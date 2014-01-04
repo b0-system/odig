@@ -1,0 +1,8 @@
+#!/bin/sh
+
+set -e
+
+# Copies from original repo into cloned repo
+cp -R $ORIGINALREPO/support/gl.xml support/
+
+./build support

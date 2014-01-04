@@ -1,0 +1,97 @@
+#!/bin/sh
+
+# Usage: build has_native
+
+set -e 
+LOC=`dirname $0`
+
+. $LOC/pkg-builder
+
+NATIVE=$1
+
+add lib pkg/META		
+
+# Tgl3 
+add lib src/tgl3.mli	
+add lib src/tgl3.cmti
+add lib src/tgl3.cmi
+add lib src/tgl3.cmx
+add lib src/tgl3.cma
+add lib src/tgl3.a
+add lib src/tgl3.cmxa
+add lib src/tgl3.cmxs
+add stublibs src/dlltgl3.so 
+add lib src/tgl3_top.ml
+add lib src/tgl3_top.cmi
+add lib src/tgl3_top.cmx
+add lib src/tgl3_top.cma
+add lib src/tgl3_top.a
+add lib src/tgl3_top.cmxa
+add lib src/tgl3_top.cmxs
+
+# Tgl4
+add lib src/tgl4.mli	
+add lib src/tgl4.cmti
+add lib src/tgl4.cmi
+add lib src/tgl4.cmx
+add lib src/tgl4.cma
+add lib src/tgl4.a
+add lib src/tgl4.cmxa
+add lib src/tgl4.cmxs
+add stublibs src/dlltgl4.so 
+add lib src/tgl4_top.ml
+add lib src/tgl4_top.cmi
+add lib src/tgl4_top.cmx
+add lib src/tgl4_top.cma
+add lib src/tgl4_top.a
+add lib src/tgl4_top.cmxa
+add lib src/tgl4_top.cmxs
+
+# Tgles2
+add lib src/tgles2.mli	
+add lib src/tgles2.cmti
+add lib src/tgles2.cmi
+add lib src/tgles2.cmx
+add lib src/tgles2.cma
+add lib src/tgles2.a
+add lib src/tgles2.cmxa
+add lib src/tgles2.cmxs
+add stublibs src/dlltgles2.so 
+add lib src/tgles2_top.ml
+add lib src/tgles2_top.cmi
+add lib src/tgles2_top.cmx
+add lib src/tgles2_top.cma
+add lib src/tgles2_top.a
+add lib src/tgles2_top.cmxa
+add lib src/tgles2_top.cmxs
+
+# Tgles3
+add lib src/tgles3.mli	
+add lib src/tgles3.cmti
+add lib src/tgles3.cmi
+add lib src/tgles3.cmx
+add lib src/tgles3.cma
+add lib src/tgles3.a
+add lib src/tgles3.cmxa
+add lib src/tgles3.cmxs
+add stublibs src/dlltgles3.so 
+add lib src/tgles3_top.ml
+add lib src/tgles3_top.cmi
+add lib src/tgles3_top.cmx
+add lib src/tgles3_top.cma
+add lib src/tgles3_top.a
+add lib src/tgles3_top.cmxa
+add lib src/tgles3_top.cmxs
+
+# Doc
+add doc README.md
+add doc CHANGES.md
+add doc DEVEL.md
+add doc test/assert_sizes.c
+add doc test/trigl3.ml
+add doc test/trigl4.ml
+add doc test/trigles2.ml
+add doc test/trigles3.ml
+
+build
+install tgls

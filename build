@@ -1,0 +1,48 @@
+#!/bin/sh
+# This script is only used for developement. It is removed by the 
+# distribution process. 
+
+set -e
+
+OCAMLBUILD=${OCAMLBUILD:="ocamlbuild -tag debug -tag annot -classic-display \
+                          -use-ocamlfind"}
+
+action () 
+{
+    case $1 in
+      default)      $OCAMLBUILD $* ;;
+      apiquery)     $OCAMLBUILD apiquery.native ;;
+      support)      action apiquery
+                    check_reg
+                    ./apiquery.native -mli -api gl3.3 > src/tgl3.mli
+                    ./apiquery.native -ml -api gl3.3 > src/tgl3.ml
+                    ./apiquery.native -mli -api gl4.4 > src/tgl4.mli
+                    ./apiquery.native -ml -api gl4.4 > src/tgl4.ml
+                    ./apiquery.native -mli -api gles2.0 > src/tgles2.mli
+                    ./apiquery.native -ml -api gles2.0 > src/tgles2.ml
+                    ./apiquery.native -mli -api gles3.0 > src/tgles3.mli
+                    ./apiquery.native -ml -api gles3.0 > src/tgles3.ml
+                    ;;
+      tgls)         $OCAMLBUILD \
+                    tgl3.cmxa \
+                    tgl4.cmxa \
+                    tgles2.cmxa \
+                    tgles3.cmxa
+                    ;;
+      doc)          shift; pkg-doc $* doc/api-dev.docdir ;;
+      clean)        $OCAMLBUILD -clean ;;
+      *)            $OCAMLBUILD $* ;;
+    esac
+} 
+
+check_reg ()
+{
+    if [ ! -f "support/gl.xml" ]; then 
+        echo "Missing file support/gl.xml, see DEVEL.md"
+        exit 1
+    fi
+}
+
+if [ $# -eq 0 ]; 
+then action default ; 
+else action $*; fi

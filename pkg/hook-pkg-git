@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+
+curl -s -S \
+ https://cvs.khronos.org/svn/repos/ogl/trunk/doc/registry/public/api/gl.xml \
+ > support/gl.xml
+
+./build support

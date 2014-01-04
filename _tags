@@ -1,0 +1,16 @@
+true: thread
+<**/*.{ml,mli}> : bin_annot, annot
+
+<support> : include
+<support/**> : package(xmlm)
+
+<src> : include
+<src/tgl{3,4,es2,es3}.{ml,mli}> : package(ctypes)
+<src/tgl{3,4,es2,es3}.{cma,cmxa,cmxs}> : custom, thread, \
+  package(ctypes), package(ctypes.foreign)
+
+<src/tgl{3,4,es2,es3}_top.*> : package(compiler-libs.toplevel)
+
+<test> : include
+<test/trigl{3,4,es2,es3}.{ml,mli,byte,native}> : package(tsdl)
+<test/linkgl{3,4,es2,es3}.{ml,mli,byte,native}> : package(ctypes.foreign)

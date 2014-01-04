@@ -1,0 +1,22 @@
+description = "Thin bindings to OpenGL {3,4} and OpenGL ES {2,3} for OCaml"
+
+package "tgl3" (
+ version = "%%VERSION%%"
+ requires = "ctypes ctypes.foreign"
+ archive(byte) = "tgl3.cma"
+ archive(byte, plugin) = "tgl3.cma"
+ archive(native) = "tgl3.cmxa"
+ archive(native, plugin) = "tgl3.cmxs"
+ archive(byte, toploop) += "tgl3_top.cma"
+ archive(native, toploop) += "tgl3_top.cmxa"
+ exists_if = "tgl3.cma"
+
+ package "top" (
+  version = "%%VERSION%%"
+  description = "Toplevel module for Tgl3"
+  requires = "compiler-libs.toplevel"
+  archive(byte) = "tgl3_top.cma"
+  archive(byte, plugin) = "tgl3_top.cma"
+  archive(native) = "tdsl_top.cmxa"
+  archive(native, plugin) = "tgl3_top.cmxs"
+  exists_if = "tgl3_top.cma"))

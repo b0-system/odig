@@ -1,0 +1,13 @@
+PKG bytes uchar result rresult
+PKG fmt fmt.tty fmt.cli
+PKG logs logs.fmt logs.cli
+PKG astring fpath bos bos.setup cmdliner
+PKG topkg.care
+PKG compiler-libs.common
+PKG mtime.os
+PKG webbrowser webbrowser.cli
+PKG asetmap
+S src
+S src-bin
+S test
+B _build/**

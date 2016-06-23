@@ -1,0 +1,7 @@
+description = "Mine installed OCaml packages"
+version = "%%VERSION%%"
+requires = "asetmap bos.setup mtime.os opam-lib compiler-libs.common"
+archive(byte) = "opkg.cma"
+archive(native) = "opkg.cmxa"
+plugin(byte) = "opkg.cma"
+plugin(native) = "opkg.cmxs"

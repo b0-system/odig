@@ -83,7 +83,7 @@ let man =
     `P "The $(b,$(tname)) command shows the API documentation of a package.";
   ] @ Cli.common_man @ Cli.see_also_main_man
 
-let backend =
+let backend = if true then Term.const `Ocamldoc else
   let odoc =
     let doc = "Show odoc output." in
     `Odoc, Arg.info ["odoc"] ~doc

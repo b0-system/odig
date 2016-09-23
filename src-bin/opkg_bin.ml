@@ -32,7 +32,7 @@ let cmds =
     Metadata_uri.online_doc_cmd;
     Metadata_uri.repo_cmd;
     Ocamldoc.cmd;
-(*    Odoc.cmd; *)
+    Odoc.cmd;
   ]
 
 let main _ = `Help (`Pager, None)

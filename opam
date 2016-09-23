@@ -7,7 +7,7 @@ license: "ISC"
 dev-repo: "http://erratique.ch/repos/opkg.git"
 bug-reports: "https://github.com/dbuenzli/opkg/issues"
 tags: []
-available: [ ocaml-version >= "4.02.0"]
+available: [ ocaml-version >= "4.03"]
 depends: [
   "ocamlfind" {build}
   "ocamlbuild" {build}
@@ -27,5 +27,5 @@ depends: [
 depopts: []
 build: [
   "ocaml" "pkg/pkg.ml" "build"
-           "--pinned" pinned
+           "--pinned" "%{pinned}%"
            "--etc-dir" opkg:etc ]

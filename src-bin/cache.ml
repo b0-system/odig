@@ -5,8 +5,8 @@
   ---------------------------------------------------------------------------*)
 
 open Bos_setup
-open Opkg
-open Opkg.Private
+open Odig
+open Odig.Private
 
 let iter_pkgs conf pkgs f =
   Cli.lookup_pkgs conf pkgs >>|
@@ -84,12 +84,12 @@ let cache conf action pkgs =
 
 open Cmdliner
 
-let doc = "Operate on the opkg cache"
+let doc = "Operate on the odig cache"
 let man =
   [ `S "SYNOPSIS";
     `P "$(b,$(mname)) $(b,$(tname)) $(i,ACTION) [$(i,OPTION)]... [$(i,PKG)]...";
     `S "DESCRIPTION";
-    `P "The $(b,$(tname)) command operates on the opkg cache. If no packages
+    `P "The $(b,$(tname)) command operates on the odig cache. If no packages
         are specified, operates on all packages.";
     `S "ACTIONS";
     `I ("$(b,path)", "Display path(s) to the cache.");

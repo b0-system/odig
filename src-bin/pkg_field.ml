@@ -5,8 +5,8 @@
   ---------------------------------------------------------------------------*)
 
 open Bos_setup
-open Opkg
-open Opkg.Private
+open Odig
+open Odig.Private
 
 let lookup ~warn_error ~kind ~get ~undefined pkgs =
   let level = if warn_error then Logs.Error else Logs.Warning in

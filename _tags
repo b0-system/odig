@@ -3,7 +3,7 @@ true : package(rresult asetmap fpath bos.setup mtime.os)
 true : package(opam-lib compiler-libs.common)
 
 <src> : include
-<src/opkg_cli.*> : package(cmdliner)
+<src/odig_cli.*> : package(cmdliner)
 
 <src-bin> : include
 <src-bin/*> : package(cmdliner fmt.tty fmt.cli logs.fmt logs.cli), \

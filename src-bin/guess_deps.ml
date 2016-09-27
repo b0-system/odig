@@ -5,7 +5,7 @@
   ---------------------------------------------------------------------------*)
 
 open Bos_setup
-open Opkg
+open Odig
 
 let pp_packages =
   let pp_package = Fmt.using Pkg.name Fmt.string in

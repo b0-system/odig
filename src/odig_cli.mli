@@ -4,7 +4,16 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** [opkg] binary main *)
+(** {!Cmdliner} support for [odig].
+
+    {e %%VERSION%% - {{:%%PKG_HOMEPAGE%% }homepage}}  *)
+
+(** {1 Command lines for setting up the configuration} *)
+
+val conf : ?docs:string -> unit -> Odig.Conf.t Cmdliner.Term.t
+(** [conf ()] is a {!Cmdliner} term that has all the options to setup
+    an odig configuration. The options are documented under the [docs]
+    section (defaults to the default in {!Cmdliner.Arg.info}). *)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

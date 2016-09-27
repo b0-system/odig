@@ -49,7 +49,7 @@ let man =
     `Noblank;
     `P "Use '$(b,$(mname)) help packaging' for packaging conventions.";
     `Noblank;
-    `P "Use '$(b,$(mname)) help conf' for information about opkg
+    `P "Use '$(b,$(mname)) help conf' for information about odig
         configuration.";
     `Noblank;
     `P "Use '$(b,$(mname)) help $(i,COMMAND)' for information about
@@ -69,7 +69,7 @@ let man =
 
 let main =
   let version = "%%VERSION%%" in
-  let info = Term.info "opkg" ~version ~doc ~sdocs:Cli.common_opts ~man in
+  let info = Term.info "odig" ~version ~doc ~sdocs:Cli.common_opts ~man in
   let t = Term.(ret (const main $ Cli.setup ())) in
   (t, info)
 
@@ -80,7 +80,7 @@ let main () = match Term.eval_choice main cmds with
 
 let () =
   exit @@
-  Opkg.Private.Log.time (fun _ m -> m "Total time") main ()
+  Odig.Private.Log.time (fun _ m -> m "Total time") main ()
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

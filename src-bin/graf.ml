@@ -5,8 +5,8 @@
   ---------------------------------------------------------------------------*)
 
 open Bos_setup
-open Opkg
-open Opkg.Private
+open Odig
+open Odig.Private
 
 module Cmis = Asetmap.Set.Make (Cobj.Cmi)
 
@@ -122,7 +122,7 @@ let man =
     `P "The $(b,$(tname)) generates dot files according to
         $(i,KIND). If no packages are specified, operates on all packages.";
     `P "EXAMPLES";
-    `Pre " opkg graph pkg-deps | dot -Tsvg > /tmp/d.svg && browse /tmp/d.svg";
+    `Pre " odig graph pkg-deps | dot -Tsvg > /tmp/d.svg && browse /tmp/d.svg";
     `S "ACTIONS";
     `I ("$(b,pkg)", "Graph of declared, installed and recognized \
                      package dependencies.");

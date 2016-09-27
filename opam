@@ -1,11 +1,11 @@
 opam-version: "1.2"
 maintainer: "Daniel Bünzli <daniel.buenzl i@erratique.ch>"
 authors: ["Daniel Bünzli <daniel.buenzl i@erratique.ch>"]
-homepage: "http://erratique.ch/software/opkg"
-doc: "http://erratique.ch/software/opkg/doc"
+homepage: "http://erratique.ch/software/odig"
+doc: "http://erratique.ch/software/odig/doc"
 license: "ISC"
-dev-repo: "http://erratique.ch/repos/opkg.git"
-bug-reports: "https://github.com/dbuenzli/opkg/issues"
+dev-repo: "http://erratique.ch/repos/odig.git"
+bug-reports: "https://github.com/dbuenzli/odig/issues"
 tags: []
 available: [ ocaml-version >= "4.03"]
 depends: [
@@ -28,4 +28,4 @@ depopts: []
 build: [
   "ocaml" "pkg/pkg.ml" "build"
            "--pinned" "%{pinned}%"
-           "--etc-dir" opkg:etc ]
+           "--etc-dir" odig:etc ]

@@ -153,7 +153,7 @@ module Make () : S = struct
 
   (* Dot printing *)
 
-  (* FIXME use Opkg_dot *)
+  (* FIXME use Odig_dot *)
 
   let pp_dot_label ~root ppf t =
     let label = match Fpath.of_string t.Trail.id with
@@ -203,7 +203,7 @@ module Make () : S = struct
 
   (* Universe *)
 
-  let magic = "opkg-%%VERSION%%-ocaml-" ^ Sys.ocaml_version
+  let magic = "odig-%%VERSION%%-ocaml-" ^ Sys.ocaml_version
 
   let read ?create:(c = true) f =
     let read ic () =

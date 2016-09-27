@@ -5,7 +5,7 @@
   ---------------------------------------------------------------------------*)
 
 open Bos_setup
-open Opkg
+open Odig
 
 (* FIXME add json output *)
 

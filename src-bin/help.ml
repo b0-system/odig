@@ -4,80 +4,80 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-let opkg_manual = "Opkg manual"
+let odig_manual = "Odig manual"
 let version = "%%VERSION%%"
 
 (* Help manuals *)
 
 let basics =
-  ("OPKG-BASICS", 7, "", version, opkg_manual),
+  ("OPKG-BASICS", 7, "", version, odig_manual),
   [ `S "NAME";
-    `P "opkg-basics - short introduction to opkg";
+    `P "odig-basics - short introduction to odig";
     `S "DESCRIPTION";
-    `P "opkg helps you to access information about installed OCaml
+    `P "odig helps you to access information about installed OCaml
         packages. The following describes the basics of the
         tool, more information about packaging conventions can
-        be found in opkg-packaging(7).";
+        be found in odig-packaging(7).";
     `S "PACKAGE LIST";
-    `P "The list of packages recognized by opkg can be obtained with:";
-    `Pre " opkg list";
+    `P "The list of packages recognized by odig can be obtained with:";
+    `Pre " odig list";
     `S "PACKAGE DISTRIBUTION DOCUMENTATION AND METADATA";
-    `P "opkg provides a few commands that make it easy to lookup
+    `P "odig provides a few commands that make it easy to lookup
         the  readme, change log and license files of packages.
         Here are a few sample invocation on the package named 'bos':";
-    `Pre " opkg readme bos";`Noblank;
-    `Pre " opkg changes bos";`Noblank;
-    `Pre " opkg license bos";
+    `Pre " odig readme bos";`Noblank;
+    `Pre " odig changes bos";`Noblank;
+    `Pre " odig license bos";
     `P "If the package properly installed its OPAM metadata file you can
         also quickly get access to the issues, homepage, or
         online documentation pages of a package. The following commands
         opens them in your browser:";
-    `Pre " opkg issues bos"; `Noblank;
-    `Pre " opkg homepage bos"; `Noblank;
-    `Pre " opkg online-doc bos";
+    `Pre " odig issues bos"; `Noblank;
+    `Pre " odig homepage bos"; `Noblank;
+    `Pre " odig online-doc bos";
     `P "See the help of individual commands for more details and options.";
     `S "OCAMLDOC PACKAGE API DOCUMENTATION";
     `P "Package API documentation can be generated on a best-effort basis
         with ocamldoc by issuing:";
-    `Pre " opkg ocamldoc      # Generate API docs for all packages"; `Noblank;
-    `Pre " opkg ocamldoc bos  # Generate API docs for package bos";
+    `Pre " odig ocamldoc      # Generate API docs for all packages"; `Noblank;
+    `Pre " odig ocamldoc bos  # Generate API docs for package bos";
     `P "To open the documentation index or the documentation of
         a package in your browser use:";
-    `Pre " opkg doc      # Package index "; `Noblank;
-    `Pre " opkg doc bos  # API doc for package bos";
+    `Pre " odig doc      # Package index "; `Noblank;
+    `Pre " odig doc bos  # API doc for package bos";
     `S "SEE ALSO";
-    `P "opkg(1), opkg-packaging(7)"; ]
+    `P "odig(1), odig-packaging(7)"; ]
 
 let packaging =
-  ("OPKG-PACKAGING", 7, "", version, opkg_manual),
+  ("OPKG-PACKAGING", 7, "", version, odig_manual),
   [ `S "NAME";
-    `P "opkg-packaging - packaging conventions for opkg";
+    `P "odig-packaging - packaging conventions for odig";
     `S "DESCRIPTION";
     `P "The following describes the conventions package installs
-        should follow to maximize opkg's mining capabilities.";
+        should follow to maximize odig's mining capabilities.";
     `S "PACKAGE INSTALL STRUCTURE AND EXISTENCE";
-    `P "opkg assumes all OCaml packages are installed in a library prefix
+    `P "odig assumes all OCaml packages are installed in a library prefix
         called $(i,LIBDIR) and have their distribution documentation installed
         in a library prefix called $(i,DOCDIR).";
-    `P "For a package named $(i,PKG) to be recognized by opkg one of the
+    `P "For a package named $(i,PKG) to be recognized by odig one of the
         following paths must exist:";
     `P "$(i,LIBDIR)/$(i,PKG)/opam";`Noblank;
     `P "$(i,LIBDIR)/$(i,PKG)/META"; `Noblank;
     `P "$(i,LIBDIR)/$(i,PKG)/caml (deprecated)";
-    `P "If neither exists $(i,LIBDIR)/$(i,PKG) is ignored by opkg and the
+    `P "If neither exists $(i,LIBDIR)/$(i,PKG) is ignored by odig and the
         package $(i,PKG) does not exist.";
     `P "For each package $(i,PKG) its distribution documentation (readme,
         license, change log, sample code, etc.) is looked up in the directory
         $(i,DOCDIR)/$(i,PKG).";
     `P "Typically the values of $(i,LIBDIR) and $(i,DOCDIR) will
         be `opam config var lib` and `opam config var doc`. However
-        opkg is not tied to OPAM, the only assumption made by opkg is
+        odig is not tied to OPAM, the only assumption made by odig is
         that the above install structure is followed.";
     `S "METADATA RECOGNITION";
     `P "Package metadata for $(i,PKG) is always read from
         $(i,LIBDIR)/$(i,PKG)/opam which must be a valid OPAM
         file. If present, the following fields are consulted and used
-        by opkg in various context and/or commands.";
+        by odig in various context and/or commands.";
     `I ("authors:", "The authors, $(b,authors) command");
     `I ("bug-reports:", "The issue tracker URI, $(b,issues) command");
     `I ("deps:, depopts:", "The dependencies, $(b,deps) command");
@@ -108,16 +108,16 @@ let packaging =
         compilation unit name the one residing at the lexicographically
         shorter path is taken to be part of the API documentation.";
     `S "SEE ALSO";
-    `P "opkg(1), opkg-basics(7)"; ]
+    `P "odig(1), odig-basics(7)"; ]
 
 let conf =
-  ("OPKG-CONF", 7, "", version, opkg_manual),
+  ("OPKG-CONF", 7, "", version, odig_manual),
   [ `S "NAME";
-    `P "opkg-conf - opkg configuration file";
+    `P "odig-conf - odig configuration file";
     `S "DESCRIPTION";
-    `P "The opkg configuration file is undocumented for now.";
+    `P "The odig configuration file is undocumented for now.";
     `S "SEE ALSO";
-    `P "opkg(1)"; ]
+    `P "odig(1)"; ]
 
 (* Help command *)
 
@@ -151,10 +151,10 @@ let topic =
   let doc = "The topic to get help on, `topics' lists the topic." in
   Arg.(value & pos 0 (some string) None & info [] ~docv:"TOPIC" ~doc)
 
-let doc = "Show help about opkg"
+let doc = "Show help about odig"
 let man =
   [ `S "DESCRIPTION";
-    `P "The $(b,$(tname)) command shows help about opkg.";
+    `P "The $(b,$(tname)) command shows help about odig.";
     `P "Use `topics' as $(i,TOPIC) to get a list of topics.";
   ] @ Cli.see_also_main_man
 

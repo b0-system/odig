@@ -4,32 +4,24 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** Dot graph generator.
+type pkg = Odig_pkg.t
 
-    See {!Opkg.Private.Dot}. *)
+module Conf = Odig_conf
+module Cobj = Odig_cobj
+module Pkg = Odig_pkg
+module Cobj_index = Odig_cobj_index
+module Odoc = Odig_odoc
+module Ocamldoc = Odig_ocamldoc
 
-type 'a seq
-val empty : 'a seq
-val ( ++ ) : 'a seq -> 'a seq -> 'a seq
-
-type id = string
-type st
-type att
-type t
-
-val edge : ?atts:att seq -> id -> id -> st seq
-val node : ?atts:att seq -> id -> st seq
-val atts : [`Graph | `Node | `Edge] -> att seq -> st seq
-val att : string -> string -> att seq
-val label : string -> att seq
-val color : string -> att seq
-val subgraph : ?id:id -> st seq -> st seq
-val graph :
-  ?id:id -> ?strict:bool -> [`Graph | `Digraph] -> st seq -> t
-
-val buffer_add : Buffer.t -> t -> unit
-val to_string : t -> string
-val output : out_channel -> t -> unit
+module Private = struct
+  module Log = Odig_log
+  module Json = Odig_json
+  module Html = Odig_html
+  module Dot = Odig_dot
+  module Digest = Odig_digest
+  module Trail = Odig_btrail
+  module Pkg = Odig_pkg
+end
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

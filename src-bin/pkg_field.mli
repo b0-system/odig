@@ -5,8 +5,8 @@
   ---------------------------------------------------------------------------*)
 
 open Bos_setup
-open Opkg
-open Opkg.Private
+open Odig
+open Odig.Private
 
 val lookup :
   warn_error:bool ->
@@ -19,11 +19,11 @@ val flatten : rev:bool -> (Pkg.t * 'a list) list -> (Pkg.t * 'a) list
 
 val json_values :
   show_pkg:bool -> mem_n:string -> mem_v:('a -> Json.t) ->
-  (Opkg.Pkg.t * 'a) list -> Json.t
+  (Odig.Pkg.t * 'a) list -> Json.t
 
 val print_values :
   show_pkg:bool -> ('a -> string) ->
-  (Opkg.Pkg.t * 'a) list -> unit
+  (Odig.Pkg.t * 'a) list -> unit
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

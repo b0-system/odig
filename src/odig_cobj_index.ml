@@ -6,13 +6,13 @@
 
 open Bos_setup
 
-type 'a result = (Opkg_pkg.t * 'a) list
+type 'a result = (Odig_pkg.t * 'a) list
 
 type digest_occs =
-  { cmis : Opkg_cobj.cmi result;
-    cmtis : Opkg_cobj.cmti result;
-    cmos : Opkg_cobj.cmo result;
-    cmxs : Opkg_cobj.cmx result }
+  { cmis : Odig_cobj.cmi result;
+    cmtis : Odig_cobj.cmti result;
+    cmos : Odig_cobj.cmo result;
+    cmxs : Odig_cobj.cmx result }
 
 type t = { digests : digest_occs String.Map.t; }
 
@@ -20,7 +20,7 @@ let empty = { cmis = []; cmtis = []; cmos = []; cmxs = [] }
 
 let _create pkgs =
   let add p acc =
-    let cobjs = Opkg_pkg.cobjs p in
+    let cobjs = Odig_pkg.cobjs p in
     let add_obj digest add_obj acc obj =
       let d = digest obj in
       let refs = match String.Map.find d acc with None -> empty | Some r -> r in
@@ -28,37 +28,37 @@ let _create pkgs =
     in
     let add_cmi =
       let add_cmi cmi acc = { acc with cmis = (p, cmi) :: acc.cmis } in
-      add_obj Opkg_cobj.Cmi.digest add_cmi
+      add_obj Odig_cobj.Cmi.digest add_cmi
     in
     let add_cmti =
       let add_cmti cmti acc = { acc with cmtis = (p, cmti) :: acc.cmtis } in
-      add_obj Opkg_cobj.Cmti.digest add_cmti
+      add_obj Odig_cobj.Cmti.digest add_cmti
     in
     let add_cmo =
       let add_cmo cmo acc = { acc with cmos = (p, cmo) :: acc.cmos } in
-      add_obj Opkg_cobj.Cmo.cmi_digest add_cmo
+      add_obj Odig_cobj.Cmo.cmi_digest add_cmo
     in
     let add_cmx acc cobj =
       let add_cmx cmx acc = { acc with cmxs = (p, cmx) :: acc.cmxs } in
-      let acc = add_obj Opkg_cobj.Cmx.cmi_digest add_cmx acc cobj in
-      add_obj Opkg_cobj.Cmx.digest add_cmx acc cobj
+      let acc = add_obj Odig_cobj.Cmx.cmi_digest add_cmx acc cobj in
+      add_obj Odig_cobj.Cmx.digest add_cmx acc cobj
     in
-    let acc = List.fold_left add_cmi acc (Opkg_cobj.cmis cobjs) in
-    let acc = List.fold_left add_cmti acc (Opkg_cobj.cmtis cobjs) in
-    let acc = List.fold_left add_cmo acc (Opkg_cobj.cmos cobjs) in
-    let acc = List.fold_left add_cmx acc (Opkg_cobj.cmxs cobjs) in
+    let acc = List.fold_left add_cmi acc (Odig_cobj.cmis cobjs) in
+    let acc = List.fold_left add_cmti acc (Odig_cobj.cmtis cobjs) in
+    let acc = List.fold_left add_cmo acc (Odig_cobj.cmos cobjs) in
+    let acc = List.fold_left add_cmx acc (Odig_cobj.cmxs cobjs) in
     acc
   in
-  { digests = Opkg_pkg.Set.fold add pkgs String.Map.empty }
+  { digests = Odig_pkg.Set.fold add pkgs String.Map.empty }
 
-let memo : (Opkg_conf.t, (t, R.msg) Result.result) Hashtbl.t =
+let memo : (Odig_conf.t, (t, R.msg) Result.result) Hashtbl.t =
   (* FIXME switch to ephemerons (>= 4.03) *) Hashtbl.create 143
 
 let create c = try Hashtbl.find memo c with
 | Not_found ->
     let i =
-      Opkg_pkg.set c >>| fun pkgs ->
-      Opkg_log.time (fun _ m -> m "Created index.") _create pkgs
+      Odig_pkg.set c >>| fun pkgs ->
+      Odig_log.time (fun _ m -> m "Created index.") _create pkgs
     in
     Hashtbl.add memo c i;
     i

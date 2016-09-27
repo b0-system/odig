@@ -76,10 +76,10 @@ module Cmi = struct
   type t = cmi
 
   let read cmi_path =
-    Opkg_ocamlc.read_cmi cmi_path >>| fun cmi ->
-    let cmi_name = Opkg_ocamlc.cmi_name cmi in
-    let cmi_digest = Opkg_ocamlc.cmi_digest cmi in
-    let cmi_deps = Opkg_ocamlc.cmi_deps cmi in
+    Odig_ocamlc.read_cmi cmi_path >>| fun cmi ->
+    let cmi_name = Odig_ocamlc.cmi_name cmi in
+    let cmi_digest = Odig_ocamlc.cmi_digest cmi in
+    let cmi_deps = Odig_ocamlc.cmi_deps cmi in
     { cmi_name; cmi_digest; cmi_deps; cmi_path }
 
   let name cmi = cmi.cmi_name
@@ -93,10 +93,10 @@ module Cmti = struct
   type t = cmti
 
   let read cmti_path =
-    Opkg_ocamlc.read_cmti cmti_path >>| fun cmti ->
-    let cmti_name = Opkg_ocamlc.cmti_name cmti in
-    let cmti_digest = Opkg_ocamlc.cmti_digest cmti in
-    let cmti_deps = Opkg_ocamlc.cmti_deps cmti in
+    Odig_ocamlc.read_cmti cmti_path >>| fun cmti ->
+    let cmti_name = Odig_ocamlc.cmti_name cmti in
+    let cmti_digest = Odig_ocamlc.cmti_digest cmti in
+    let cmti_deps = Odig_ocamlc.cmti_deps cmti in
     { cmti_name; cmti_digest; cmti_deps; cmti_path }
 
   let name cmti = cmti.cmti_name
@@ -109,13 +109,13 @@ module Cmo = struct
   type t = cmo
 
   let of_ocamlc_cmo cmo_path ~cmo_cma cmo =
-    let cmo_name = Opkg_ocamlc.cmo_name cmo in
-    let cmo_cmi_digest = Opkg_ocamlc.cmo_cmi_digest cmo in
-    let cmo_cmi_deps = Opkg_ocamlc.cmo_cmi_deps cmo in
+    let cmo_name = Odig_ocamlc.cmo_name cmo in
+    let cmo_cmi_digest = Odig_ocamlc.cmo_cmi_digest cmo in
+    let cmo_cmi_deps = Odig_ocamlc.cmo_cmi_deps cmo in
     { cmo_name; cmo_cmi_digest; cmo_cmi_deps; cmo_cma; cmo_path }
 
   let read cmo_path =
-    Opkg_ocamlc.read_cmo cmo_path >>| fun cmo ->
+    Odig_ocamlc.read_cmo cmo_path >>| fun cmo ->
     of_ocamlc_cmo cmo_path ~cmo_cma:None cmo
 
   let name cmo = cmo.cmo_name
@@ -129,13 +129,13 @@ module Cma = struct
   type t = cma
 
   let read cma_path =
-    Opkg_ocamlc.read_cma cma_path >>| fun cma ->
-    let cma_name = Opkg_ocamlc.cma_name cma in
-    let cma_custom = Opkg_ocamlc.cma_custom cma in
-    let cma_custom_cobjs = Opkg_ocamlc.cma_custom_cobjs cma in
-    let cma_custom_copts = Opkg_ocamlc.cma_custom_copts cma in
-    let cma_dllibs = Opkg_ocamlc.cma_dllibs cma in
-    let cmos = Opkg_ocamlc.cma_cmos cma in
+    Odig_ocamlc.read_cma cma_path >>| fun cma ->
+    let cma_name = Odig_ocamlc.cma_name cma in
+    let cma_custom = Odig_ocamlc.cma_custom cma in
+    let cma_custom_cobjs = Odig_ocamlc.cma_custom_cobjs cma in
+    let cma_custom_copts = Odig_ocamlc.cma_custom_copts cma in
+    let cma_dllibs = Odig_ocamlc.cma_dllibs cma in
+    let cmos = Odig_ocamlc.cma_cmos cma in
     let rec cma_cmos =
       lazy (List.map (Cmo.of_ocamlc_cmo cma_path ~cmo_cma:(Some cma)) cmos)
     and cma = { cma_name; cma_custom; cma_custom_cobjs; cma_custom_copts;
@@ -158,16 +158,16 @@ module Cmx = struct
   type t = cmx
 
   let of_ocamlc_cmx cmx_path ~cmx_cmxa cmx =
-    let cmx_name = Opkg_ocamlc.cmx_name cmx in
-    let cmx_digest = Opkg_ocamlc.cmx_digest cmx in
-    let cmx_cmi_digest = Opkg_ocamlc.cmx_cmi_digest cmx in
-    let cmx_cmi_deps = Opkg_ocamlc.cmx_cmi_deps cmx in
-    let cmx_cmx_deps = Opkg_ocamlc.cmx_cmx_deps cmx in
+    let cmx_name = Odig_ocamlc.cmx_name cmx in
+    let cmx_digest = Odig_ocamlc.cmx_digest cmx in
+    let cmx_cmi_digest = Odig_ocamlc.cmx_cmi_digest cmx in
+    let cmx_cmi_deps = Odig_ocamlc.cmx_cmi_deps cmx in
+    let cmx_cmx_deps = Odig_ocamlc.cmx_cmx_deps cmx in
     { cmx_name; cmx_digest; cmx_cmi_digest; cmx_cmi_deps; cmx_cmx_deps;
       cmx_cmxa; cmx_path }
 
   let read cmx_path =
-    Opkg_ocamlc.read_cmx cmx_path >>| fun cmo ->
+    Odig_ocamlc.read_cmx cmx_path >>| fun cmo ->
     of_ocamlc_cmx cmx_path ~cmx_cmxa:None cmo
 
   let name cmx = cmx.cmx_name
@@ -184,11 +184,11 @@ module Cmxa = struct
   type t = cmxa
 
   let read cmxa_path =
-    Opkg_ocamlc.read_cmxa cmxa_path >>| fun cmxa ->
-    let cmxa_name = Opkg_ocamlc.cmxa_name cmxa in
-    let cmxa_cobjs = Opkg_ocamlc.cmxa_cobjs cmxa in
-    let cmxa_copts = Opkg_ocamlc.cmxa_copts cmxa in
-    let cmxs = Opkg_ocamlc.cmxa_cmxs cmxa in
+    Odig_ocamlc.read_cmxa cmxa_path >>| fun cmxa ->
+    let cmxa_name = Odig_ocamlc.cmxa_name cmxa in
+    let cmxa_cobjs = Odig_ocamlc.cmxa_cobjs cmxa in
+    let cmxa_copts = Odig_ocamlc.cmxa_copts cmxa in
+    let cmxs = Odig_ocamlc.cmxa_cmxs cmxa in
     let rec cmxa_cmxs =
       lazy (List.map (Cmx.of_ocamlc_cmx cmxa_path ~cmx_cmxa:(Some cmxa)) cmxs)
     and cmxa = { cmxa_name; cmxa_cmxs; cmxa_cobjs; cmxa_copts; cmxa_path }
@@ -208,8 +208,8 @@ module Cmxs = struct
   type t = cmxs
 
   let read cmxs_path =
-    Opkg_ocamlc.read_cmxs cmxs_path >>| fun cmxs ->
-    let cmxs_name = Opkg_ocamlc.cmxs_name cmxs in
+    Odig_ocamlc.read_cmxs cmxs_path >>| fun cmxs ->
+    let cmxs_name = Odig_ocamlc.cmxs_name cmxs in
     { cmxs_name; cmxs_path }
 
   let name cmxs = cmxs.cmxs_name
@@ -255,7 +255,7 @@ let set_of_dir dir =
   let elements = `Files in
   let add_cobj read f objs =
     (read f >>| fun obj -> obj :: objs)
-    |> Opkg_log.on_error_msg ~use:(fun _ -> objs)
+    |> Odig_log.on_error_msg ~use:(fun _ -> objs)
   in
   let add f acc = match Fpath.get_ext f with
   | ".mli" -> { acc with mlis = add_cobj Mli.read f acc.mlis }
@@ -269,7 +269,7 @@ let set_of_dir dir =
   | _ -> acc
   in
   (OS.Dir.fold_contents ~elements add empty_set dir)
-  |> Opkg_log.on_error_msg ~use:(fun _ -> empty_set)
+  |> Odig_log.on_error_msg ~use:(fun _ -> empty_set)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

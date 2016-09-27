@@ -5,8 +5,8 @@
   ---------------------------------------------------------------------------*)
 
 open Bos_setup
-open Opkg
-open Opkg.Private
+open Odig
+open Odig.Private
 
 let version p =
   Pkg.version p |> Logs.on_error_msg ~level:Logs.Warning ~use:(fun _ -> None)
@@ -54,7 +54,7 @@ open Cmdliner
 let doc = "List packages"
 let man =
   [ `S "DESCRIPTION";
-    `P "The $(b,list) command lists the package known to opkg.";
+    `P "The $(b,list) command lists the package known to odig.";
   ] @ Cli.common_man @ Cli.see_also_main_man
 
 let cmd =

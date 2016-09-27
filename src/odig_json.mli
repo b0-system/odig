@@ -4,30 +4,34 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-open Bos_setup
-open Cmdliner
+(** JSON generation.
 
-let path_arg =
-  let parse s = match Fpath.of_string s with
-  | Error (`Msg m) -> `Error m
-  | Ok p -> `Ok p
-  in
-  parse, Fpath.pp
+    See {!Odig.Json}.  *)
 
-(* Command lines *)
+type 'a seq
+val empty : 'a seq
+val ( ++ ) : 'a seq -> 'a seq -> 'a seq
 
-let conf ?docs () =
-  let conf_file =
-    let doc = "Use $(docv) as the opkg configuration file. See opkg-conf(7)."in
-    let env = Arg.env_var "OPKG_CONF" in
-    Arg.(value & opt path_arg Opkg.Conf.default_file & info ["C"; "conf" ]
-           ~env ~doc ~docv:"FILE" ?docs)
-  in
-  let conf conf_file = match Opkg.Conf.of_file conf_file with
-  | Ok v -> `Ok v
-  | Error (`Msg e) -> `Error (false, e)
-  in
-  Term.(ret (const conf $ conf_file))
+type t
+type mem
+type el
+
+val null : t
+val bool : bool -> t
+val int : int -> t
+val str : string -> t
+
+val el : t -> el seq
+val el_if : bool -> (unit -> t) -> el seq
+val arr : el seq -> t
+
+val mem : string -> t -> mem seq
+val mem_if : bool -> string -> (unit -> t) -> mem seq
+val obj : mem seq -> t
+
+val buffer_add : Buffer.t -> t -> unit
+val to_string : t -> string
+val output : out_channel -> t -> unit
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

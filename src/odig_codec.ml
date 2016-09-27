@@ -4,21 +4,38 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
+open Bos_setup
 
+type 'a t = unit
 
-val pkg_info : htmldir:(Opkg_pkg.t -> Fpath.t) -> Opkg_pkg.t -> string
-val pkg_title_links : htmldir:(Opkg_pkg.t -> Fpath.t) -> Opkg_pkg.t -> string
+let v () = ()
 
-val pkg_page :
-  htmldir:(Opkg_pkg.t -> Fpath.t) -> Opkg_pkg.t -> mods:string list ->
-  string
+let magic = "odig-%%VERSION%%-ocaml-" ^ Sys.ocaml_version
 
-val pkg_index :
-  Opkg_conf.t ->
-  tool:[`Odoc | `Ocamldoc ] ->
-  htmldir:Fpath.t ->
-  has_doc:Opkg_pkg.t list ->
-  no_doc:Opkg_pkg.t list -> string
+let write : type a. a t -> Fpath.t -> a -> (unit, R.msg) result =
+fun codec f v  ->
+  let write oc v =
+    try
+      output_string oc magic;
+      output_value oc v;
+      flush oc;
+      Ok ()
+    with Sys_error e -> R.error_msgf "%a: %s" Fpath.pp f e
+  in
+  R.join @@ OS.File.with_oc f write v
+
+let read : type a. a t -> Fpath.t -> (a, R.msg) result =
+fun codec f ->
+  let read ic () =
+    let m = really_input_string ic (String.length magic) in
+    match m = magic with
+    | true -> Ok (input_value ic : a)
+    | false ->
+        R.error_msgf "%a: invalid magic number %S, expected %S"
+          Fpath.pp f m magic
+  in
+  R.join @@ OS.File.with_ic f read ()
+
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

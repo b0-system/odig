@@ -228,48 +228,48 @@ body { margin: 0; padding:0; border:0; color: #222; background: #FAFAFA;}
     padding-bottom: 0.5rem;
 }
 
-/* Opkg */
+/* Odig */
 
 .odoc-doc h1 nav { display: inline; font-size: 0.875rem; font-weight: normal; }
 
 .odoc-doc ul.indexlist { list-style-type: none }
 .odoc-doc ul.indexlist li { margin-left: 0em; }
 
-.odoc-doc dl.opkg-info { margin-top: 0.625rem; }
-.odoc-doc dl.opkg-info dt
+.odoc-doc dl.odig-info { margin-top: 0.625rem; }
+.odoc-doc dl.odig-info dt
 { float: left; clear: left; width: 12ex; font-style: italic }
 
-.odoc-doc dl.opkg-info dd { margin-left: 12ex;}
+.odoc-doc dl.odig-info dd { margin-left: 12ex;}
 
-.odoc-doc .opkg-info ul
+.odoc-doc .odig-info ul
 { list-style-type: none; margin: 0; padding: 0; display: inline }
 
-.odoc-doc .opkg-info ul li
+.odoc-doc .odig-info ul li
 { display: inline-block; margin: 0; padding:0; margin-right: 1ex;}
 
-.odoc-doc .opkg-name nav { margin-top: 0.625rem; }
-.odoc-doc .opkg-name nav a
+.odoc-doc .odig-name nav { margin-top: 0.625rem; }
+.odoc-doc .odig-name nav a
 { text-transform: uppercase; font-size: 1.125rem;
   margin-right:1ex; color: #222; display: inline-block; }
 
-.odoc-doc .opkg-name ol { list-style-type: none; margin: 0; }
-.odoc-doc .opkg-name > ol { margin-top: 0.625rem; }
-.odoc-doc .opkg-name ol > li { margin-left: 0}
+.odoc-doc .odig-name ol { list-style-type: none; margin: 0; }
+.odoc-doc .odig-name > ol { margin-top: 0.625rem; }
+.odoc-doc .odig-name ol > li { margin-left: 0}
 
-.odoc-doc ol.opkg-errors { list-style-type: none; }
-.odoc-doc ol.opkg-errors li { margin-left: 0; }
+.odoc-doc ol.odig-errors { list-style-type: none; }
+.odoc-doc ol.odig-errors li { margin-left: 0; }
 
-.odoc-doc .opkg-tag nav { margin-top: 0.625rem }
-.odoc-doc .opkg-tag nav a
+.odoc-doc .odig-tag nav { margin-top: 0.625rem }
+.odoc-doc .odig-tag nav a
 { margin-right:1ex; color: #222; display: inline-block; }
 
-.odoc-doc .opkg-tag ol { list-style-type: none; margin: 0; }
-.odoc-doc .opkg-tag li { margin-left: 0; padding:0}
-.odoc-doc .opkg-tag > ol { margin-top: 0.625rem; }
-.odoc-doc .opkg-tag > ol > li { margin-top: 0.625rem; }
-.odoc-doc .opkg-tag > ol > li > span,
-.odoc-doc .opkg-tag > ol > li > ol,
-.odoc-doc .opkg-tag > ol > li > ol > li
+.odoc-doc .odig-tag ol { list-style-type: none; margin: 0; }
+.odoc-doc .odig-tag li { margin-left: 0; padding:0}
+.odoc-doc .odig-tag > ol { margin-top: 0.625rem; }
+.odoc-doc .odig-tag > ol > li { margin-top: 0.625rem; }
+.odoc-doc .odig-tag > ol > li > span,
+.odoc-doc .odig-tag > ol > li > ol,
+.odoc-doc .odig-tag > ol > li > ol > li
 { display: inline-block; margin-right: 1ex; }
 
 

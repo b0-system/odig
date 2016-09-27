@@ -148,41 +148,41 @@ pre .code { background: inherit; }
 
 img { margin-top: 1.25rem }
 
-/* Opkg */
+/* Odig */
 
 h1 nav { display: inline; font-size: 0.875rem; font-weight: normal; }
 
 ul.indexlist { list-style-type: none }
 ul.indexlist li { margin-left: 0em; }
 
-dl.opkg-info { margin-top: 0.625rem; }
-dl.opkg-info dt { float: left; clear: left; width: 12ex; font-style: italic }
-dl.opkg-info dd { margin-left: 12ex;}
+dl.odig-info { margin-top: 0.625rem; }
+dl.odig-info dt { float: left; clear: left; width: 12ex; font-style: italic }
+dl.odig-info dd { margin-left: 12ex;}
 
-.opkg-info ul { list-style-type: none; margin: 0; padding: 0; display: inline }
-.opkg-info ul li { display: inline-block; margin: 0; padding:0;
+.odig-info ul { list-style-type: none; margin: 0; padding: 0; display: inline }
+.odig-info ul li { display: inline-block; margin: 0; padding:0;
                   margin-right: 1ex;}
 
-.opkg-name nav { margin-top: 0.625rem; }
-.opkg-name nav a { text-transform: uppercase; font-size: 1.125rem;
+.odig-name nav { margin-top: 0.625rem; }
+.odig-name nav a { text-transform: uppercase; font-size: 1.125rem;
                     margin-right:1ex; color: #222; display: inline-block; }
 
-.opkg-name ol { list-style-type: none; margin: 0; }
-.opkg-name > ol { margin-top: 0.625rem; }
-.opkg-name li { margin-left: 0}
+.odig-name ol { list-style-type: none; margin: 0; }
+.odig-name > ol { margin-top: 0.625rem; }
+.odig-name li { margin-left: 0}
 
-ol.opkg-errors { list-style-type: none; }
-ol.opkg-errors li { margin-left: 0; }
+ol.odig-errors { list-style-type: none; }
+ol.odig-errors li { margin-left: 0; }
 
-.opkg-tag nav { margin-top: 0.625rem }
-.opkg-tag nav a { margin-right:1ex; color: #222; display: inline-block; }
-.opkg-tag ol { list-style-type: none; margin: 0; }
-.opkg-tag li { margin-left: 0; padding:0}
-.opkg-tag > ol { margin-top: 0.625rem; }
-.opkg-tag > ol > li { margin-top: 0.625rem; }
-.opkg-tag > ol > li > span,
-.opkg-tag > ol > li > ol,
-.opkg-tag > ol > li > ol > li
+.odig-tag nav { margin-top: 0.625rem }
+.odig-tag nav a { margin-right:1ex; color: #222; display: inline-block; }
+.odig-tag ol { list-style-type: none; margin: 0; }
+.odig-tag li { margin-left: 0; padding:0}
+.odig-tag > ol { margin-top: 0.625rem; }
+.odig-tag > ol > li { margin-top: 0.625rem; }
+.odig-tag > ol > li > span,
+.odig-tag > ol > li > ol,
+.odig-tag > ol > li > ol > li
  { display: inline-block; margin-right: 1ex; }
 
 /* Mobile adjustements

@@ -14,20 +14,20 @@ type t =
 
 let trails_file cachedir = Fpath.(cachedir / "trails")
 
-let default_file = Fpath.(Opkg_etc.dir / "opkg.conf")
+let default_file = Fpath.(Odig_etc.dir / "odig.conf")
 
 let write_trails cachedir () =
   begin
     OS.Dir.exists cachedir >>= function
     | false -> Ok ()
-    | true -> Opkg_btrail.write (trails_file cachedir)
+    | true -> Odig_btrail.write (trails_file cachedir)
   end
   |> Logs.on_error_msg ~use:(fun _ -> ())
 
 let v ?(trust_cache = false) ~cachedir ~libdir ~docdir () =
   let trails_file = trails_file cachedir in
-  (Opkg_btrail.read ~create:true trails_file)
-  |> Opkg_log.on_error_msg ~level:Logs.Warning ~use:(fun _ -> ());
+  (Odig_btrail.read ~create:true trails_file)
+  |> Odig_log.on_error_msg ~level:Logs.Warning ~use:(fun _ -> ());
   at_exit (write_trails cachedir); (* FIXME more explicit *)
   { libdir; docdir; cachedir; trust_cache; }
 
@@ -44,7 +44,7 @@ let of_opam_switch ?trust_cache ?switch () =
   >>= fun opam -> get_dir opam "lib"
   >>= fun libdir -> get_dir opam "doc"
   >>= fun docdir -> get_dir opam "prefix"
-  >>= fun prefix -> Ok Fpath.(prefix / "var" / "cache" / "opkg")
+  >>= fun prefix -> Ok Fpath.(prefix / "var" / "cache" / "odig")
   >>= fun cachedir -> Ok (v ?trust_cache ~cachedir ~libdir ~docdir ())
 
 let of_file ?trust_cache f =
@@ -62,11 +62,11 @@ let of_file ?trust_cache f =
       Fpath.of_string dir >>= fun dir ->
       parse_directives opam libdir docdir (Some dir)  ds
   | (_, loc) :: ds ->
-      R.error_msgf "%a: unknown configuration directive" Opkg_sexp.pp_loc loc
+      R.error_msgf "%a: unknown configuration directive" Odig_sexp.pp_loc loc
   | [] ->
       Ok (opam, libdir, docdir, cachedir)
   in
-  Opkg_sexp.of_file f
+  Odig_sexp.of_file f
   >>= fun ds -> parse_directives false None None None ds
   >>= function
   | true, None, None, None -> of_opam_switch ()
@@ -88,7 +88,7 @@ let pkg_cachedir c = Fpath.(c.cachedir / "cache")
 
 let clear_cache c =
   let d = cachedir c in
-  Opkg_log.info (fun m -> m "Deleting %a" Fpath.pp d);
+  Odig_log.info (fun m -> m "Deleting %a" Fpath.pp d);
   OS.Dir.delete ~recurse:true d
 
 let cached_pkgs_names c =

@@ -7,7 +7,7 @@
 open Bos_setup
 open Cmdliner
 
-open Opkg.Private
+open Odig.Private
 
 (* Manual *)
 
@@ -24,7 +24,7 @@ let common_man =
 
 let see_also_main_man =
   [ `S "SEE ALSO";
-    `P "opkg(1)" ]
+    `P "odig(1)" ]
 
 (* Converters *)
 
@@ -43,7 +43,7 @@ let cmd_arg =
   parse, Cmd.pp
 
 let pkg_name_arg =
-  let parser v = match Opkg.Pkg.name_of_string v with
+  let parser v = match Odig.Pkg.name_of_string v with
   | Error (`Msg msg) -> `Error msg
   | Ok v -> `Ok v
   in
@@ -146,18 +146,18 @@ let setup () =
     let env = Arg.env_var "OPKG_VERBOSITY" in
     Logs_cli.level ~docs:common_opts ~env ()
   in
-  Term.(const setup $ Opkg_cli.conf ~docs:common_opts () $
+  Term.(const setup $ Odig_cli.conf ~docs:common_opts () $
         style_renderer $ log_level)
 
 let lookup_pkgs conf pkgs =
   let add acc pkg =
     acc
-    >>= fun acc -> Opkg.Pkg.lookup conf pkg
-    >>= fun pkg -> Ok (Opkg.Pkg.Set.add pkg acc)
+    >>= fun acc -> Odig.Pkg.lookup conf pkg
+    >>= fun pkg -> Ok (Odig.Pkg.Set.add pkg acc)
   in
   match pkgs with
-  | `Pkgs pkgs -> List.fold_left add (Ok Opkg.Pkg.Set.empty) pkgs
-  | `All -> Opkg.Pkg.set conf
+  | `Pkgs pkgs -> List.fold_left add (Ok Odig.Pkg.Set.empty) pkgs
+  | `All -> Odig.Pkg.set conf
 
 (* Error handling *)
 

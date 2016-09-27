@@ -14,9 +14,9 @@ let name_of_string s = match is_name s with
 | true -> Ok s
 | false -> R.error_msgf "%S: not a package name" s
 
-let pkg_libdir conf name = Fpath.(Opkg_conf.libdir conf / name)
-let pkg_docdir conf name = Fpath.(Opkg_conf.docdir conf / name)
-let pkg_cachedir conf name = Fpath.(Opkg_conf.pkg_cachedir conf / name)
+let pkg_libdir conf name = Fpath.(Odig_conf.libdir conf / name)
+let pkg_docdir conf name = Fpath.(Odig_conf.docdir conf / name)
+let pkg_cachedir conf name = Fpath.(Odig_conf.pkg_cachedir conf / name)
 let pkg_opam_file conf name = Fpath.(pkg_libdir conf name / "opam")
 
 (* Package detection *)
@@ -32,7 +32,7 @@ let is_package dir =
             (* FIXME special case the compiler *)
             OS.Path.exists Fpath.(dir / "caml")
   end
-  |> Opkg_log.on_error_msg ~use:(fun _ -> false)
+  |> Odig_log.on_error_msg ~use:(fun _ -> false)
 
 let dir_is_package dir = match is_package dir with
 | false -> None
@@ -44,14 +44,14 @@ let dir_is_package dir = match is_package dir with
 
 (* Packages *)
 
-type cache = Opkg_cobj.set
+type cache = Odig_cobj.set
 
 type t =
   { name : name;
-    conf : Opkg_conf.t;
+    conf : Odig_conf.t;
     opam_fields : (string list String.map, R.msg) result Lazy.t;
-    install_trail : Opkg_btrail.t Lazy.t;
-    cache : (Opkg_btrail.t * cache) Lazy.t (* Cached package info. *) }
+    install_trail : Odig_btrail.t Lazy.t;
+    cache : (Odig_btrail.t * cache) Lazy.t (* Cached package info. *) }
 
 let field ~err f p = match f p with Ok v -> v | Error _ -> err
 let name p = p.name
@@ -104,26 +104,26 @@ let install_digest p =
     in
     paths
     >>= fun paths -> OS.Path.fold (fun p ps -> p :: ps) [] paths
-    >>= fun ps -> Opkg_digest.mtimes ps
+    >>= fun ps -> Odig_digest.mtimes ps
   in
-  Opkg_log.time (fun _ m -> m "Digest %s" p.name) digest p
+  Odig_log.time (fun _ m -> m "Digest %s" p.name) digest p
 
 
 let install_trail p = Lazy.force p.install_trail
 
-let _raw_install_trail p = Opkg_btrail.v ~id:p.name
+let _raw_install_trail p = Odig_btrail.v ~id:p.name
 
 let _install_trail p = (* automatically updates the install trail *)
   let t = _raw_install_trail p in
   let digest = ((install_digest p >>| fun d -> Some d)
-                |> Opkg_log.on_error_msg ~use:(fun _ -> None))
+                |> Odig_log.on_error_msg ~use:(fun _ -> None))
   in
-  Opkg_btrail.set_witness t digest;
+  Odig_btrail.set_witness t digest;
   t
 
 type cache_status = [ `Fresh | `New | `Stale ]
 
-let cache_status p = match Opkg_btrail.witness (_raw_install_trail p) with
+let cache_status p = match Odig_btrail.witness (_raw_install_trail p) with
 | None -> Ok `New
 | Some d -> install_digest p >>| fun d' -> if (d = d') then `Fresh else `Stale
 
@@ -131,8 +131,8 @@ let refresh_cache p = Ok (ignore (Lazy.force p.cache))
 
 let clear_cache p =
   let d = cachedir p in
-  Opkg_log.info (fun m -> m "Deleting %a" Fpath.pp d);
-  Opkg_btrail.delete ~succs:`Delete (_raw_install_trail p);
+  Odig_log.info (fun m -> m "Deleting %a" Fpath.pp d);
+  Odig_btrail.delete ~succs:`Delete (_raw_install_trail p);
   OS.Dir.delete ~recurse:true d
 
 let with_cachedir p f v =
@@ -143,39 +143,39 @@ let memo ~file ~preds read write =
   let memo f p =
     let preds = preds p in
     let file = file p in
-    let t = Opkg_btrail.v ~id:(Fpath.to_string file) in
+    let t = Odig_btrail.v ~id:(Fpath.to_string file) in
     let cache f p =
       let v = f p in
       begin
-        Opkg_log.debug (fun m -> m ~header "[WRITE] %a" Fpath.pp file);
+        Odig_log.debug (fun m -> m ~header "[WRITE] %a" Fpath.pp file);
         with_cachedir p (write file) v
-        >>= fun () -> Opkg_digest.file file
-        >>| fun d -> Opkg_btrail.set_witness ~preds t (Some d); (t, v)
+        >>= fun () -> Odig_digest.file file
+        >>| fun d -> Odig_btrail.set_witness ~preds t (Some d); (t, v)
       end
-      |> Opkg_log.on_error_msg
-        ~use:(fun _ -> Opkg_btrail.set_witness t None; (t, v))
+      |> Odig_log.on_error_msg
+        ~use:(fun _ -> Odig_btrail.set_witness t None; (t, v))
     in
-    match Opkg_btrail.status t with
+    match Odig_btrail.status t with
     | `Stale ->
-        Opkg_log.debug (fun m -> m ~header "[STALE] %a" Fpath.pp file);
+        Odig_log.debug (fun m -> m ~header "[STALE] %a" Fpath.pp file);
         cache f p
     | `Fresh ->
-        Opkg_log.debug (fun m -> m ~header "[FRESH] %a" Fpath.pp file);
+        Odig_log.debug (fun m -> m ~header "[FRESH] %a" Fpath.pp file);
         (read file >>| fun v -> (t, v))
-        |> Opkg_log.on_error_msg ~use:(fun _ -> cache f p)
+        |> Odig_log.on_error_msg ~use:(fun _ -> cache f p)
   in
   memo
 
 let memo_cache =
   let file = cache_file in
   let preds p = [install_trail p] in (* This will update the trail on access *)
-  let cache_codec = Opkg_codec.v () in
-  let read = Opkg_codec.read cache_codec in
-  let write = Opkg_codec.write cache_codec in
-  memo ~file ~preds read write (fun p -> Opkg_cobj.set_of_dir (libdir p))
+  let cache_codec = Odig_codec.v () in
+  let read = Odig_codec.read cache_codec in
+  let write = Odig_codec.write cache_codec in
+  memo ~file ~preds read write (fun p -> Odig_cobj.set_of_dir (libdir p))
 
 let _cache p =
-  Opkg_log.time (fun _ m -> m "Cache %s" p.name) memo_cache p
+  Odig_log.time (fun _ m -> m "Cache %s" p.name) memo_cache p
 
 let cobjs_trail p = fst (Lazy.force p.cache)
 let cobjs p = snd (Lazy.force p.cache)
@@ -186,7 +186,7 @@ let pkg_opam_fields conf name =
   let opam_file = pkg_opam_file conf name in
   OS.File.exists opam_file >>= function
   | false -> Ok String.Map.empty
-  | true -> Opkg_opam.File.fields opam_file
+  | true -> Odig_opam.File.fields opam_file
 
 (* Package lookup *)
 
@@ -202,7 +202,7 @@ let v name conf = try Hashtbl.find memo (name, conf) with
     pkg
 
 let set conf =
-  OS.Dir.contents (Opkg_conf.libdir conf) >>| fun candidates ->
+  OS.Dir.contents (Odig_conf.libdir conf) >>| fun candidates ->
   let rec add_pkg acc dir = match is_package dir with
   | false -> acc
   | true -> Set.add (v (Fpath.filename dir) conf) acc
@@ -260,7 +260,7 @@ let maintainers p = opam_field_values p "maintainer"
 let repo p = opam_field_values p "dev-repo"
 let deps ?opts p =
   opam_fields p >>| fun fields ->
-  Opkg_opam.File.deps ?opts fields
+  Odig_opam.File.deps ?opts fields
 
 let depopts p = opam_field_values p "depopts" >>| String.Set.of_list
 

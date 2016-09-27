@@ -32,7 +32,7 @@ val path_arg : Fpath.t Arg.converter
 val cmd_arg : Cmd.t Arg.converter
 (** [cmd_arg] is a command argument converter. *)
 
-val pkg_name_arg : Opkg.Pkg.name Arg.converter
+val pkg_name_arg : Odig.Pkg.name Arg.converter
 (** [pkg_name_arg] is a command argument for package names. *)
 
 (** {1 Arguments} *)
@@ -68,26 +68,26 @@ val doc_force : bool Term.t
 val pkgs : ?right_of:int -> unit -> string list Term.t
 (** [pkgs] is a list of packages specified as positional arguments. *)
 
-val pkgs_or_all : [`Pkgs of Opkg.Pkg.name list | `All ] Term.t
+val pkgs_or_all : [`Pkgs of Odig.Pkg.name list | `All ] Term.t
 (** [pkgs_or_all] is like {!pkgs} except if no package is specified all
     of them is implied. *)
 
-val pkgs_or_all_opt : [`Pkgs of Opkg.Pkg.name list | `All ] Term.t
+val pkgs_or_all_opt : [`Pkgs of Odig.Pkg.name list | `All ] Term.t
 (** [pkgs_or_all] is like {!pkgs_or_all} except all packages are only
     provided if [--all] is specified. It is an error if no package
     is specified and [--all] is absent. *)
 
 (** {1 Commonalities} *)
 
-val setup : unit -> Opkg.Conf.t Term.t
+val setup : unit -> Odig.Conf.t Term.t
 (** [setup ()] defines a basic setup common to all commands. This
     includes, by side effect, setting log verbosity for {!Logs},
     ajusting colored output and finally getting a configuration
-    through {!Opkg_cli.conf}. *)
+    through {!Odig_cli.conf}. *)
 
 val lookup_pkgs :
-  Opkg.Conf.t -> [`Pkgs of Opkg.Pkg.name list | `All ] ->
-  (Opkg.Pkg.set, Bos_setup.R.msg) Result.result
+  Odig.Conf.t -> [`Pkgs of Odig.Pkg.name list | `All ] ->
+  (Odig.Pkg.set, Bos_setup.R.msg) Result.result
 (** [lookup_pkgs conf names] lookups packages [names] in [conf]. *)
 
 (** {1 Error handling} *)

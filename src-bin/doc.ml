@@ -5,8 +5,8 @@
   ---------------------------------------------------------------------------*)
 
 open Bos_setup
-open Opkg
-open Opkg.Private
+open Odig
+open Odig.Private
 
 let show ~background ~prefix ?browser uris =
   Log.on_iter_error_msg List.iter
@@ -23,31 +23,31 @@ let add_file not_found file acc =
   |> Logs.on_error_msg ~use:(fun _ -> acc)
 
 let root_not_found tool () =
-  Logs.warn (fun m -> m "@[No doc found,@ try 'opkg %s'@]" tool)
+  Logs.warn (fun m -> m "@[No doc found,@ try 'odig %s'@]" tool)
 
 let pkg_not_found tool pkg () =
-  let n = Opkg.Pkg.name pkg in
-  Logs.warn (fun m -> m "%s: @[No doc found,@ try 'opkg %s %s'@]" n tool n)
+  let n = Odig.Pkg.name pkg in
+  Logs.warn (fun m -> m "%s: @[No doc found,@ try 'odig %s %s'@]" n tool n)
 
 (* odoc *)
 
 let add_odoc_root conf =
   add_file (root_not_found "odoc")
-    Fpath.(Opkg.Odoc.htmldir conf / "index.html")
+    Fpath.(Odig.Odoc.htmldir conf / "index.html")
 
 let add_odoc_pkg pkg =
   add_file (pkg_not_found "odoc" pkg)
-    Fpath.(Opkg.Odoc.pkg_htmldir pkg / "index.html")
+    Fpath.(Odig.Odoc.pkg_htmldir pkg / "index.html")
 
 (* ocamldoc *)
 
 let add_ocamldoc_root conf =
   add_file (root_not_found "ocamldoc")
-    Fpath.(Opkg.Ocamldoc.htmldir conf / "index.html")
+    Fpath.(Odig.Ocamldoc.htmldir conf / "index.html")
 
 let add_ocamldoc_pkg pkg =
   add_file (pkg_not_found "ocamldoc" pkg)
-    Fpath.(Opkg.Ocamldoc.pkg_htmldir pkg / "index.html")
+    Fpath.(Odig.Ocamldoc.pkg_htmldir pkg / "index.html")
 
 (* Command *)
 

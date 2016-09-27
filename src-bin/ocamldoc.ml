@@ -5,17 +5,17 @@
   ---------------------------------------------------------------------------*)
 
 open Bos_setup
-open Opkg
-open Opkg.Private
+open Odig
+open Odig.Private
 
 let ocamldoc_pkg ~ocamldoc ~force pkg =
   Log.app (fun m -> m "Processing %s." (Pkg.name pkg));
-  Opkg.Ocamldoc.compile ~force ~ocamldoc pkg  >>= fun () ->
-  Opkg.Ocamldoc.html ~force ~ocamldoc pkg
+  Odig.Ocamldoc.compile ~force ~ocamldoc pkg  >>= fun () ->
+  Odig.Ocamldoc.html ~force ~ocamldoc pkg
 
 let ocamldocs ~ocamldoc ~force conf pkgs =
   Log.on_iter_error_msg Pkg.Set.iter (ocamldoc_pkg ~force ~ocamldoc) pkgs;
-  Opkg.Ocamldoc.htmldir_css_and_index conf
+  Odig.Ocamldoc.htmldir_css_and_index conf
 
 let api_doc conf ocamldoc force pkgs =
   begin

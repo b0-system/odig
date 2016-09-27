@@ -8,44 +8,44 @@ open Bos_setup
 
 (* odoc generation *)
 
-let htmldir conf = Fpath.(Opkg_conf.cachedir conf / "odoc")
-let css_file conf = Fpath.(Opkg_etc.dir / "odoc.css")
+let htmldir conf = Fpath.(Odig_conf.cachedir conf / "odoc")
+let css_file conf = Fpath.(Odig_etc.dir / "odoc.css")
 
 let pkg_htmldir pkg =
-  let htmldir = htmldir (Opkg_pkg.conf pkg) in
-  Fpath.(htmldir / Opkg_pkg.name pkg)
+  let htmldir = htmldir (Odig_pkg.conf pkg) in
+  Fpath.(htmldir / Odig_pkg.name pkg)
 
 let compile_dst pkg cmti =
-  let pkgdir = Opkg_pkg.libdir pkg in
-  let cachedir = Opkg_pkg.cachedir pkg in
+  let pkgdir = Odig_pkg.libdir pkg in
+  let cachedir = Odig_pkg.cachedir pkg in
   match Fpath.rem_prefix pkgdir cmti with
   | None -> assert false
   | Some p -> Fpath.(cachedir // p -+ ".odoc")
 
 let cmti_deps pkg cmti =
-  let cmti_path = Opkg_cobj.Cmti.path cmti in
+  let cmti_path = Odig_cobj.Cmti.path cmti in
   let add_cmti i acc (name, d) = match d with
   | None -> acc
   | Some d ->
-      let _, cmtis, _, _ = Opkg_cobj_index.find_digest i d in
+      let _, cmtis, _, _ = Odig_cobj_index.find_digest i d in
       match cmtis with
       | [] ->
           Logs.warn
             (fun m -> m "%s: %a: No cmti found for %s (%s)"
-                (Opkg_pkg.name pkg) Fpath.pp cmti_path name (Digest.to_hex d));
+                (Odig_pkg.name pkg) Fpath.pp cmti_path name (Digest.to_hex d));
           acc
       | cmti :: cmtis ->
           (* Any should do FIXME really ? *)
           cmti :: acc
   in
-  Opkg_cobj_index.create (Opkg_pkg.conf pkg)
+  Odig_cobj_index.create (Odig_pkg.conf pkg)
   >>= fun i ->
-  let deps = Opkg_cobj.Cmti.deps cmti in
+  let deps = Odig_cobj.Cmti.deps cmti in
   Ok (List.fold_left (add_cmti i) [] deps)
 
 let incs_of_deps ?(odoc = false) deps =
   let add acc (pkg, cmti) =
-    let path = Opkg_cobj.Cmti.path cmti in
+    let path = Odig_cobj.Cmti.path cmti in
     let path = if odoc then compile_dst pkg path else path in
     Fpath.(Set.add (parent path) acc)
   in
@@ -61,7 +61,7 @@ let rec build_cmti_deps ~odoc seen pkg cmti = (* FIXME not t.r. *)
   |> Logs.on_error_msg ~use:(fun _ -> [], seen)
 
 and _compile_cmti ~odoc seen pkg cmti =
-  let cmti_path = Opkg_cobj.Cmti.path cmti in
+  let cmti_path = Odig_cobj.Cmti.path cmti in
   if Fpath.Set.mem cmti_path seen then (Ok seen) else
   let seen = Fpath.Set.add cmti_path seen in
   let dst = compile_dst pkg cmti_path in
@@ -71,7 +71,7 @@ and _compile_cmti ~odoc seen pkg cmti =
   | false ->
       let deps, seen = build_cmti_deps ~odoc seen pkg cmti in
       let incs = incs_of_deps deps in
-      let pkg = Cmd.(v "--pkg" % Opkg_pkg.name pkg) in
+      let pkg = Cmd.(v "--pkg" % Odig_pkg.name pkg) in
       let odoc = Cmd.(odoc % "compile" %% incs %% pkg % "-o" % p dst %
                       p cmti_path)
       in
@@ -83,37 +83,37 @@ and compile_cmti ~odoc pkg cmti =
   _compile_cmti ~odoc Fpath.Set.empty pkg cmti >>| fun _ -> ()
 
 let compile ~odoc ~force pkg =
-  let cmtis = Opkg_cobj.cmtis (Opkg_pkg.cobjs pkg) in
+  let cmtis = Odig_cobj.cmtis (Odig_pkg.cobjs pkg) in
   let compile_cmti = compile_cmti ~odoc pkg in
-  Opkg_log.time
-    (fun _ m -> m "Compiled odoc files of %s" @@ Opkg_pkg.name pkg)
-    (Opkg_log.on_iter_error_msg List.iter compile_cmti) cmtis;
+  Odig_log.time
+    (fun _ m -> m "Compiled odoc files of %s" @@ Odig_pkg.name pkg)
+    (Odig_log.on_iter_error_msg List.iter compile_cmti) cmtis;
   Ok ()
 
 let html_of_odoc ~odoc pkg cmti =
-  let cmti_path = Opkg_cobj.Cmti.path cmti in
+  let cmti_path = Odig_cobj.Cmti.path cmti in
   let odoc_file = compile_dst pkg cmti_path in
   cmti_deps pkg cmti >>= fun deps ->
   let incs = incs_of_deps ~odoc:true deps in
-  let htmldir = htmldir (Opkg_pkg.conf pkg) in
+  let htmldir = htmldir (Odig_pkg.conf pkg) in
   OS.Cmd.run Cmd.(odoc % "html" %% incs % "-o" % p htmldir % p odoc_file)
 
 let html_index pkg htmldir cmtis =
-  let mods = List.map Opkg_cobj.Cmti.name cmtis in
-  let page = Opkg_api_doc.pkg_page ~htmldir:pkg_htmldir pkg ~mods in
+  let mods = List.map Odig_cobj.Cmti.name cmtis in
+  let page = Odig_api_doc.pkg_page ~htmldir:pkg_htmldir pkg ~mods in
   OS.File.write Fpath.(htmldir / "index.html") page
 
 let html ~odoc ~force pkg =
   let htmldir = pkg_htmldir pkg in
-  let cmtis = Opkg_cobj.cmtis (Opkg_pkg.cobjs pkg) in
+  let cmtis = Odig_cobj.cmtis (Odig_pkg.cobjs pkg) in
   let html pkg =
     let html_of_odoc = html_of_odoc ~odoc pkg in
-    Opkg_log.on_iter_error_msg List.iter html_of_odoc cmtis;
+    Odig_log.on_iter_error_msg List.iter html_of_odoc cmtis;
     html_index pkg htmldir cmtis
   in
   OS.Dir.create ~path:true htmldir >>= fun _ ->
-  Opkg_log.time
-    (fun _ m -> m "Compiled HTML files of %s" @@ Opkg_pkg.name pkg)
+  Odig_log.time
+    (fun _ m -> m "Compiled HTML files of %s" @@ Odig_pkg.name pkg)
     html pkg
 
 let htmldir_css_and_index conf =
@@ -124,16 +124,16 @@ let htmldir_css_and_index conf =
         | true -> (p :: has_doc, no_doc)
         | false -> (has_doc, p :: no_doc)
       end
-      |> Opkg_log.on_error_msg ~use:(fun _ -> acc)
+      |> Odig_log.on_error_msg ~use:(fun _ -> acc)
     in
-    let has_doc, no_doc = Opkg_pkg.Set.fold classify pkgs ([], []) in
+    let has_doc, no_doc = Odig_pkg.Set.fold classify pkgs ([], []) in
     List.rev has_doc, List.rev no_doc
   in
   let htmldir = htmldir conf in
-  Opkg_pkg.set conf
+  Odig_pkg.set conf
   >>= function pkgs -> Ok (partition pkgs)
   >>= fun (has_doc, no_doc) ->
-  Ok (Opkg_api_doc.pkg_index ~tool:`Odoc ~htmldir conf ~has_doc ~no_doc)
+  Ok (Odig_api_doc.pkg_index ~tool:`Odoc ~htmldir conf ~has_doc ~no_doc)
   >>= fun index -> OS.File.write Fpath.(htmldir / "index.html") index
   >>= fun () -> OS.File.read (css_file conf)
   >>= fun css -> OS.File.write Fpath.(htmldir / "odoc.css") css

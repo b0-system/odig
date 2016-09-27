@@ -12,16 +12,16 @@ let etc_config c = match Conf.build_context c with
 | `Pin | `Distrib ->
     let etc_dir = Conf.value c etc_dir in
     let config = strf "let dir = Fpath.v %S\n" etc_dir in
-    OS.File.write "src/opkg_etc.ml" config
+    OS.File.write "src/odig_etc.ml" config
 
 let build = Pkg.build ~pre:etc_config ()
 
 let () =
-  Pkg.describe "opkg" ~build @@ fun c ->
-  Ok [ Pkg.mllib ~api:["Opkg"] "src/opkg.mllib";
-       Pkg.mllib "src/opkg_cli.mllib";
-       Pkg.bin "src-bin/opkg_bin" ~dst:"opkg";
-       Pkg.etc "etc/opkg.conf";
+  Pkg.describe "odig" ~build @@ fun c ->
+  Ok [ Pkg.mllib ~api:["Odig"] "src/odig.mllib";
+       Pkg.mllib "src/odig_cli.mllib";
+       Pkg.bin "src-bin/odig_bin" ~dst:"odig";
+       Pkg.etc "etc/odig.conf";
        Pkg.etc "etc/odoc.css";
        Pkg.etc "etc/ocamldoc.css";
-       Pkg.test ~run:false "src-bin/opkg_bin"; ]
+       Pkg.test ~run:false "src-bin/odig_bin"; ]

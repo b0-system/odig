@@ -5,16 +5,16 @@
   ---------------------------------------------------------------------------*)
 
 open Bos_setup
-open Opkg
-open Opkg.Private
+open Odig
+open Odig.Private
 
 let odoc_pkg ~odoc ~force pkg =
-  Opkg.Odoc.compile ~odoc ~force pkg >>= fun () ->
-  Opkg.Odoc.html ~odoc ~force pkg
+  Odig.Odoc.compile ~odoc ~force pkg >>= fun () ->
+  Odig.Odoc.html ~odoc ~force pkg
 
 let odocs ~odoc ~force conf pkgs =
-  Log.on_iter_error_msg Opkg.Pkg.Set.iter (odoc_pkg ~odoc ~force) pkgs;
-  Opkg.Odoc.htmldir_css_and_index conf
+  Log.on_iter_error_msg Odig.Pkg.Set.iter (odoc_pkg ~odoc ~force) pkgs;
+  Odig.Odoc.htmldir_css_and_index conf
 
 let api conf odoc force pkgs =
   begin

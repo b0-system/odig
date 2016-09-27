@@ -4,16 +4,21 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** {!Cmdliner} support for [opkg].
+open Result
 
-    {e %%VERSION%% - {{:%%PKG_HOMEPAGE%% }homepage}}  *)
+let src = Logs.Src.create "odig" ~doc:"The odig library"
+include (val Logs.src_log src : Logs.LOG)
 
-(** {1 Command lines for setting up the configuration} *)
+let on_iter_error_msg ?level ?header ?tags iter f vs =
+  let f v = (f v) |> on_error_msg ?level ?header ?tags ~use:(fun _ -> ()) in
+  iter f vs
 
-val conf : ?docs:string -> unit -> Opkg.Conf.t Cmdliner.Term.t
-(** [conf ()] is a {!Cmdliner} term that has all the options to setup
-    an opkg configuration. The options are documented under the [docs]
-    section (defaults to the default in {!Cmdliner.Arg.info}). *)
+let time ?(level = Logs.Info) m f v =
+  let time = Mtime.counter () in
+  let r = f v in
+  let span = Mtime.count time in
+  let header = Fmt.strf "%a" Mtime.pp_span span in
+  kmsg (fun () -> r) level (fun w -> m r (w ~header))
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

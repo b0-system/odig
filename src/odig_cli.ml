@@ -4,13 +4,30 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** Computation trails.
-
-    See {Opkg.Trail} *)
-
 open Bos_setup
+open Cmdliner
 
-include Opkg_trail.S
+let path_arg =
+  let parse s = match Fpath.of_string s with
+  | Error (`Msg m) -> `Error m
+  | Ok p -> `Ok p
+  in
+  parse, Fpath.pp
+
+(* Command lines *)
+
+let conf ?docs () =
+  let conf_file =
+    let doc = "Use $(docv) as the odig configuration file. See odig-conf(7)."in
+    let env = Arg.env_var "OPKG_CONF" in
+    Arg.(value & opt path_arg Odig.Conf.default_file & info ["C"; "conf" ]
+           ~env ~doc ~docv:"FILE" ?docs)
+  in
+  let conf conf_file = match Odig.Conf.of_file conf_file with
+  | Ok v -> `Ok v
+  | Error (`Msg e) -> `Error (false, e)
+  in
+  Term.(ret (const conf $ conf_file))
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

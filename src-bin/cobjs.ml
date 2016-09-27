@@ -5,8 +5,8 @@
   ---------------------------------------------------------------------------*)
 
 open Bos_setup
-open Opkg
-open Opkg.Private
+open Odig
+open Odig.Private
 
 let no_digest = String.v 32 (fun _ -> '-')
 let opt_digest_to_string =
@@ -122,8 +122,8 @@ let cmd_info ~cmd ~kind =
   let man =
     [ `S "DESCRIPTION";
       `P (strf "The $(b,$(tname)) command shows the %s of a package.
-                See opkg-packaging(7) to understand how %s are found
-                by opkg." kind kinds);
+                See odig-packaging(7) to understand how %s are found
+                by odig." kind kinds);
     ] @ Cli.common_man @ [
       `S "EXIT STATUS";
       `P "The $(b,$(tname)) command exits with one of the following values:";

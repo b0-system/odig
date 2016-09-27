@@ -62,7 +62,6 @@ module Codec : sig
   val view : ?kind:string -> ('a -> 'b) * ('b -> 'a) -> 'b t -> 'a t
 end
 
-
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
 

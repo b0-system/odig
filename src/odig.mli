@@ -6,14 +6,14 @@
 
 (** Mining OCaml package installs.
 
-    {b Warning.} [Opkg] is a work in progress. Do not expect these
+    {b Warning.} [Odig] is a work in progress. Do not expect these
     APIs to be stable.
 
     {e %%VERSION%% — {{:%%PKG_HOMEPAGE%% }homepage}} *)
 
 open Bos_setup
 
-(** {1 Opkg} *)
+(** {1 Odig} *)
 
 (** OCaml compilation objects and their dependencies. *)
 module Cobj : sig
@@ -317,13 +317,13 @@ module Cobj : sig
       log on errors and continue (at worst you'll get an {!empty_set}). *)
 end
 
-(** Opkg configuration. *)
+(** Odig configuration. *)
 module Conf : sig
 
   (** {1 Configuration} *)
 
   type t
-  (** The type for opkg configuration. *)
+  (** The type for odig configuration. *)
 
   val default_file : Fpath.t
   (** [default_file] is the default configuration file. *)
@@ -332,7 +332,7 @@ module Conf : sig
     ?trust_cache:bool -> cachedir:Fpath.t -> libdir:Fpath.t ->
     docdir:Fpath.t -> unit -> t
   (** [v ~trust_cache ~cachedir ~libdir ~docdir ()] is a configuration
-      using [cachedir] as the opkg cache directory, [libdir] for
+      using [cachedir] as the odig cache directory, [libdir] for
       looking up package compilation objects and [docdir] for looking
       up package documentation. If [trust_cache] is [true] (defaults
       to [false]) indicates the data of [cachedir] should be trusted
@@ -356,10 +356,10 @@ module Conf : sig
   (** {1 Cache} *)
 
   val cachedir : t -> Fpath.t
-  (** [cachedir c] is [c]'s opkg cache directory. *)
+  (** [cachedir c] is [c]'s odig cache directory. *)
 
   val trust_cache : t -> bool
-  (** [trust_cache c] indicates if [c] is trusting [opkg]'s cache. *)
+  (** [trust_cache c] indicates if [c] is trusting [odig]'s cache. *)
 
   val clear_cache : t -> (unit, R.msg) result
   (** [clear_cache c] deletes [c]'s cache directory. *)
@@ -380,7 +380,7 @@ end
 (** Packages.
 
     Information about how packages are recognized and their data looked up
-    is kept in [opkg help packaging].
+    is kept in [odig help packaging].
 
     {b TODO.} Add a note about freshness and concurrent access. *)
 module Pkg : sig
@@ -635,13 +635,13 @@ end
 (** Private definitions. *)
 module Private : sig
 
-  (** Opkg log. *)
+  (** Odig log. *)
   module Log : sig
 
     (** {1 Log} *)
 
     val src : Logs.src
-    (** [src] is Opkg's logging source. *)
+    (** [src] is Odig's logging source. *)
 
     include Logs.LOG
 

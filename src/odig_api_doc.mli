@@ -4,21 +4,21 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-open Result
 
-let src = Logs.Src.create "opkg" ~doc:"The opkg library"
-include (val Logs.src_log src : Logs.LOG)
 
-let on_iter_error_msg ?level ?header ?tags iter f vs =
-  let f v = (f v) |> on_error_msg ?level ?header ?tags ~use:(fun _ -> ()) in
-  iter f vs
+val pkg_info : htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t -> string
+val pkg_title_links : htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t -> string
 
-let time ?(level = Logs.Info) m f v =
-  let time = Mtime.counter () in
-  let r = f v in
-  let span = Mtime.count time in
-  let header = Fmt.strf "%a" Mtime.pp_span span in
-  kmsg (fun () -> r) level (fun w -> m r (w ~header))
+val pkg_page :
+  htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t -> mods:string list ->
+  string
+
+val pkg_index :
+  Odig_conf.t ->
+  tool:[`Odoc | `Ocamldoc ] ->
+  htmldir:Fpath.t ->
+  has_doc:Odig_pkg.t list ->
+  no_doc:Odig_pkg.t list -> string
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

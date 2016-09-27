@@ -6,7 +6,7 @@
 
 (** HTML generation.
 
-    See {!Opkg.Html}. *)
+    See {!Odig.Html}. *)
 
 type 'a seq
 val empty : 'a seq

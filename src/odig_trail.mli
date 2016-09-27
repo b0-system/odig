@@ -6,7 +6,7 @@
 
 (** Computation trails.
 
-    See {Opkg.Trail} *)
+    See {Odig.Trail} *)
 
 open Bos_setup
 
@@ -31,7 +31,7 @@ module type S = sig
   val succs : t -> t list
   (** [succs t] is the list of trails succeeding [t]. *)
 
-  val witness : t -> Opkg_digest.t option
+  val witness : t -> Odig_digest.t option
   (** [witness t] is [t]'s last witness. *)
 
   val status : t -> status

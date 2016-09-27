@@ -4,24 +4,7 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-type pkg = Opkg_pkg.t
-
-module Conf = Opkg_conf
-module Cobj = Opkg_cobj
-module Pkg = Opkg_pkg
-module Cobj_index = Opkg_cobj_index
-module Odoc = Opkg_odoc
-module Ocamldoc = Opkg_ocamldoc
-
-module Private = struct
-  module Log = Opkg_log
-  module Json = Opkg_json
-  module Html = Opkg_html
-  module Dot = Opkg_dot
-  module Digest = Opkg_digest
-  module Trail = Opkg_btrail
-  module Pkg = Opkg_pkg
-end
+(** [odig] binary main *)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

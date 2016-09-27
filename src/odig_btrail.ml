@@ -4,34 +4,9 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** JSON generation.
+open Bos_setup
 
-    See {!Opkg.Json}.  *)
-
-type 'a seq
-val empty : 'a seq
-val ( ++ ) : 'a seq -> 'a seq -> 'a seq
-
-type t
-type mem
-type el
-
-val null : t
-val bool : bool -> t
-val int : int -> t
-val str : string -> t
-
-val el : t -> el seq
-val el_if : bool -> (unit -> t) -> el seq
-val arr : el seq -> t
-
-val mem : string -> t -> mem seq
-val mem_if : bool -> string -> (unit -> t) -> mem seq
-val obj : mem seq -> t
-
-val buffer_add : Buffer.t -> t -> unit
-val to_string : t -> string
-val output : out_channel -> t -> unit
+include (Odig_trail.Make ())
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

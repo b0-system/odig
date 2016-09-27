@@ -5,8 +5,8 @@
   ---------------------------------------------------------------------------*)
 
 open Bos_setup
-open Opkg
-open Opkg.Private
+open Odig
+open Odig.Private
 
 let show_uris uris browser background =
   let show (p, uri) = Webbrowser.reload ?prefix:None ~background ?browser uri in

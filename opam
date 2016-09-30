@@ -6,7 +6,7 @@ doc: "http://erratique.ch/software/odig/doc"
 license: "ISC"
 dev-repo: "http://erratique.ch/repos/odig.git"
 bug-reports: "https://github.com/dbuenzli/odig/issues"
-tags: []
+tags: [ org:erratique build dev meta doc packaging ]
 available: [ ocaml-version >= "4.03"]
 depends: [
   "ocamlfind" {build}

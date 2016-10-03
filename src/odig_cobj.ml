@@ -6,7 +6,13 @@
 
 open Bos_setup
 
-module Digest = Digest
+module Digest = struct
+  include Digest
+  module Set = Asetmap.Set.Make (Digest)
+  module Map = Asetmap.Map.Make_with_key_set (Digest) (Set)
+  type set = Set.t
+  type 'a map = 'a Map.t
+end
 
 type mli =
   { mli_name : string;
@@ -152,6 +158,26 @@ module Cma = struct
   let custom_copts cma = cma.cma_custom_copts
   let dllibs cma = cma.cma_dllibs
   let path cma = cma.cma_path
+
+  (* Derived information *)
+
+  let cmi_digests ?(init = Digest.Set.empty) cma =
+    let add_cmo acc cmo = Digest.Set.add (Cmo.cmi_digest cmo) acc in
+    List.fold_left add_cmo init (Lazy.force cma.cma_cmos)
+
+  let cmi_deps ?(init = Digest.Set.empty) cma =
+    let self = cmi_digests cma in
+    let add_cmo acc cmo =
+      let add_dep acc (_, d) = match d with
+      | None -> acc
+      | Some d ->
+          match Digest.Set.mem d self with
+          | true -> acc
+          | false -> Digest.Set.add d acc
+      in
+      List.fold_left add_dep acc (Cmo.cmi_deps cmo)
+    in
+    List.fold_left add_cmo init (Lazy.force cma.cma_cmos)
 end
 
 module Cmx = struct
@@ -202,6 +228,26 @@ module Cmxa = struct
   let cobjs cmxa = cmxa.cmxa_cobjs
   let copts cmxa = cmxa.cmxa_copts
   let path cmxa = cmxa.cmxa_path
+
+  (* Derived information *)
+
+  let cmi_digests ?(init = Digest.Set.empty) cmxa =
+    let add_cmx acc cmx = Digest.Set.add (Cmx.cmi_digest cmx) acc in
+    List.fold_left add_cmx init (Lazy.force cmxa.cmxa_cmxs)
+
+  let cmi_deps ?(init = Digest.Set.empty) cmxa =
+    let self = cmi_digests cmxa in
+    let add_cmx acc cmx =
+      let add_dep acc (_, d) = match d with
+      | None -> acc
+      | Some d ->
+          match Digest.Set.mem d self with
+          | true -> acc
+          | false -> Digest.Set.add d acc
+      in
+      List.fold_left add_dep acc (Cmx.cmi_deps cmx)
+    in
+    List.fold_left add_cmx init (Lazy.force cmxa.cmxa_cmxs)
 end
 
 module Cmxs = struct
@@ -216,8 +262,7 @@ module Cmxs = struct
   let path cmxs = cmxs.cmxs_path
 end
 
-
-let compare_by_name name o o' = compare (name o) (name o)
+let compare_by_name name o o' = compare (name o) (name o')
 
 type set =
   { mlis : mli list;
@@ -227,8 +272,7 @@ type set =
     cmas : cma list;
     cmxs : cmx list;
     cmxas : cmxa list;
-    cmxss : cmxs list;
- }
+    cmxss : cmxs list; }
 
 let empty_set =
   { mlis = []; cmis = []; cmtis = []; cmos = []; cmas = [];

@@ -24,6 +24,11 @@ module Cobj : sig
   (** Compilation object digests. *)
   module Digest : sig
     include module type of Digest
+    module Set : Asetmap.Set.S with type elt = t
+    module Map : Asetmap.Map.S_with_key_set with type key_set = Set.t
+                                             and type key = t
+    type set = Set.t
+    type 'a map = 'a Map.t
   end
 
   type mli
@@ -187,6 +192,20 @@ module Cobj : sig
 
     val path : cma -> Fpath.t
     (** [path cma] is the file path to the [cma] file. *)
+
+    (** {1 Derived information} *)
+
+    val cmi_digests : ?init:Digest.set -> cma -> Digest.set
+    (** [cmi_digests ~init cma] adds to [init] (defaults to
+        {!Digest.Set.empty}) the set of [cmi] digests the [cmo]s
+        of the [cma] implement. *)
+
+    val cmi_deps : ?init:Digest.set -> cma -> Digest.set
+    (** [cmi_deps ~init cma] adds to [init] (defaults to
+        {!Digest.Set.empty}) the set of [cmi] digests the [cmo]s of
+        the [cma] depend on. This excludes self-dependencies, that is
+        the set {!cmi_digests} of digests that are implemented by the
+        [cmo]s themselves. *)
   end
 
   (** [cmx] files. *)
@@ -251,6 +270,20 @@ module Cobj : sig
 
     val path : cmxa -> Fpath.t
     (** [path cmxa] is the file path to the [cmxa] file. *)
+
+    (** {1 Derived information} *)
+
+    val cmi_digests : ?init:Digest.set -> cmxa -> Digest.set
+    (** [cmi_digests ~init cmxa] adds to [init] (defaults to
+        {!Digest.Set.empty}) the set of [cmi] digests the [cmx]s
+        of the [cmxa] implement. *)
+
+    val cmi_deps : ?init:Digest.set -> cmxa -> Digest.set
+    (** [cmi_deps ~init cma] adds to [init] (defaults to
+        {!Digest.Set.empty}) the set of [cmi] digests the [cmx]s of
+        the [cmxa] depend on. This excludes self-dependencies, that is
+        the set {!cmi_digests} of digests that are implemented by the
+        [cmo]s themselves. *)
   end
 
   (** [cmxs] files. *)
@@ -448,6 +481,9 @@ module Pkg : sig
 
   val cobjs : t -> Cobj.set
   (** [cobjs p] are [p]'s compilation objects. *)
+
+  val conf : t -> Conf.t
+  (** [conf p] is the configuration in which [p] was found. *)
 
   (** {1 Package metadata (OPAM file)} *)
 

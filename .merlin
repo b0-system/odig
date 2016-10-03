@@ -7,7 +7,9 @@ PKG compiler-libs.common
 PKG mtime.os
 PKG webbrowser webbrowser.cli
 PKG asetmap
+PKG findlib
 S src
 S src-bin
+S toys
 S test
 B _build/**

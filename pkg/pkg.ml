@@ -24,4 +24,5 @@ let () =
        Pkg.etc "etc/odig.conf";
        Pkg.etc "etc/odoc.css";
        Pkg.etc "etc/ocamldoc.css";
-       Pkg.test ~run:false "src-bin/odig_bin"; ]
+       Pkg.bin "toys/metagen" ~dst:"metagen";
+ ]

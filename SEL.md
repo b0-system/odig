@@ -16,14 +16,14 @@ formats (i.e. `.cma`, `.cmxa`, `.cmxs`) define the same set of
 For a package `pkg` the bijective map between archive names and
 selectors is the following, with `.e` denoting `.{cma,cmxa,cmxs}`.
 
-| Module selector      | Archive name
---------------------------------------------------------
-| `pkg`                | `$LIBDIR/pkg/pkg.e`
-| `pkg.id`             | `$LIBDIR/pkg/[pkg_]id.e`
-| `pkg.sub.id`         | `$LIBDIR/pkg/sub/[pkg_]id.e`
-| `pkg@variant`        | `$LIBDIR/pkg/@variant/pkg.e`
-| `pkg.id@variant`     | `$LIBDIR/pkg/@variant/[pkg_]id.e`
-| `pkg.sub.id@variant` | `$LIBDIR/pkg/@variant/sub/[pkg_]id.e` 
+| Module selector      | Archive name                          |
+|----------------------|---------------------------------------|
+| `pkg`                | `$LIBDIR/pkg/pkg.e`                   |
+| `pkg.id`             | `$LIBDIR/pkg/[pkg_]id.e`              |
+| `pkg.sub.id`         | `$LIBDIR/pkg/sub/[pkg_]id.e`          |
+| `pkg@variant`        | `$LIBDIR/pkg/@variant/pkg.e`          |
+| `pkg.id@variant`     | `$LIBDIR/pkg/@variant/[pkg_]id.e`     |
+| `pkg.sub.id@variant` | `$LIBDIR/pkg/@variant/sub/[pkg_]id.e` |
 
 The map must be bijective it is therefore an error for a package
 to install both `$LIBDIDR/pkg/pkg_id.e` and `$LIBDIR/pkg/id.e`.
@@ -34,9 +34,11 @@ For compilation, selectors allow to lookup compilation flags and
 concrete file dependencies needed to use the corresponding modules
 during the various compilation phases.
 
+```
 odig c [--flags | --file-deps | --sel-deps | --rec] [byte | native ] SEL...
 odig l [--flags | --file-deps | --sel-deps | --rec] [byte | native ] SEL...
 odig dyn-l [--flags | --files | --rec] [byte | native ] SEL...
+```
 
 The result of these commands is computed automatically in a
 compilation object universe bounded by the `deps:` and `depopts:`

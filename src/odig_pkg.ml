@@ -9,7 +9,13 @@ open Bos_setup
 (* Package names *)
 
 type name = string
-let is_name s = s <> "" && Fpath.is_seg s
+let is_name s =
+  let is_name_char = function
+  | '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-' | '_' -> true
+  | _ -> false
+  in
+  s <> "" && String.for_all is_name_char s
+
 let name_of_string s = match is_name s with
 | true -> Ok s
 | false -> R.error_msgf "%S: not a package name" s
@@ -23,24 +29,25 @@ let pkg_opam_file conf name = Fpath.(pkg_libdir conf name / "opam")
 
 let is_package dir =
   begin
-    OS.Path.exists Fpath.(dir / "opam") >>= function
-    | true -> Ok true
-    | false ->
-        OS.Path.exists Fpath.(dir / "META") >>= function
+    match Fpath.basename dir with
+    | "" (* FIXME relative segment or root path, can't name. Maybe
+            we should use realpath(3) somewhere, sometimes *) -> Ok false
+    | name when not (is_name name) -> Ok false
+    | name ->
+        OS.Path.exists Fpath.(dir / "opam") >>= function
         | true -> Ok true
         | false ->
-            (* FIXME special case the compiler *)
-            OS.Path.exists Fpath.(dir / "caml")
+            OS.Path.exists Fpath.(dir / "META") >>= function
+            | true -> Ok true
+            | false ->
+                (* FIXME special case the compiler *)
+                OS.Path.exists Fpath.(dir / "caml")
   end
   |> Odig_log.on_error_msg ~use:(fun _ -> false)
 
 let dir_is_package dir = match is_package dir with
 | false -> None
-| true ->
-    match Fpath.basename dir with
-    | "" (* relative segment or root path, can't name. Maybe
-            we should use realpath(3) somewhere, sometimes *) -> None
-    | name -> Some (Fpath.basename dir)
+| true -> (Some (Fpath.basename dir)) (* can't be empty *)
 
 (* Packages *)
 

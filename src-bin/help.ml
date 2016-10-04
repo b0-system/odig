@@ -59,8 +59,9 @@ let packaging =
     `P "odig assumes all OCaml packages are installed in a library prefix
         called $(i,LIBDIR) and have their distribution documentation installed
         in a library prefix called $(i,DOCDIR).";
-    `P "For a package named $(i,PKG) to be recognized by odig one of the
-        following paths must exist:";
+    `P "For a package named $(i,PKG) to be recognized by odig $(i,PKG)
+        must be a valid OPAM package name and one of the following paths
+        must exist:";
     `P "$(i,LIBDIR)/$(i,PKG)/opam";`Noblank;
     `P "$(i,LIBDIR)/$(i,PKG)/META"; `Noblank;
     `P "$(i,LIBDIR)/$(i,PKG)/caml (deprecated)";

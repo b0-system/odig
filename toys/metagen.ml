@@ -172,9 +172,9 @@ let obj_pkg_def get_path var pred obj =
 let pkg_requires pkg cmi_digests =
   let names =
     begin
-      Cobj_index.create (Pkg.conf pkg) >>| fun index ->
+      Pkg.conf_cobj_index (Pkg.conf pkg) >>| fun index ->
       let add_digest digest acc =
-        let _, _, cmos, cmxs = Cobj_index.find_digest index digest in
+        let _, _, cmos, cmxs = Cobj.Index.find_cobjs index digest in
         let add_obj get_ar get_p acc (pkg, obj) =
           if (Pkg.name pkg = "ocaml") then acc else
           match get_ar obj with

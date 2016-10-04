@@ -27,8 +27,7 @@ let cmti_deps pkg cmti =
   let add_cmti i acc (name, d) = match d with
   | None -> acc
   | Some d ->
-      let _, cmtis, _, _ = Odig_cobj_index.find_digest i d in
-      match cmtis with
+      match Odig_cobj.Index.find_cmti i d with
       | [] ->
           Logs.warn
             (fun m -> m "%s: %a: No cmti found for %s (%s)"
@@ -38,7 +37,7 @@ let cmti_deps pkg cmti =
           (* Any should do FIXME really ? *)
           cmti :: acc
   in
-  Odig_cobj_index.create (Odig_pkg.conf pkg)
+  Odig_pkg.conf_cobj_index (Odig_pkg.conf pkg)
   >>= fun i ->
   let deps = Odig_cobj.Cmti.deps cmti in
   Ok (List.fold_left (add_cmti i) [] deps)

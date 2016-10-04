@@ -80,6 +80,42 @@ val Odig.list : unit -> unit
 val Odig.load : ?conf:Odig.Conf.t -> ?noinit:[`Pkg | `All] -> sel -> unit
 ```
 
+# Assumptions & issues
+
+* When automatic sort, need a deterministic sort,
+  in full generality need to control build order (=> refine via `x-` field
+  and stable sort) Simple example:
+     ```ocaml
+       module Msg : sig
+         val get : unit -> string 
+         val set : string -> unit
+       end = struct
+         let msg = ref "ho"
+         let get () = !msg
+         let set m = msg := m
+       end
+
+      module A = struct let () = Msg.set "hey" end
+      module B = struct let () = print_endline (Msg.get ()) end
+     ```
+
+* The (cmi/cmx) files for a given compilation archive are always located
+  in the same directory as the archive itself.
+
+* A module implementation cannot depend on another one without importing
+  its cmi.
+
+* cmi files with equal digests are totally interchangeable.
+
+* Given a `cmi` and a program at most one module can implement the `cmi`
+  in the program. (toplevel)
+
+* When both a `cmo` is available both independently and in a cma
+  we favour the `cma`.
+
+* `None` digest (`-opaque`) handling strategy.
+
+
 
 
 

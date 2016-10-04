@@ -20,9 +20,9 @@ let () =
   Pkg.describe "odig" ~build @@ fun c ->
   Ok [ Pkg.mllib ~api:["Odig"] "src/odig.mllib";
        Pkg.mllib "src/odig_cli.mllib";
+       Pkg.mllib "src/odig_top.mllib";
        Pkg.bin "src-bin/odig_bin" ~dst:"odig";
        Pkg.etc "etc/odig.conf";
        Pkg.etc "etc/odoc.css";
        Pkg.etc "etc/ocamldoc.css";
-       Pkg.bin "toys/metagen" ~dst:"metagen";
- ]
+       Pkg.bin "toys/metagen" ~dst:"metagen"; ]

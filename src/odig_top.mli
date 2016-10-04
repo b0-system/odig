@@ -4,23 +4,34 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-type pkg = Odig_pkg.t
+(** Toplevel helpers.
 
-module Conf = Odig_conf
-module Cobj = Odig_cobj
-module Pkg = Odig_pkg
-module Odoc = Odig_odoc
-module Ocamldoc = Odig_ocamldoc
+    {b Warning.} Proof of concepts do not start using this
+    in your scripts.
 
-module Private = struct
-  module Log = Odig_log
-  module Json = Odig_json
-  module Html = Odig_html
-  module Dot = Odig_dot
-  module Digest = Odig_digest
-  module Trail = Odig_btrail
-  module Pkg = Odig_pkg
-end
+    {b FIXME.}
+    {ul
+    {- In general need a mecanism to refine load order (note however
+       that e.g. [#load_rec] says the order is unspecified).}
+    {- Need a precise description of resolving procedure and
+      disambiguisation}} *)
+
+(** {1 Loaders} *)
+
+
+val load_libs : ?dir:Fpath.t -> unit -> unit
+(** [load_libs ~dir ()] loads and setups include directories for
+    libraries found in [dir]. [dir] defaults to [Fpath.v "_build"] or
+    the value of [ODIG_BUILD_DIR]. *)
+
+(** {1 Init}
+
+    Only call this if you need to setup another configuration.
+    Initialisation happens automatically. *)
+
+val init : ?conf:Odig.Conf.t -> unit -> unit
+(** [init ~conf ()] initalizes the library with [conf]
+    (defaults to {!Odig.Conf.default_file}). *)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

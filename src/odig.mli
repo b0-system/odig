@@ -15,9 +15,8 @@ open Bos_setup
 
 (** {1 Odig} *)
 
-(** OCaml compilation objects and their dependencies. *)
+(** OCaml compilation objects. *)
 module Cobj : sig
-
 
   (** {1:cobjs Compilation objects} *)
 
@@ -30,6 +29,9 @@ module Cobj : sig
     type set = Set.t
     type 'a map = 'a Map.t
   end
+
+  type digest = Digest.t
+  (** The type for compilation object digests. *)
 
   type mli
   (** The type for [mli] files. *)
@@ -90,10 +92,10 @@ module Cobj : sig
     val name : cmi -> string
     (** [name cmi] is the name of the module interface. *)
 
-    val digest : cmi -> Digest.t
+    val digest : cmi -> digest
     (** [digest cmi] is the digest of the module interface. *)
 
-    val deps : cmi -> (string * Digest.t option) list
+    val deps : cmi -> (string * digest option) list
     (** [deps cmi] is the list of imported module interfaces names with their
         digest, if known. *)
 
@@ -101,7 +103,8 @@ module Cobj : sig
     (** [path cmi] is the file path to the [cmi] file. *)
 
     val compare : cmi -> cmi -> int
-    (** [compare cmi cmi'] totally orders [cmi] and [cmi']. *)
+    (** [compare cmi cmi'] totally orders [cmi] and [cmi'] according
+        to their digests. *)
   end
 
   (** [cmti] files. *)
@@ -118,10 +121,10 @@ module Cobj : sig
     val name : cmti -> string
     (** [name cmti] is the name of the module interface. *)
 
-    val digest : cmti -> Digest.t
+    val digest : cmti -> digest
     (** [digest cmti] is the digest of the module interface. *)
 
-    val deps : cmti -> (string * Digest.t option) list
+    val deps : cmti -> (string * digest option) list
     (** [deps cmti] is the list of imported module interfaces with their
         digest, if known. *)
 
@@ -143,11 +146,11 @@ module Cobj : sig
     val name : cmo -> string
     (** [name cmo] is the name of the module implemntation. *)
 
-    val cmi_digest : cmo -> Digest.t
+    val cmi_digest : cmo -> digest
     (** [cmi_digest cmo] is the digest of the module interface of the
         implementation. *)
 
-    val cmi_deps : cmo -> (string * Digest.t option) list
+    val cmi_deps : cmo -> (string * digest option) list
     (** [cmi_deps cmo] is the list of imported module interfaces names
         with their digest, if known. *)
 
@@ -222,18 +225,18 @@ module Cobj : sig
     val name : cmx -> string
     (** [name cmx] is the name of the module implementation. *)
 
-    val digest : cmx -> Digest.t
+    val digest : cmx -> digest
     (** [digest cmx] is the digest of the implementation. *)
 
-    val cmi_digest : cmx -> Digest.t
+    val cmi_digest : cmx -> digest
     (** [cmi_digest cmx] is the digest of the module interface of the
         implementation. *)
 
-    val cmi_deps : cmx -> (string * Digest.t option) list
+    val cmi_deps : cmx -> (string * digest option) list
     (** [cmi_deps cmx] is the list of imported module interfaces names
         with their digest, if known. *)
 
-    val cmx_deps : cmx -> (string * Digest.t option) list
+    val cmx_deps : cmx -> (string * digest option) list
     (** [cmx_deps cmx] is the list of imported module implementations names
         with their digest, if known. *)
 
@@ -306,7 +309,7 @@ module Cobj : sig
     (** [path cmxs] is the file path to the [cmxs] file. *)
   end
 
-  (** {1 Sets of compilation objects.} *)
+  (** {1 Compilation object sets} *)
 
   type set
   (** The type for sets of compilation objects. *)
@@ -342,12 +345,69 @@ module Cobj : sig
   val cmxss : set -> cmxs list
   (** [cmxss s] is the list of [cmxs]s contained in [s]. *)
 
-  val set_of_dir : Fpath.t -> set
-  (** [set_of_dir d] is the set of compilation objects that
+  val set_of_dir :
+    ?err:(Fpath.t -> ('a, R.msg) result -> unit) ->
+    Fpath.t -> set
+  (** [set_of_dir ~err d] is the set of compilation objects that
       are present in the file hierarchy rooted at [d].
 
-      {b Warning.} This is a best-effort function, it will
-      log on errors and continue (at worst you'll get an {!empty_set}). *)
+      This is a best-effort function, it will call [err] on errors and
+      continue; at worst you'll get an {!empty_set}.  [err]'s default
+      simply logs the error at level {!Logs.Error}. *)
+
+  (** {1 Compilation object search indexes} *)
+
+  type 'a index
+  (** See {!Index.t}. *)
+
+  (** Compilation object indexes *)
+  module Index : sig
+
+    (** {1 Compilation objects indexes} *)
+
+    type 'a t = 'a index
+    (** The type for compilation objects search indices whose query
+        results are tagged with ['a]. *)
+
+    val empty : 'a index
+    (** [empty] is an empty index. *)
+
+    val of_set : ?init:'a index -> 'a -> set -> 'a index
+    (** [of_set ~init t s] is an index from [s] whose objects
+        are tagged with [t]. [init] is the index to add to (defaults to
+        {!empty}.) *)
+
+    (** {1 Queries} *)
+
+    type ('a, 'b) result = ('a * 'b) list
+    (** The type for query results. Tagged compilation objects. *)
+
+    val find_cobjs :
+      'a t -> digest ->
+      ('a, cmi) result * ('a, cmti) result * ('a, cmo) result *
+      ('a, cmx) result
+    (** [find_cobjs i d] is [(cmis, cmtis, cmos, cmxs)] the compilations
+        objects matching digest [d] in [i]. [cmis] are those whose
+        {!Cobj.Cmi.digest} match, [cmtis] are those whose {!Cobj.Cmti.digest}
+        match, [cmos] are those whose {!Cobj.Cmo.cmi_digest} match and
+        [cmxs] are those whose {!Cobj.Cmx.digest} or {!Cobj.Cmx.cmi_digest}
+        match. *)
+
+    val find_cmi : 'a index -> digest -> ('a, cmi) result
+    (** [find_cmo i d] is a list of [cmi] objects with {!Cmi.digest} [d]. *)
+
+    val find_cmti : 'a index -> digest -> ('a, cmti) result
+    (** [find_cmti i cmi] is a list of [cmti] objects with {!Cmti.digest}
+        [d]. *)
+
+    val find_cmo : 'a index -> digest -> ('a, cmo) result
+    (** [find_cmo i d] is a list of [cmo] objects implementing [cmi]
+        digest [d], i.e. with {!Cmo.cmi_digest} [d]. *)
+
+    val find_cmx : 'a index -> digest -> ('a, cmx) result
+    (** [find_cmx i cmi] is a list of [cmx] objects implementing [cmi]
+        digest [d], i.e. with {!Cmx.cmi_digest} [d]. *)
+  end
 end
 
 (** Odig configuration. *)
@@ -447,7 +507,19 @@ module Pkg : sig
   (** The type for package sets. *)
 
   val set : Conf.t -> (set, R.msg) result
-  (** [set c] is the set of all packages in configuration [c]. *)
+  (** [set c] is the set of all packages in configuration [c].
+
+      {b FIXME.} Currently results are memoized, which may not
+      be suitable for long running programs. *)
+
+  val conf_cobj_index : Conf.t -> (t Cobj.Index.t, R.msg) result
+  (** [conf_cobj_cobjs c] is an index for all compilation objects in present in
+      packages of configuration [c]. Query results are tagged with
+      the package they belong to.
+
+      {b FIXME.} Currently results are memoized, which may not
+      be suitable for long running programs. Also this should be
+      simpler to access from a given package. *)
 
   val lookup : Conf.t -> name -> (t, R.msg) result
   (** [lookup c n] is the package named [n] in [c]. An error
@@ -596,26 +668,7 @@ module Pkg : sig
       cache status becomes [`New]. *)
 end
 
-(** Compilation objects lookups. *)
-module Cobj_index : sig
-
-  (** {1 Compilation objects index} *)
-
-  type t
-  (** The type for compilation objects indexes. *)
-
-  val create : Conf.t -> (t, R.msg) result
-  (** [create c] is an index for all compilation objects in configuration
-      [c]. *)
-
-  type 'a result = (Pkg.t * 'a) list
-  (** The type for query results. *)
-
-  val find_digest : t -> Cobj.Digest.t ->
-    Cobj.cmi result * Cobj.cmti result * Cobj.cmo result * Cobj.cmx result
-  (** [find_digest i d] searches [i] for compilation objects matching
-      digest [d]. *)
-end
+(** {1 Package documentation generation} *)
 
 (** [odoc] API documentation generation. *)
 module Odoc : sig

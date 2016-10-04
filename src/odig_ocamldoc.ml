@@ -8,12 +8,11 @@ open Bos_setup
 
 (* Finding the -I for a mli file. *)
 
-let mli_cmi_deps pkg mli =
-  let add_cmi i acc (name, d) = match d with
+let mli_cmi_deps idx pkg mli =
+  let add_cmi acc (name, d) = match d with
   | None -> acc
   | Some d ->
-      let cmis, _, _, _ = Odig_cobj_index.find_digest i d in
-      match cmis with
+      match Odig_cobj.Index.find_cmi idx d with
       | [] ->
           Odig_log.debug
             (fun m -> m "%s: %a: No cmi found for %s (%s)"
@@ -27,17 +26,15 @@ let mli_cmi_deps pkg mli =
   OS.File.exists cmi >>= function
   | false -> Ok []
   | true ->
-      Odig_cobj.Cmi.read cmi
-      >>= fun cmi -> Odig_cobj_index.create (Odig_pkg.conf pkg)
-      >>= fun i ->
+      Odig_cobj.Cmi.read cmi >>= fun cmi ->
       let deps = Odig_cobj.Cmi.deps cmi in
-      Ok (List.fold_left (add_cmi i) [] deps)
+      Ok (List.fold_left add_cmi [] deps)
 
-let mli_incs pkg mli =
+let mli_incs idx pkg mli =
   let add_inc acc cmi = Fpath.(Set.add (parent (Odig_cobj.Cmi.path cmi)) acc) in
   begin
     let init = Fpath.Set.singleton (Fpath.parent mli) in
-    mli_cmi_deps pkg mli >>| fun cmis ->
+    mli_cmi_deps idx pkg mli >>| fun cmis ->
     Fpath.Set.elements @@ List.fold_left add_inc init cmis
   end
   |> Odig_log.on_error_msg ~use:(fun _ -> [])
@@ -58,13 +55,13 @@ let compile_dst pkg mli =
   | None -> assert false
   | Some p -> Fpath.(cachedir // p -+ ".ocodoc")
 
-let compile_mli ~ocamldoc ~force pkg mli =
+let compile_mli ~ocamldoc ~force idx pkg mli =
   let mli = Odig_cobj.Mli.path mli in
   let dst = compile_dst pkg mli in
   let cobjs_trail = Odig_pkg.cobjs_trail pkg in
   let dst_trail = Odig_btrail.v ~id:(Fpath.to_string dst) in
   let no_warn = Cmd.(v "-hide-warnings" % "-w" % "-a") in
-  let incs = Cmd.(of_values ~slip:"-I" p @@ mli_incs pkg mli) in
+  let incs = Cmd.(of_values ~slip:"-I" p @@ mli_incs idx pkg mli) in
   let odoc = Cmd.(ocamldoc %% no_warn % "-dump" % p dst %% incs % p mli) in
   let is_fresh =
     if force then Ok false else match Odig_btrail.status dst_trail with
@@ -88,7 +85,8 @@ let compile_mli ~ocamldoc ~force pkg mli =
 
 let compile ~ocamldoc ~force pkg =
   let mlis = Odig_cobj.mlis (Odig_pkg.cobjs pkg) in
-  let compile_mli = compile_mli ~ocamldoc ~force pkg in
+  Odig_pkg.conf_cobj_index (Odig_pkg.conf pkg) >>= fun idx ->
+  let compile_mli = compile_mli ~ocamldoc ~force idx pkg in
   Odig_log.time
     (fun _ m -> m "Compiled ocamldoc odoc files of %s" (Odig_pkg.name pkg))
     (Odig_log.on_iter_error_msg List.iter compile_mli) mlis;

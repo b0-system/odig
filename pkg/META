@@ -1,7 +1,28 @@
 description = "Mine installed OCaml packages"
-version = "%%VERSION%%"
+version = "%%VERSION_NUM%%"
 requires = "asetmap bos.setup mtime.os opam-lib compiler-libs.common"
 archive(byte) = "odig.cma"
 archive(native) = "odig.cmxa"
 plugin(byte) = "odig.cma"
 plugin(native) = "odig.cmxs"
+
+package "top" (
+  description = "Toplevel helpers"
+  version = "%%VERSION_NUM%%"
+  requires = "odig compiler-libs.bytecomp"
+  archive(byte) = "odig_top.cma"
+  archive(native) = "odig_top.cmxa"
+  plugin(byte) = "odig_top.cma"
+  plugin(native) = "odig_top.cmxs"
+)
+
+package "cli" (
+  description = "Cmdliner support for Odig"
+  version = "%%VERSION_NUM%%"
+  requires = "odig cmdliner"
+  archive(byte) = "odig_cli.cma"
+  archive(native) = "odig_cli.cmxa"
+  plugin(byte) = "odig_cli.cma"
+  plugin(native) = "odig_cli.cmxs"
+  exists_if = "odig_cli.cma"
+)

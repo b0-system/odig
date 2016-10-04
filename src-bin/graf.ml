@@ -18,7 +18,7 @@ let cmi_digests pkgs =
   Pkg.Set.fold add_pkg pkgs String.Set.empty
 
 let graph_pkg_cmis conf pkgs =
-  Cobj_index.create conf >>= fun index ->
+  Pkg.conf_cobj_index conf >>= fun index ->
   let rec deps seen pkgs acc todo = match String.Set.choose todo with
   | None -> seen, pkgs, acc
   | Some digest ->
@@ -43,7 +43,7 @@ let graph_pkg_cmis conf pkgs =
       in
       let todo = String.Set.remove digest todo in
       let seen = String.Set.add digest seen in
-      let cmis, _, _, _ = Cobj_index.find_digest index digest in
+      let cmis = Cobj.Index.find_cmi index digest in
       let pkgs, acc, todo = add_cmis pkgs acc todo cmis in
       deps seen pkgs acc todo
   in

@@ -38,7 +38,7 @@ let index_digests cobjs =
 let match_digests index (self, (digests, _)) =
   let add_pkgs d acc =
     if String.Set.mem d self then acc else
-    let cmis, _, cmos, cmxs = Cobj_index.find_digest index d in
+    let cmis, _, cmos, cmxs = Cobj.Index.find_cobjs index d in
     (* FIXME warn multiple *)
     let add_pkg acc (pkg, _) = Pkg.Set.add pkg acc in
     let acc = List.fold_left add_pkg acc cmis in
@@ -54,7 +54,7 @@ let guess_deps index cobjs =
 
 let guess_deps conf build_dir =
   begin
-    Cobj_index.create conf
+    Pkg.conf_cobj_index conf
     >>= fun index -> Ok (Cobj.set_of_dir build_dir)
     >>= fun cobjs -> Ok (guess_deps index cobjs)
     >>= fun pkgs -> Ok (Fmt.pr "%a@." pp_packages pkgs)

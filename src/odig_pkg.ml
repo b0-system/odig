@@ -239,6 +239,24 @@ let lookup conf name =
   | true -> Ok (v name conf)
   | false -> R.error_msgf "%s: No such package." name
 
+(* Index compilation objects of configurations. *)
+
+let memo : (Odig_conf.t, (t Odig_cobj.index, R.msg) Result.result) Hashtbl.t =
+  (* FIXME switch to ephemerons (>= 4.03) *) Hashtbl.create 143
+
+let conf_cobj_index c = try Hashtbl.find memo c with
+| Not_found ->
+    let i =
+      let index pkgs =
+        let add p acc = Odig_cobj.Index.of_set ~init:acc p (cobjs p) in
+        Set.fold add pkgs Odig_cobj.Index.empty
+      in
+      set c >>| fun pkgs ->
+      Odig_log.time (fun _ m -> m "Created index.") index pkgs
+    in
+    Hashtbl.add memo c i;
+    i
+
 (* OPAM *)
 
 let opam_file p = pkg_opam_file p.conf p.name

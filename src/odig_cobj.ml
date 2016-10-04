@@ -14,26 +14,28 @@ module Digest = struct
   type 'a map = 'a Map.t
 end
 
+type digest = Digest.t
+
 type mli =
   { mli_name : string;
     mli_path : Fpath.t }
 
 type cmi =
   { cmi_name : string;
-    cmi_digest : Digest.t;
-    cmi_deps : (string * Digest.t option) list;
+    cmi_digest : digest;
+    cmi_deps : (string * digest option) list;
     cmi_path : Fpath.t; }
 
 type cmti =
   { cmti_name : string;
-    cmti_digest : Digest.t;
-    cmti_deps : (string * Digest.t option) list;
+    cmti_digest : digest;
+    cmti_deps : (string * digest option) list;
     cmti_path : Fpath.t; }
 
 type cmo =
   { cmo_name : string;
-    cmo_cmi_digest : Digest.t;
-    cmo_cmi_deps : (string * Digest.t option) list;
+    cmo_cmi_digest : digest;
+    cmo_cmi_deps : (string * digest option) list;
     cmo_cma : cma option;
     cmo_path : Fpath.t }
 
@@ -48,10 +50,10 @@ and cma =
 
 and cmx =
   { cmx_name : string;
-    cmx_digest : Digest.t;
-    cmx_cmi_digest : Digest.t;
-    cmx_cmi_deps : (string * Digest.t option) list;
-    cmx_cmx_deps : (string * Digest.t option) list;
+    cmx_digest : digest;
+    cmx_cmi_digest : digest;
+    cmx_cmi_deps : (string * digest option) list;
+    cmx_cmx_deps : (string * digest option) list;
     cmx_cmxa : cmxa option;
     cmx_path : Fpath.t }
 
@@ -158,6 +160,7 @@ module Cma = struct
   let custom_copts cma = cma.cma_custom_copts
   let dllibs cma = cma.cma_dllibs
   let path cma = cma.cma_path
+  let compare c0 c1 = Fpath.compare c0.cma_path c1.cma_path
 
   (* Derived information *)
 
@@ -228,6 +231,7 @@ module Cmxa = struct
   let cobjs cmxa = cmxa.cmxa_cobjs
   let copts cmxa = cmxa.cmxa_copts
   let path cmxa = cmxa.cmxa_path
+  let compare c0 c1 = Fpath.compare c0.cmxa_path c1.cmxa_path
 
   (* Derived information *)
 
@@ -260,9 +264,12 @@ module Cmxs = struct
 
   let name cmxs = cmxs.cmxs_name
   let path cmxs = cmxs.cmxs_path
+  let compare c0 c1 = Fpath.compare c0.cmxs_path c1.cmxs_path
 end
 
 let compare_by_name name o o' = compare (name o) (name o')
+
+(* Cobj sets. *)
 
 type set =
   { mlis : mli list;
@@ -295,11 +302,14 @@ let cmxs ?(files = false) s =
 let cmxas s = s.cmxas
 let cmxss s = s.cmxss
 
-let set_of_dir dir =
-  let elements = `Files in
-  let add_cobj read f objs =
-    (read f >>| fun obj -> obj :: objs)
-    |> Odig_log.on_error_msg ~use:(fun _ -> objs)
+let err f = function
+| Error (`Msg e) -> Odig_log.err (fun m -> m "%a: %a" Fpath.pp f Fmt.text e)
+| Ok _ -> assert false
+
+let set_of_dir ?(err = err) dir =
+  let add_cobj read f objs = match (read f >>| fun obj -> obj :: objs) with
+  | Ok objs -> objs
+  | Error _ as e -> err f e; objs
   in
   let add f acc = match Fpath.get_ext f with
   | ".mli" -> { acc with mlis = add_cobj Mli.read f acc.mlis }
@@ -312,8 +322,86 @@ let set_of_dir dir =
   | ".cmxs" -> { acc with cmxss = add_cobj Cmxs.read f acc.cmxss }
   | _ -> acc
   in
-  (OS.Dir.fold_contents ~elements add empty_set dir)
-  |> Odig_log.on_error_msg ~use:(fun _ -> empty_set)
+  let fold_err f e = err f e; Ok () in
+  let elements = `Files in
+  match OS.Dir.fold_contents ~err:fold_err ~elements add empty_set dir with
+  | Error _ as e -> err dir e; empty_set
+  | Ok cobjs -> cobjs
+
+(* Cobj indexes *)
+
+module Index = struct
+
+  type ('a, 'b) result = ('a * 'b) list
+
+  type 'a digest_occs =
+    { cmis : ('a, cmi) result;
+      cmtis : ('a, cmti) result;
+      cmos : ('a, cmo) result;
+      cmxs : ('a, cmx) result }
+
+  type 'a t = { digests : 'a digest_occs String.Map.t; }
+
+  let empty_occs = { cmis = []; cmtis = []; cmos = []; cmxs = [] }
+  let empty = { digests = String.Map.empty }
+
+  let add_cobjs acc tag cobjs =
+    let add_obj digest add_obj acc obj =
+      let d = digest obj in
+      let refs = match String.Map.find d acc with
+      | None -> empty_occs | Some r -> r
+      in
+      String.Map.add d (add_obj obj refs) acc
+    in
+    let add_cmi =
+      let add_cmi cmi acc = { acc with cmis = (tag, cmi) :: acc.cmis } in
+      add_obj Cmi.digest add_cmi
+    in
+    let add_cmti =
+      let add_cmti cmti acc = { acc with cmtis = (tag, cmti) :: acc.cmtis } in
+      add_obj Cmti.digest add_cmti
+    in
+    let add_cmo =
+      let add_cmo cmo acc = { acc with cmos = (tag, cmo) :: acc.cmos } in
+      add_obj Cmo.cmi_digest add_cmo
+    in
+    let add_cmx acc cobj =
+      let add_cmx cmx acc = { acc with cmxs = (tag, cmx) :: acc.cmxs } in
+      let acc = add_obj Cmx.cmi_digest add_cmx acc cobj in
+      add_obj Cmx.digest add_cmx acc cobj
+    in
+    let acc = List.fold_left add_cmi acc (cmis cobjs) in
+    let acc = List.fold_left add_cmti acc (cmtis cobjs) in
+    let acc = List.fold_left add_cmo acc (cmos cobjs) in
+    let acc = List.fold_left add_cmx acc (cmxs cobjs) in
+    acc
+
+  let of_set ?(init = empty) v cobjs =
+    { init with digests = add_cobjs init.digests v cobjs } [@warning "-23"]
+
+  (* Queries *)
+
+  let find_cobjs i d = match String.Map.find d i.digests with
+  | None -> ([], [], [], [])
+  | Some occs -> (occs.cmis, occs.cmtis, occs.cmos, occs.cmxs)
+
+  let find_cmi i d = match String.Map.find d i.digests with
+  | None -> [] | Some occs -> occs.cmis
+
+  let find_cmti i d = match String.Map.find d i.digests with
+  | None -> [] | Some occs -> occs.cmtis
+
+  let find_cmo i d = match String.Map.find d i.digests with
+  | None -> [] | Some occs -> occs.cmos
+
+  let find_cmx i d = match String.Map.find d i.digests with
+  | None -> []
+  | Some occs ->
+      let has_cmi_digest (_, cmx) = Cmx.cmi_digest cmx = d in
+      List.filter has_cmi_digest occs.cmxs
+end
+
+type 'a index = 'a Index.t
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

@@ -4,6 +4,8 @@ true : package(opam-lib compiler-libs.common)
 
 <src> : include
 <src/odig_cli.*> : package(cmdliner)
+<src/odig_top.*> : package(compiler-libs.toplevel)
+
 
 <src-bin> : include
 <src-bin/*> : package(cmdliner fmt.tty fmt.cli logs.fmt logs.cli), \

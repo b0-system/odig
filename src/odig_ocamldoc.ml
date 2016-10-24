@@ -12,7 +12,7 @@ let mli_cmi_deps idx pkg mli =
   let add_cmi acc (name, d) = match d with
   | None -> acc
   | Some d ->
-      match Odig_cobj.Index.find_cmi idx d with
+      match Odig_cobj.Index.cmis_for_interface idx (`Digest d) with
       | [] ->
           Odig_log.debug
             (fun m -> m "%s: %a: No cmi found for %s (%s)"

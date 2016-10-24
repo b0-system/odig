@@ -45,6 +45,17 @@ let basics =
         a package in your browser use:";
     `Pre " odig doc      # Package index "; `Noblank;
     `Pre " odig doc bos  # API doc for package bos";
+    `S "TOPLEVEL SUPPORT (EXPERIMENTAL)";
+    `P "Odig provides support to automatically load modules and their
+        dependencies. In a toplevel simply invoke:";
+    `Pre "# #use \"odig.top\"";
+    `P "You may want to add that line to your ~/.ocamlinit file. Here
+        are a few invocations, note that those always lookup the recursive
+        dependencies.";
+    `Pre "# Odig.load \"Gg\"    (* Load module Gg *)"; `Noblank;
+    `Pre "# Odig.load_libs () (* Load locally build libraries *)"; `Noblank;
+    `Pre "# Odig.load_pkg \"p\" (* Load all libraries of package p *)";
+    `P "Consult the API in `odig doc odig` for more information.";
     `S "SEE ALSO";
     `P "odig(1), odig-packaging(7)"; ]
 
@@ -108,6 +119,9 @@ let packaging =
     `P "If a package defines more than one mli for a given toplevel
         compilation unit name the one residing at the lexicographically
         shorter path is taken to be part of the API documentation.";
+    `S "TOPLEVEL SUPPORT (EXPERIMENTAL)";
+    `P "After Odig loads a library named `lib` it loads a file
+        named `lib_top_init.ml` at the same location if it exists.";
     `S "SEE ALSO";
     `P "odig(1), odig-basics(7)"; ]
 

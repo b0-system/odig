@@ -4,27 +4,12 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-type pkg = Odig_pkg.t
+open Rresult
 
-module Conf = Odig_conf
-module Cobj = Odig_cobj
-module Pkg = Odig_pkg
-module Odoc = Odig_odoc
-module Ocamldoc = Odig_ocamldoc
-
-include Odig_top
-
-module Private = struct
-  module Log = Odig_log
-  module Top = Odig_top
-  module Ocamltop = Odig_ocamltop
-  module Json = Odig_json
-  module Html = Odig_html
-  module Dot = Odig_dot
-  module Digest = Odig_digest
-  module Trail = Odig_btrail
-  module Pkg = Odig_pkg
-end
+val add_inc : Fpath.t -> (unit, R.msg) result
+val rem_inc : Fpath.t -> (unit, R.msg) result
+val load_ml : Fpath.t -> (unit, R.msg) result
+val load_obj : Fpath.t -> (unit, R.msg) result
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

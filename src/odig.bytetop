@@ -1,0 +1,90 @@
+
+(* Load odig deps *)
+
+#directory "+compiler-libs"
+#directory "%%LIBDIR%%/rresult"
+#directory "%%LIBDIR%%/asetmap"
+#directory "%%LIBDIR%%/astring"
+#directory "%%LIBDIR%%/fpath"
+#directory "%%LIBDIR%%/fmt"
+#directory "%%LIBDIR%%/logs"
+#directory "%%LIBDIR%%/bos"
+#directory "%%LIBDIR%%/mtime/os"
+#directory "%%LIBDIR%%/odig"
+
+#load "ocamlcommon.cma"
+#load "unix.cma"
+
+#load "rresult.cma"
+#load "asetmap.cma"
+#load "astring.cma"
+#load "fpath.cma"
+#load "fmt.cma"
+#load "fmt_tty.cma"
+#load "logs.cma"
+#load "logs_fmt.cma"
+#load "bos.cma"
+#load "bos_setup.cma"
+#load "mtime.cma"
+
+(* Load opam-lib dep *)
+
+#directory "%%LIBDIR%%/extlib"
+#directory "%%LIBDIR%%/re"
+#directory "%%LIBDIR%%/cudf"
+#directory "%%LIBDIR%%/ocamlgraph"
+#directory "%%LIBDIR%%/dose3"
+#directory "%%LIBDIR%%/uutf"
+#directory "%%LIBDIR%%/jsonm"
+#directory "%%LIBDIR%%/opam-lib"
+
+#load "extLib.cma"
+#load "re.cma"
+#load "re_perl.cma"
+#load "re_pcre.cma"
+#load "cudf.cma"
+#load "graph.cma"
+#load "%%LIBDIR%%/dose3/common.cma"
+#load "%%LIBDIR%%/dose3/algo.cma"
+#load "%%LIBDIR%%/dose3/debian.cma"
+#load "%%LIBDIR%%/dose3/eclipse.cma"
+#load "%%LIBDIR%%/dose3/csw.cma"
+#load "%%LIBDIR%%/dose3/cv.cma"
+#load "re_emacs.cma"
+#load "re_str.cma"
+#load "re_glob.cma"
+#load "uutf.cma"
+#load "jsonm.cma"
+#load "opam-core.cma"
+
+(* Load odig *)
+
+#load "odig.cma"
+
+(* Remove opam-lib cmis *)
+
+#remove_directory "%%LIBDIR%%/extlib"
+#remove_directory "%%LIBDIR%%/re"
+#remove_directory "%%LIBDIR%%/cudf"
+#remove_directory "%%LIBDIR%%/ocamlgraph"
+#remove_directory "%%LIBDIR%%/dose3"
+#remove_directory "%%LIBDIR%%/uutf"
+#remove_directory "%%LIBDIR%%/jsonm"
+#remove_directory "%%LIBDIR%%/opam-lib"
+
+(* Keep only cmis really needed by for Odig's toplevel support. *)
+
+#remove_directory "+compiler-libs"
+#remove_directory "%%LIBDIR%%/rresult"
+#remove_directory "%%LIBDIR%%/asetmap"
+#remove_directory "%%LIBDIR%%/astring"
+(* #remove_directory "%%LIBDIR%%/fpath" *)
+#remove_directory "%%LIBDIR%%/fmt"
+#remove_directory "%%LIBDIR%%/logs"
+#remove_directory "%%LIBDIR%%/bos"
+#remove_directory "%%LIBDIR%%/mtime/os"
+(* #remove_directory "%%LIBDIR%%/odig" *)
+
+(* Shout *)
+
+let () = Odig.Private.Top.announce ();;

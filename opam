@@ -28,4 +28,5 @@ depopts: []
 build: [
   "ocaml" "pkg/pkg.ml" "build"
            "--pinned" "%{pinned}%"
-           "--etc-dir" odig:etc ]
+           "--etc-dir" "%{odig:etc}%"
+           "--lib-dir" "%{lib}%" ]

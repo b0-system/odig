@@ -35,6 +35,14 @@ odig ocamldoc
 odig doc
 ```
 
+To use in the toplevel (experimental) do:
+```
+# #use "odig.top"
+# Odig.load_mod "Uuseg" (* load the Uuseg module and its dependencies *)
+# Odig.load_libs ()     (* load libraries from a local build *)
+```
+See `odig doc odig` for the full API.
+
 Other than that `odig` is extensively documented in man pages
 available through it's help system. Type:
 

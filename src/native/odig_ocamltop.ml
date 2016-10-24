@@ -4,27 +4,12 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-type pkg = Odig_pkg.t
+let not_implemented () = failwith "Not implemented in native code"
 
-module Conf = Odig_conf
-module Cobj = Odig_cobj
-module Pkg = Odig_pkg
-module Odoc = Odig_odoc
-module Ocamldoc = Odig_ocamldoc
-
-include Odig_top
-
-module Private = struct
-  module Log = Odig_log
-  module Top = Odig_top
-  module Ocamltop = Odig_ocamltop
-  module Json = Odig_json
-  module Html = Odig_html
-  module Dot = Odig_dot
-  module Digest = Odig_digest
-  module Trail = Odig_btrail
-  module Pkg = Odig_pkg
-end
+let add_inc f = not_implemented ()
+let rem_inc f = not_implemented ()
+let load_ml f = not_implemented ()
+let load_obj f = not_implemented ()
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

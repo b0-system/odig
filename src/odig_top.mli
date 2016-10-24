@@ -4,34 +4,22 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** Toplevel helpers.
+open Rresult
 
-    {b Warning.} Proof of concepts do not start using this
-    in your scripts.
+val load_libs :
+  ?force:bool -> ?deps:bool -> ?init:bool -> ?dir:Fpath.t -> unit -> unit
 
-    {b FIXME.}
-    {ul
-    {- In general need a mecanism to refine load order (note however
-       that e.g. [#load_rec] says the order is unspecified).}
-    {- Need a precise description of resolving procedure and
-      disambiguisation}} *)
+val load :
+  ?force:bool -> ?deps:bool -> ?init:bool -> ?dir:Fpath.t -> string -> unit
 
-(** {1 Loaders} *)
+val load_pkg :
+  ?force:bool -> ?deps:bool -> ?init:bool -> string -> unit
 
-
-val load_libs : ?dir:Fpath.t -> unit -> unit
-(** [load_libs ~dir ()] loads and setups include directories for
-    libraries found in [dir]. [dir] defaults to [Fpath.v "_build"] or
-    the value of [ODIG_BUILD_DIR]. *)
-
-(** {1 Init}
-
-    Only call this if you need to setup another configuration.
-    Initialisation happens automatically. *)
-
-val init : ?conf:Odig.Conf.t -> unit -> unit
-(** [init ~conf ()] initalizes the library with [conf]
-    (defaults to {!Odig.Conf.default_file}). *)
+val init : ?conf:Odig_conf.t -> unit -> unit
+val announce : unit -> unit
+val reset : unit -> unit
+val status : unit -> unit
+val help : unit -> unit
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

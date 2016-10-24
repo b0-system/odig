@@ -6,16 +6,6 @@ archive(native) = "odig.cmxa"
 plugin(byte) = "odig.cma"
 plugin(native) = "odig.cmxs"
 
-package "top" (
-  description = "Toplevel helpers"
-  version = "%%VERSION_NUM%%"
-  requires = "odig compiler-libs.bytecomp"
-  archive(byte) = "odig_top.cma"
-  archive(native) = "odig_top.cmxa"
-  plugin(byte) = "odig_top.cma"
-  plugin(native) = "odig_top.cmxs"
-)
-
 package "cli" (
   description = "Cmdliner support for Odig"
   version = "%%VERSION_NUM%%"

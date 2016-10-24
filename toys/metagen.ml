@@ -174,8 +174,8 @@ let pkg_requires pkg cmi_digests =
     begin
       Pkg.conf_cobj_index (Pkg.conf pkg) >>| fun index ->
       let add_digest digest acc =
-        let _, _, cmos, cmxs = Cobj.Index.find_cobjs index digest in
-        let add_obj get_ar get_p acc (pkg, obj) =
+        let _, _, cmos, cmxs = Cobj.Index.query index (`Digest digest) in
+        let add_obj get_ar get_p acc ((`Pkg pkg), obj) =
           if (Pkg.name pkg = "ocaml") then acc else
           match get_ar obj with
           | None -> acc
@@ -198,19 +198,26 @@ let pkg_requires pkg cmi_digests =
   let def_value = String.concat ~sep:" " (String.Set.elements names) in
   { Fl_metascanner.def_var ; def_flav; def_preds = []; def_value }
 
+let add_dep_digest acc (n, d) = match d with
+| None -> acc (* FIXME *) | Some dig -> Cobj.Digest.Set.add dig acc
+
 let add_sub_defs pkg sub cmas cmxas cmxss acc =
   let acc, cmi_digests = match List.assoc sub cmas with
   | exception Not_found -> acc, Cobj.Digest.Set.empty
   | cma ->
       obj_pkg_def Cobj.Cma.path "archive" "byte" cma ::
       obj_pkg_def Cobj.Cma.path "plugin" "byte" cma :: acc,
-      Cobj.Cma.cmi_deps cma
+      List.fold_left add_dep_digest Cobj.Digest.Set.empty
+        (Cobj.Cma.cmi_deps cma)
   in
   let acc, cmi_digests = match List.assoc sub cmxas with
   | exception Not_found -> acc, cmi_digests
   | cmxa ->
       obj_pkg_def Cobj.Cmxa.path "archive" "native" cmxa :: acc,
-      Cobj.Cmxa.cmi_deps ~init:cmi_digests cmxa
+      Cobj.Digest.Set.union
+        cmi_digests
+        (List.fold_left add_dep_digest Cobj.Digest.Set.empty
+           (Cobj.Cmxa.cmi_deps cmxa))
   in
   let acc = match List.assoc sub cmxss with
   | exception Not_found -> acc
@@ -346,7 +353,6 @@ let mode =
   in
   Arg.(value & vflag `Cmp [`Raw, raw; `Norm, norm; `Gen, gen; `Cmp, cmp;])
 
-
 let doc = "Generate package META files and compare them to existing ones"
 let cmd =
   let info = Term.info "metagen" ~version:"%%VERSION%%" ~doc in
@@ -356,7 +362,6 @@ let cmd =
 let () = match Term.eval cmd with
 | `Error _ -> exit 1
 | _ -> if Logs.err_count () > 0 then exit 1 else exit 0
-
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

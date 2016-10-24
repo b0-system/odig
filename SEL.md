@@ -115,9 +115,20 @@ val Odig.load : ?conf:Odig.Conf.t -> ?noinit:[`Pkg | `All] -> sel -> unit
 
 * `None` digest (`-opaque`) handling strategy.
 
+* The compilation unit name of a cmi is included in its digest.
 
 
+* Toplevel loading for cmi only. Directive to declare them ?
+
+* In a dependency dag it is not possible to have the same module
+  name with different cmi digests.
+
+* In a dependency dag all cmis without digests with the same name
+  must resolve to the same digest.
 
 
+* Compilation model uncertaineties
+** Deps inclusion seems overly inclusive.
+** No way to detect cmi-only dependencies.
 
 

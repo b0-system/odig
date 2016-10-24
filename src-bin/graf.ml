@@ -8,8 +8,6 @@ open Bos_setup
 open Odig
 open Odig.Private
 
-module Cmis = Asetmap.Set.Make (Cobj.Cmi)
-
 let cmi_digests pkgs =
   let add_pkg pkg acc =
     let add_digest acc cmi = String.Set.add (Cobj.Cmi.digest cmi) acc in
@@ -24,7 +22,7 @@ let graph_pkg_cmis conf pkgs =
   | Some digest ->
       let rec add_cmis pkgs acc todo = function
       | [] -> pkgs, acc, todo
-      | (pkg, cmi) :: cmis ->
+      | ((`Pkg pkg), cmi) :: cmis ->
           let rec add_dep acc todo = function
           | (_, Some dep) :: deps ->
               let digid = Digest.to_hex digest in
@@ -43,7 +41,7 @@ let graph_pkg_cmis conf pkgs =
       in
       let todo = String.Set.remove digest todo in
       let seen = String.Set.add digest seen in
-      let cmis = Cobj.Index.find_cmi index digest in
+      let cmis = Cobj.Index.cmis_for_interface index (`Digest digest) in
       let pkgs, acc, todo = add_cmis pkgs acc todo cmis in
       deps seen pkgs acc todo
   in

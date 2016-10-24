@@ -8,36 +8,28 @@ open Bos_setup
 open Odig
 open Odig.Private
 
-let no_digest = String.v 32 (fun _ -> '-')
-let opt_digest_to_string =
-  function None -> no_digest | Some v -> Digest.to_hex v
-
-let dstr digest o = Digest.to_hex (digest o)
 
 let cobj_mli f =
-  let digest _ = no_digest in
+  let digest _ = strf "%a" Cobj.Digest.pp_opt None in
   let deps _ = [] in
   Cobj.Mli.(f name digest deps path)
 
-let cobj_cmi f = Cobj.Cmi.(f name (dstr digest) deps path)
-let cobj_cmti f = Cobj.Cmti.(f name (dstr digest) deps path)
-let cobj_cmo f = Cobj.Cmo.(f name (dstr cmi_digest) cmi_deps path)
-let cobj_cmx f = Cobj.Cmx.(f name (dstr digest) cmi_deps path)
+let cobj_cmi f = Cobj.Cmi.(f name digest deps path)
+let cobj_cmti f = Cobj.Cmti.(f name digest deps path)
+let cobj_cmo f = Cobj.Cmo.(f name cmi_digest cmi_deps path)
+let cobj_cmx f = Cobj.Cmx.(f name cmi_digest cmi_deps path)
 
 (* Print *)
 
-let pp_digest_str ppf d = Fmt.string ppf d
-let pp_opt_digest ppf d = Fmt.string ppf (opt_digest_to_string d)
-
 let print_deps deps =
-  let print_dep (n, d) = strf "  %a %s\n" pp_opt_digest d n in
+  let print_dep (n, d) = strf "  %a %s\n" Cobj.Digest.pp_opt d n in
   String.concat ~sep:"" List.(rev @@ rev_map print_dep deps)
 
 let print_cobj
-    name digest_str deps path ~show_loc ~show_pkg ~show_deps p obj
+    name digest deps path ~show_loc ~show_pkg ~show_deps p obj
   =
   let pre = if show_pkg then strf "%s " (Pkg.name p) else "" in
-  let info = strf "%a %s" pp_digest_str (digest_str obj) (name obj) in
+  let info = strf "%a %s" Cobj.Digest.pp (digest obj) (name obj) in
   let path = if show_loc then strf " %a" Fpath.pp (path obj) else "" in
   let deps = if show_deps then print_deps (deps obj) else "" in
   strf "%s%s%s\n%s" pre info path deps
@@ -58,7 +50,7 @@ let print_cobjs ~print_cobj ~show_loc ~show_pkg ~show_deps fields =
 
 let json_deps deps =
   let add_dep acc (n, d) =
-    let digest = opt_digest_to_string d in
+    let digest = strf  "%a" Cobj.Digest.pp_opt d in
     Json.(acc ++ el (obj @@ mem "name" (str n) ++ mem "digest" (str digest)))
   in
   Json.(arr @@ List.fold_left add_dep empty deps)

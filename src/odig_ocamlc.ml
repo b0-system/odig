@@ -126,6 +126,20 @@ let cmo_name cmo = cmo.name
 let cmo_cmi_digest cmo = cmo.cmi_digest
 let cmo_cmi_deps cmo = cmo.cmi_deps
 
+(* Cmt files *)
+
+type cmt = { name : string }
+
+let read_cmt cmt =
+  exn_to_error begin fun () ->
+    let info = Cmt_format.read_cmt (Fpath.to_string cmt) in
+    let name = info.Cmt_format.cmt_modname in
+    Ok { name; }
+  end ()
+  |> prefix_path_on_error cmt
+
+let cmt_name cmt = cmt.name
+
 (* Cma files *)
 
 type cma =

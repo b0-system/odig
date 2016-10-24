@@ -68,6 +68,17 @@ val cmo_cmi_deps : cmo -> (string * Digest.t option) list
 (** [cmo_cmi_deps cmo] are the interfaces [cmo] depends on; without
     itself. *)
 
+(** {1 Cmt files} *)
+
+type cmt
+(** The type for cmt files. *)
+
+val read_cmt : Fpath.t -> (cmt, R.msg) result
+(** [read_cmt f] reads a cmt file from [f]. *)
+
+val cmt_name : cmt -> string
+(** [cmt_name cmt] is the interface name of [cmt]. *)
+
 (** {1 Cma files} *)
 
 type cma

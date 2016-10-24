@@ -38,9 +38,9 @@ let index_digests cobjs =
 let match_digests index (self, (digests, _)) =
   let add_pkgs d acc =
     if String.Set.mem d self then acc else
-    let cmis, _, cmos, cmxs = Cobj.Index.find_cobjs index d in
+    let cmis, _, cmos, cmxs = Cobj.Index.query index (`Digest d) in
     (* FIXME warn multiple *)
-    let add_pkg acc (pkg, _) = Pkg.Set.add pkg acc in
+    let add_pkg acc ((`Pkg pkg), _) = Pkg.Set.add pkg acc in
     let acc = List.fold_left add_pkg acc cmis in
     let acc = List.fold_left add_pkg acc cmos in
     let acc = List.fold_left add_pkg acc cmxs in

@@ -27,7 +27,7 @@ let cmti_deps pkg cmti =
   let add_cmti i acc (name, d) = match d with
   | None -> acc
   | Some d ->
-      match Odig_cobj.Index.find_cmti i d with
+      match Odig_cobj.Index.cmtis_for_interface i (`Digest d) with
       | [] ->
           Logs.warn
             (fun m -> m "%s: %a: No cmti found for %s (%s)"
@@ -43,7 +43,7 @@ let cmti_deps pkg cmti =
   Ok (List.fold_left (add_cmti i) [] deps)
 
 let incs_of_deps ?(odoc = false) deps =
-  let add acc (pkg, cmti) =
+  let add acc ((`Pkg pkg), cmti) =
     let path = Odig_cobj.Cmti.path cmti in
     let path = if odoc then compile_dst pkg path else path in
     Fpath.(Set.add (parent path) acc)
@@ -59,7 +59,7 @@ let rec build_cmti_deps ~odoc seen pkg cmti = (* FIXME not t.r. *)
    deps, List.fold_left build seen deps)
   |> Logs.on_error_msg ~use:(fun _ -> [], seen)
 
-and _compile_cmti ~odoc seen pkg cmti =
+and _compile_cmti ~odoc seen (`Pkg pkg) cmti =
   let cmti_path = Odig_cobj.Cmti.path cmti in
   if Fpath.Set.mem cmti_path seen then (Ok seen) else
   let seen = Fpath.Set.add cmti_path seen in
@@ -83,7 +83,7 @@ and compile_cmti ~odoc pkg cmti =
 
 let compile ~odoc ~force pkg =
   let cmtis = Odig_cobj.cmtis (Odig_pkg.cobjs pkg) in
-  let compile_cmti = compile_cmti ~odoc pkg in
+  let compile_cmti = compile_cmti ~odoc (`Pkg pkg) in
   Odig_log.time
     (fun _ m -> m "Compiled odoc files of %s" @@ Odig_pkg.name pkg)
     (Odig_log.on_iter_error_msg List.iter compile_cmti) cmtis;

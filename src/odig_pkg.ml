@@ -241,14 +241,16 @@ let lookup conf name =
 
 (* Index compilation objects of configurations. *)
 
-let memo : (Odig_conf.t, (t Odig_cobj.index, R.msg) Result.result) Hashtbl.t =
+let memo :
+  (Odig_conf.t, ([`Pkg of t] Odig_cobj.index, R.msg) Result.result) Hashtbl.t
+  =
   (* FIXME switch to ephemerons (>= 4.03) *) Hashtbl.create 143
 
 let conf_cobj_index c = try Hashtbl.find memo c with
 | Not_found ->
     let i =
       let index pkgs =
-        let add p acc = Odig_cobj.Index.of_set ~init:acc p (cobjs p) in
+        let add p acc = Odig_cobj.Index.of_set ~init:acc (`Pkg p) (cobjs p) in
         Set.fold add pkgs Odig_cobj.Index.empty
       in
       set c >>| fun pkgs ->

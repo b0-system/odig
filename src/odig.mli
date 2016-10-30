@@ -901,13 +901,13 @@ module Pkg : sig
       cache status becomes [`New]. *)
 end
 
-(** {1 Toplevel helpers}
+(** {1:toplevel Toplevel helpers}
 
     {b WARNING.} Proof of concepts do not start using this in your
     scripts. For now only available in the bytecode toplevel.
 
     To use the toplevel helpers simply bring the [Odig] module
-    in your scope type or add the following line to your
+    in your scope: type or add the following line to your
     [~/.ocamlinit] file.
 {[#use "odig.top"]}
 
@@ -943,7 +943,7 @@ end
 val load :
   ?force:bool -> ?deps:bool -> ?init:bool -> ?dir:Fpath.t -> string -> unit
 (** [load ~force ~deps ~init ~dir "Mod"] loads and setups include directories
-    for the module [Mod] found in [dir] or in any packages.
+    for the module [Mod] found in [dir] or in any package.
     {ul
     {- If [init] is [true] (default) toplevel library initialisation files
        are loaded.}

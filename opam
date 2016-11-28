@@ -22,7 +22,7 @@ depends: [
   "cmdliner"
   "mtime"
   "webbrowser"
-  "opam-lib"
+  "opam-lib" {= "1.2.2"}
 ]
 depopts: []
 build: [

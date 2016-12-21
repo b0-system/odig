@@ -117,7 +117,6 @@ val Odig.load : ?conf:Odig.Conf.t -> ?noinit:[`Pkg | `All] -> sel -> unit
 
 * The compilation unit name of a cmi is included in its digest.
 
-
 * Toplevel loading for cmi only. Directive to declare them ?
 
 * In a dependency dag it is not possible to have the same module
@@ -128,7 +127,34 @@ val Odig.load : ?conf:Odig.Conf.t -> ?noinit:[`Pkg | `All] -> sel -> unit
 
 
 * Compilation model uncertaineties
-** Deps inclusion seems overly inclusive.
+** ~~Deps inclusion seems overly inclusive.~~
 ** No way to detect cmi-only dependencies.
 
+
+# Cmi needs for separate compilation (`ocaml{c,opt} -c`)
+
+We talk in terms of concrete `cmi` files rather than include path
+(`-I`). The latter can always be derived from the former.
+
+Given an `.ml` or `.mli` files and a set of root `cmi` files that
+match the compilation unit names mentioned in the `.ml` or `.mli`
+file.
+
+The root `cmi` files are determined by selectors. ~~Note that in
+constrast to toplevel loading the recursive dependencies of `cmi`
+are not needed.~~
+
+# Cmo needs for linking
+
+Given a `cmo` file, we lookup its imported interfaces, match them
+to corresponding `cmo` and recursively.
+
+One problem is `cmi`-only dependencies. Another one is None digests.
+
+# Cmx needs for linking
+
+Given a `cmx` file, we lookup its imported implementation, match them
+to correspnding `cmx`'s and remove these names from imported
+interfaces. For the remaining interface we match them to corresponding
+`cmx` files.
 

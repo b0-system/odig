@@ -29,7 +29,7 @@ let adds_esc s g =
     | '>' -> flush g.b start i; adds "&gt;" g; loop next next
     | '\'' -> flush g.b start i; adds "&apos;" g; loop next next
     | '\"' -> flush g.b start i; adds "&quot;" g; loop next next
-    | '@' -> flush g.b start i; adds "&copy;" g; loop next next
+    | '@' -> flush g.b start i; adds "&commat;" g; loop next next
     | c -> loop start next
   in
   loop 0 0

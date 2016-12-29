@@ -40,7 +40,7 @@ em { font-style: italic }
 .superscript { vertical-align: super; }
 .subscript { vertical-align: sub; }
 .superscript, .subscript
-{ font-size : 0.75rem; line-height: 0; margin-left: 0.4ex; }
+{ font-size : 0.75rem; line-height: 0; margin-left: 0.3ex; }
 
 /* ocamldoc markup workaround hacks.
    See http://caml.inria.fr/mantis/view.php?id=7351 */
@@ -67,7 +67,7 @@ a:hover { box-shadow:0 1px 0 0 #2C5CBD; }
    h1 and the .7 div (sic) like h2. */
 
 h1, h2, h3, h6, .h7
-{ font-weight: bold; padding-top: 0.625rem; margin-top: 0.625rem }
+{ font-weight: bold; padding-top: 0.625rem; margin-top: 1.25rem }
 
 h1, h6
 { font-size: 1.25rem;
@@ -75,6 +75,8 @@ h1, h6
   border-top-style: solid;
   border-width: 1px;
   border-color: #DDDDDD; }
+
+h3 { margin-top: 0.625rem; }
 
 h1 + p { margin-top: 0.625rem; }
 br + pre { margin-top: 0.625rem; } /* Ideally this would be h1 + pre */

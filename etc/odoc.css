@@ -17,8 +17,7 @@ menu,nav,output,ruby,section,summary,time,mark,audio,video
 
 table { border-collapse: collapse; border-spacing: 0; }
 
-*,  *:before,  *:after
-{ box-sizing: border-box; }
+*,  *:before,  *:after { box-sizing: border-box; }
 
 body
 { font-family: Helvetica, "DejaVu Sans", Arial, sans-serif;
@@ -32,12 +31,23 @@ body
   margin-left: 3.75rem;
   color: #222; background: #FAFAFA; }
 
+/* Basic markup elements */
+
 b, strong { font-weight: bold; }
 em { font-style: italic; }
 
 sup { vertical-align: super; }
 sub { vertical-align: sub; }
-sup, sub { font-size : 0.75rem; line-height: 0; margin-left: 0.4ex; }
+sup, sub { font-size : 0.75rem; line-height: 0; margin-left: 0.3ex; }
+
+p, div { margin-top: 1.25rem; }
+
+ul, ol
+{ margin-top: 0.625rem; margin-bottom: 0.625rem; list-style-position: outside }
+
+ul { list-style-type: square }
+ul > li { margin-left: 1.375rem; }
+ol > li { margin-left: 1.7rem; }
 
 /* Links and anchors */
 
@@ -55,46 +65,40 @@ a.anchor
    padding-right: 1ex; padding-left: 1ex; /* To remain selectable */
    color: #AAAAAA; }
 
+
+/* Module member specification */
+
+div.def { margin-top: 0rem; }
+div.def + div.doc { margin-left: 1ex; margin-top: 0.15625rem }
+div.doc > *:first-child { margin-top: 0rem; }
+
 /* Section and document divisions.
 
    Many of the modules of the stdlib start at h6, we make it look like
    h1 and the .h7 div (sic) like h2. */
 
-h1, h2, h3, h6, .h7
-{ font-weight: bold; padding-top: 0.625rem; margin-top: 0.625rem; }
+h1, h2, h3, h4, h5, h6, .h7
+{ font-weight: bold; padding-top: 0.625rem; margin-top: 1.25rem; }
 
-h1, h6
+h1, h2, h6
 { font-size: 1.25rem;
   line-height: 2.4375rem; /* 2.5rem - border width */
   border-top: solid;
   border-width: 1px;
   border-color: #DDDDDD; }
 
-h2 { font-size: 1.125rem; }
-h1 + h2,
+h1 + *, h2 + *, h6 + * { margin-top: 0.625rem; }
+
+h3 { font-size: 1.125rem; }
+h4 { margin-top: 0.625rem; }
+
+h2 + h3,
 h6 + h7
 { margin-top: 0.625rem; padding-top: 0rem; }
 
-/* Paragraphs, list and tables */
-
-p { margin-top: 1.25rem; }
-.spec { margin-top: 1.25rem; }
-.doc + .spec { margin-top:0.625rem; }
-.def + .doc { margin-left: 1ex; margin-top: 0.15625rem }
-
-ul, ol
-{ margin-top: 0.625rem; margin-bottom: 0.625rem; list-style-position: outside }
-
-ul { list-style-type: square }
-ul > li { margin-left: 1.375rem; }
-ol > li { margin-left: 1.7rem; }
-
 /* Preformatted and code */
 
-.def, /* FIXME drop this. */
-tt,
-code,
-pre
+tt, code, pre
  { font-family: Menlo, "DejaVu Sans Mono", "Bitstream Vera Sans Mono",
                 monospace;
    font-weight: normal;
@@ -105,19 +109,19 @@ pre
   padding-right: 0.25rem;
   margin-left: -0.25rem;
   margin-right: -0.25rem;
+  margin-top: 1.25rem;
+/*  margin-bottom: 0.625rem; */
   padding-bottom: 0.3125rem;
   padding-top: 0.3125rem;
-  margin-bottom: 0.265rem;
   line-height: 1.1875rem;
   background: #F1F1F1; }
 
-h1 tt, h1 code, h6 tt, h6 code
-{ font-size: 1.125rem }
+h1 tt, h1 code, h2 tt, h2 code, h6 tt, h6 code { font-size: 1.125rem }
+h3 tt, h3 code { font-size: 1rem }
 
-h2 tt, h2 code, .h7 tt, .h7 code
-{ font-size: 1rem }
+/* Code lexemes */
 
-h2 code, odoc-doc .h7 tt { font-size:0.96rem; font-weight: bold; }
+.keyword { font-weight: bold; }
 
 /* Inline module */
 
@@ -141,17 +145,6 @@ td > .spec { margin-top: 0; }
 
 .tag .label { font-weight: bold; }
 
-.package-index ul ul { margin-left: 2ex; }
-
-.comment {
-    border: 1px solid #CCCCCC;
-    border-right: 0;
-    border-bottom: 0;
-    margin: 1em 0;
-    padding: 1em;
-    margin-left: -1em;
-}
-
 .heading {
     margin-top: 0.625rem;
     border-top: solid;
@@ -168,7 +161,7 @@ td > .spec { margin-top: 0; }
     margin-top: -1.25rem;
 }
 
-.keyword { font-weight: bold;}
+
 .tag.deprecated { color: orange; }
 .tag.deprecated .label { color: red; }
 .mod,

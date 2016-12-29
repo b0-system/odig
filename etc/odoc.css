@@ -245,9 +245,9 @@ dl.odig-info dd { margin-left: 12ex;}
 { text-transform: uppercase; font-size: 1.125rem;
   margin-right:1ex; color: #222; display: inline-block; }
 
-.odig-name ol { list-style-type: none; margin: 0; }
-.odig-name > ol { margin-top: 0.625rem; }
-.odig-name ol > li { margin-left: 0}
+ul.odig-mods, .odig-name ol { list-style-type: none; margin: 0; }
+ul.odig-mods, .odig-name > ol { margin-top: 0.625rem; }
+ul.odig-mods > li , .odig-name li { margin-left: 0}
 
 ol.odig-errors { list-style-type: none; }
 ol.odig-errors li { margin-left: 0; }
@@ -264,7 +264,6 @@ ol.odig-errors li { margin-left: 0; }
 .odig-tag > ol > li > ol,
 .odig-tag > ol > li > ol > li
 { display: inline-block; margin-right: 1ex; }
-
 
 /* Mobile adjustements. */
 

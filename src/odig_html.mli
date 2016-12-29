@@ -39,6 +39,7 @@ val dl : ?atts:att seq -> t seq -> t seq
 val dt : ?atts:att seq -> t seq -> t seq
 val dd : ?atts:att seq -> t seq -> t seq
 val p : ?atts:att seq -> t seq -> t seq
+val header : ?atts:att seq -> t seq -> t seq
 val h1 : ?atts:att seq -> t seq -> t seq
 val h2 : ?atts:att seq -> t seq -> t seq
 val span : ?atts:att seq -> t seq -> t seq

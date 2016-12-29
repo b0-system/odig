@@ -181,28 +181,31 @@ let pkg_title_links ~htmldir pkg =
 (* Package module index page *)
 
 let pkg_header ~htmldir pkg =
-  let pkgs = H.(a ~atts:(href "../index.html") (data "Packages")) in
+  let nav_up = H.(nav @@ a ~atts:(href "../index.html") (data "Up")) in
   let version = match Odig_pkg.(field ~err:None version pkg) with
   | None -> H.empty
   | Some v -> H.data (v ^ " ")
   in
-  H.(h1 (pkgs ++ (data " – ") ++ (data @@ Odig_pkg.name pkg ^ " ") ++
-                 version ++ title_links ~htmldir pkg))
+  let h = H.(header @@ h1 ~atts:(id "pkg") @@
+             (data "Package ") ++ (data @@ Odig_pkg.name pkg ^ " ") ++
+             version ++ title_links ~htmldir pkg)
+  in
+  H.(nav_up ++ h)
 
 let pkg_module_list mods =
   let add_mod acc m =
     H.(acc ++ li (a ~atts:(href (strf "%s/index.html" m)) (data m)))
   in
-  H.(ul (List.fold_left add_mod empty mods))
+  H.(ul ~atts:(att "class" (attv "odig-mods"))
+                 (List.fold_left add_mod empty mods))
 
 let pkg_page ~htmldir pkg ~mods =
   let title = H.(data @@ Odig_pkg.name pkg) in
   let mods = List.sort String.compare mods in
   H.(html @@
              head ~style_href:"../odoc.css" (* FIXME *) title ++
-             (body ~atts:(class_ "odoc-doc") @@
+             (body ~atts:(class_ "odig") @@
               pkg_header ~htmldir pkg ++
-              h2 ~atts:(id "api") (data "API") ++
               pkg_module_list mods ++
               h2 ~atts:(id "info") (data "Info") ++
               (_pkg_info ~htmldir pkg)))

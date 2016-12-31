@@ -301,6 +301,7 @@ let index_page conf ~tool ~htmldir ~has_doc ~no_doc =
   H.(html @@
      head ~style_href title ++
      (body ~atts:(class_ cl) @@
+      nav (data "\xF0\x9F\x90\xAB") ++
       h1 (data "OCaml package documentation") ++
       p (data "For " ++ (data (Fpath.to_string libdir))  ++ data ". See the " ++
          link "#errors" (data "caveat and errors") ++ data ".") ++

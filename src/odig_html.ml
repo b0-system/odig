@@ -39,6 +39,7 @@ let adds_esc s g =
 type 'a seq = k
 let empty b = ()
 let ( ++ ) g g' b = g b; g' b; ()
+let list e l = List.fold_left (fun acc v -> acc ++ e v) empty l
 
 (* HTML values. *)
 
@@ -86,9 +87,13 @@ let p = el "p"
 let header = el "header"
 let h1 = el "h1"
 let h2 = el "h2"
+let h3 = el "h3"
 let span = el "span"
 let body = el "body"
 let html = el "html"
+let table = el "table"
+let tr = el "tr"
+let td = el "td"
 
 (* Output *)
 

@@ -11,6 +11,7 @@
 type 'a seq
 val empty : 'a seq
 val ( ++ ) : 'a seq -> 'a seq -> 'a seq
+val list : ('b -> 'a seq) -> 'b list -> 'a seq
 
 type att
 type attv
@@ -42,9 +43,13 @@ val p : ?atts:att seq -> t seq -> t seq
 val header : ?atts:att seq -> t seq -> t seq
 val h1 : ?atts:att seq -> t seq -> t seq
 val h2 : ?atts:att seq -> t seq -> t seq
+val h3 : ?atts:att seq -> t seq -> t seq
 val span : ?atts:att seq -> t seq -> t seq
 val body : ?atts:att seq -> t seq -> t seq
 val html : ?atts:att seq -> t seq -> t seq
+val table : ?atts:att seq -> t seq -> t seq
+val tr : ?atts:att seq -> t seq -> t seq
+val td : ?atts:att seq -> t seq -> t seq
 
 val buffer_add : ?doc_type:bool -> Buffer.t -> t seq -> unit
 val to_string : ?doc_type:bool -> t seq -> string

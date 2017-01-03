@@ -10,8 +10,8 @@ val pkg_info : htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t -> string
 val pkg_title_links : htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t -> string
 
 val pkg_page :
-  htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t -> mods:string list ->
-  string
+  htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t ->
+  cmis:Odig_cobj.cmi list -> string
 
 val pkg_index :
   Odig_conf.t ->

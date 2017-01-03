@@ -130,11 +130,10 @@ let html_index_page pkg ocdocs =
   let mods = List.map mod_of_ocdoc ocdocs in
   let mod_list = String.concat ~sep:" " @@  List.sort String.compare mods in
   strf "{%%html:\
-         <div class=\"navbar\"><a href=\"../index.html\">Up</a></div>%%}\n\
+         <nav><a href=\"../index.html\">Up</a></nav>%%}\n\
         {1 Package %s%s {%%html:%s%%}}\n\
         {!modules: %s}\n\
         {!indexlist}\n\
-        {2:info Information}\n\
         {%%html:%s%%}"
     (Odig_pkg.name pkg) (make_version pkg)
     (Odig_api_doc.pkg_title_links ~htmldir:pkg_htmldir pkg)

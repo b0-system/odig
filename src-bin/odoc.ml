@@ -5,10 +5,10 @@
   ---------------------------------------------------------------------------*)
 
 open Bos_setup
-open Odig
 open Odig.Private
 
 let odoc_pkg ~odoc ~force pkg =
+  Log.app (fun m -> m "Processing %s." (Pkg.name pkg));
   Odig.Odoc.compile ~odoc ~force pkg >>= fun () ->
   Odig.Odoc.html ~odoc ~force pkg
 

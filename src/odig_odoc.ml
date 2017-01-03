@@ -139,8 +139,7 @@ let html_of_odoc ~odoc ~force pkg cmi =
   OS.Cmd.run Cmd.(odoc % "html" %% incs % "-o" % p htmldir % p odoc_file)
 
 let html_index pkg htmldir cmis =
-  let mods = List.map Odig_cobj.Cmi.name cmis in
-  let page = Odig_api_doc.pkg_page ~htmldir:pkg_htmldir pkg ~mods in
+  let page = Odig_api_doc.pkg_page ~htmldir:pkg_htmldir pkg ~cmis in
   OS.File.write Fpath.(htmldir / "index.html") page
 
 let html ~odoc ~force pkg =

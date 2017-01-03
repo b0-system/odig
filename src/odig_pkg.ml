@@ -281,7 +281,10 @@ let version p = opam_field_value p "version"
 let homepage p = opam_field_values p "homepage"
 let online_doc p = opam_field_values p "doc"
 let issues p = opam_field_values p "bug-reports"
-let tags p = opam_field_values p "tags"
+let tags p =
+  opam_field_values p "tags" >>| fun tags ->
+  List.map String.Ascii.lowercase tags
+
 let authors p = opam_field_values p "authors"
 let maintainers p = opam_field_values p "maintainer"
 let repo p = opam_field_values p "dev-repo"

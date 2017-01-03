@@ -23,6 +23,10 @@ let get_rel_fpaths htmldir f pkg =
   in
   List.(rev @@ fold_left rel [] ps)
 
+let version_data pkg = match get_opt_field Odig_pkg.version pkg with
+| None -> H.data "?"
+| Some v -> H.data v
+
 (* HTML generation *)
 
 let fpath_to_uri p =
@@ -31,8 +35,10 @@ let fpath_to_uri p =
 let type_utf8_text =
   H.(att "type" (attv "text/plain; charset=UTF-8"))
 
-let list e l = H.(List.fold_left (fun acc v -> acc ++ e v) empty l)
-let dds def l = H.(dd @@ ul @@ list def l)
+let anchored_cl = "anchored"
+let anchor_id aid = H.(id aid ++ class_ anchored_cl)
+let anchor ?(text = H.empty) aid =
+  H.(a ~atts:(href (strf "#%s" aid) ++ class_ "anchor") text)
 
 let head ~style_href title = (* a basic head *)
   H.(
@@ -52,32 +58,41 @@ let head ~style_href title = (* a basic head *)
 
 let raw_link l = H.(a ~atts:(att "href" (attv l)) (data l))
 
+let tr_anchor ?nid name value =
+  let nid = match nid with None -> name | Some nid -> nid in
+  let nid = strf "info-%s" nid in
+  H.(tr ~atts:(anchor_id nid) @@
+     td (anchor nid ++ data name) ++
+     td value)
+
+let values def l = H.(ul @@ list def l)
+
 let rel_file path =
   let l = fpath_to_uri path in
   H.(link ~atts:type_utf8_text l (data @@ Fpath.filename path))
 
-let def_strings fname f def pkg = match get_list f pkg with
+let def_strings ?nid fname f def pkg = match get_list f pkg with
 | [] -> H.empty
 | vs ->
     let vs = List.sort compare vs in
-    H.(dt (data fname) ++ dds (fun e -> li @@ def e) vs)
+    H.(tr_anchor ?nid fname @@ values (fun e -> li @@ def e) vs)
 
-let def_raw_links fname f pkg = match get_list f pkg with
+let def_raw_links ?nid fname f pkg = match get_list f pkg with
 | [] -> H.empty
-| links -> H.(dt (data fname) ++ dds raw_link links)
+| links -> H.(tr_anchor ?nid fname @@ values raw_link links)
 
-let def_rel_files dir fname f pkg = match get_rel_fpaths dir f pkg with
+let def_rel_files ?nid dir fname f pkg = match get_rel_fpaths dir f pkg with
 | [] -> H.empty
-| files -> H.(dt (data fname) ++ dds rel_file files)
+| files -> H.(tr_anchor ?nid fname @@ values rel_file files)
 
 let def_readmes ~htmldir =
   def_rel_files htmldir "readme" Odig_pkg.readmes
 
 let def_change_logs ~htmldir =
-  def_rel_files htmldir "change log" Odig_pkg.change_logs
+  def_rel_files htmldir ~nid:"changelog" "change log" Odig_pkg.change_logs
 
 let def_license_tags =
-  def_strings "licenses" Odig_pkg.license_tags H.data
+  def_strings "licenses" ~nid:"license-tags" Odig_pkg.license_tags H.data
 
 let def_licenses ~htmldir =
   def_rel_files htmldir "licenses" Odig_pkg.licenses
@@ -113,7 +128,7 @@ let def_deps ~htmldir pkg =
     Odig_pkg.depopts pkg >>| fun d -> String.Set.elements d
   in
   H.(def_strings "deps" deps linkify pkg ++
-             def_strings "depopts" depopts linkify pkg)
+     def_strings "depopts" depopts linkify pkg)
 
 let def_authors =
   def_strings "authors" Odig_pkg.authors H.data
@@ -125,11 +140,7 @@ let def_online_doc =
   def_raw_links "online-doc" Odig_pkg.online_doc
 
 let def_version pkg =
-  H.(dt (data "version") ++
-             dd begin match get_opt_field Odig_pkg.version pkg with
-             | None -> data "?"
-             | Some v -> data v
-             end)
+  H.(tr_anchor "version" @@ version_data pkg)
 
 let _pkg_info ~htmldir pkg =
   let pkg_htmldir = htmldir pkg in
@@ -149,11 +160,12 @@ let _pkg_info ~htmldir pkg =
       ++ def_tags pkg
       ++ def_version pkg)
   in
-  H.(dl ~atts:(att "class" (attv "odig-info")) (defs pkg))
+  let iid = "info" in
+  H.(h2 ~atts:(anchor_id iid) (anchor iid ++ data "Info") ++
+     table ~atts:(class_ "info") (defs pkg))
 
 let pkg_info ~htmldir pkg =
   H.to_string ~doc_type:false @@ _pkg_info ~htmldir pkg
-
 
 (* Package title short links *)
 
@@ -186,47 +198,97 @@ let pkg_header ~htmldir pkg =
   | None -> H.empty
   | Some v -> H.(span ~atts:(class_ "version") (data v) ++ data " ")
   in
-  let h = H.(header @@ h1 ~atts:(id "pkg") @@
+  let h = H.(h1 ~atts:(id "pkg") @@
              (data "Package ") ++ (data @@ Odig_pkg.name pkg ^ " ") ++
              version ++ title_links ~htmldir pkg)
   in
   H.(nav_up ++ h)
 
-let pkg_module_list mods =
-  let add_mod acc m =
-    H.(acc ++ li (a ~atts:(href (strf "%s/index.html" m)) (data m)))
+let group_cmis_by_archive pkg cmis =
+  let cobjs = Odig_pkg.cobjs pkg in
+  let find_archive cmi =
+    let find obj_cmi_digest obj_path ext objs =
+      let dig = Odig_cobj.Cmi.digest cmi in
+      let find o = dig = obj_cmi_digest o && Fpath.has_ext ext (obj_path o) in
+      try Some (obj_path @@ List.find find objs) with Not_found -> None
+    in
+    match Odig_cobj.(find Cmo.cmi_digest Cmo.path ".cma" (cmos cobjs)) with
+    | Some _ as v -> v
+    | None -> Odig_cobj.(find Cmx.cmi_digest Cmx.path ".cmxa" (cmxs cobjs))
   in
-  H.(ul ~atts:(att "class" (attv "odig-mods"))
-                 (List.fold_left add_mod empty mods))
+  let add_cmi acc cmi =
+    let k, k_segs = match find_archive cmi with
+    | None -> "", []
+    | Some p ->
+        match Fpath.rem_prefix (Odig_pkg.libdir pkg) p with
+        | None -> assert false
+        | Some p -> let p = Fpath.rem_ext p in Fpath.to_string p, Fpath.segs p
+    in
+    let cmis = match String.Map.find k acc with
+    | None -> [cmi]
+    | Some (_, cmis) -> cmi :: cmis
+    in
+    String.Map.add k (k_segs, cmis) acc
+  in
+  let cmp (a, (ss, _)) (a', (ss', _)) = (* order archives by subdir level *)
+    let c = compare (List.length ss) (List.length ss') in
+    if c <> 0 then c else compare a a'
+  in
+  List.sort cmp @@
+  String.Map.bindings @@ List.fold_left add_cmi String.Map.empty cmis
 
-let pkg_page ~htmldir pkg ~mods =
+let pkg_module_lists pkg cmis =
+  let mod_groups = group_cmis_by_archive pkg cmis in
+  let mod_li cmi =
+    let m = Odig_cobj.Cmi.name cmi in
+    let mid = strf "module-%s" m in
+    H.(li ~atts:(anchor_id mid) @@
+       anchor mid ++ a ~atts:(href (strf "%s/index.html" m)) (data m))
+  in
+  let mods_ul cmis = H.(ul ~atts:(class_ "modules") @@ list mod_li cmis) in
+  let group (group, (_, cmis)) = match cmis with
+  | [] -> assert false
+  | [cmi] as cmis -> mods_ul cmis
+  | cmis ->
+      let by_name c c' = Odig_cobj.(compare (Cmi.name c) (Cmi.name c')) in
+      let cmis = List.sort by_name cmis in
+      let mods = mods_ul cmis in
+      match group with
+      | "" -> mods
+      | group ->
+          let sel = strf "sel-%s" group in
+          H.(h3 ~atts:(anchor_id sel) (anchor sel ++ data group) ++ mods)
+  in
+  H.list group mod_groups
+
+let pkg_page ~htmldir pkg ~cmis =
   let title = H.(data @@ Odig_pkg.name pkg) in
-  let mods = List.sort String.compare mods in
   H.(html @@
-             head ~style_href:"../odoc.css" (* FIXME *) title ++
-             (body ~atts:(class_ "odig") @@
-              pkg_header ~htmldir pkg ++
-              pkg_module_list mods ++
-              h2 ~atts:(id "info") (data "Info") ++
-              (_pkg_info ~htmldir pkg)))
+     head ~style_href:"../odoc.css" (* FIXME *) title ++
+     (body ~atts:(class_ "odig package") @@
+      pkg_header ~htmldir pkg ++
+      pkg_module_lists pkg cmis ++
+      _pkg_info ~htmldir pkg))
 
-let pkg_page ~htmldir pkg ~mods =
-  H.to_string @@ pkg_page ~htmldir pkg ~mods
+let pkg_page ~htmldir pkg ~cmis =
+  H.to_string @@ pkg_page ~htmldir pkg ~cmis
 
 (* Package index *)
 
-let li_pkg pkg =
-  let name = Odig_pkg.name pkg in
-  let l = strf "%s/index.html" name in
-  H.(li @@ link l (data name))
-
 let name_list pkgs =
+  let li_pkg pkg =
+    let name = Odig_pkg.name pkg in
+    let l = strf "%s/index.html" name in
+    let pid = strf "package-%s" name in
+    H.(li ~atts:(anchor_id pid) @@
+       anchor pid ++ link l (data name) ++
+       data " " ++
+       span ~atts:(class_ "version") (version_data pkg))
+  in
   let classes p = [Char.Ascii.lowercase @@ String.get_head @@ Odig_pkg.name p]in
   let classes = Odig_pkg.classify ~classes pkgs in
   let lid c = strf "name-%c" c in
-  let letter_link (c, _) =
-    H.(link ("#" ^ lid c) (data @@ String.of_char c))
-  in
+  let letter_link (c, _) = H.(link ("#" ^ lid c) @@ data (String.of_char c)) in
   let letter_sec (c, pkgs) =
     let cmp p p' =
       let n p = String.Ascii.lowercase (Odig_pkg.name p) in
@@ -235,23 +297,32 @@ let name_list pkgs =
     let pkgs = List.sort cmp (Odig_pkg.Set.elements pkgs) in
     H.(li ~atts:(id @@ lid c) @@ ol (list li_pkg pkgs))
   in
-  H.(div ~atts:(class_ "odig-name") @@
-     h1 ~atts:(id "by-name") (data "By name") ++
+  let byname = "by-name" in
+  H.(div ~atts:(class_ byname) @@
+     h2 ~atts:(anchor_id byname) (anchor byname ++ data "By name") ++
      nav (list letter_link classes) ++
      ol (list letter_sec classes))
 
 let tag_list pkgs =
+  let li_pkg pkg =
+    let name = Odig_pkg.name pkg in
+    let l = strf "%s/index.html" name in
+    H.(li @@ link l (data name))
+  in
   let classes p = (Odig_pkg.tags p) |> R.ignore_error ~use:(fun _ -> []) in
   let classes = Odig_pkg.classify ~classes pkgs in
   let tid t = strf "tag-%s" t in
   let tlink (t, _) = H.(link ("#" ^ tid t) (data t)) in
   let tsec (t, pkgs) =
-    H.(li ~atts:(id @@ tid t) @@
+    let tid = tid t in
+    H.(li ~atts:(anchor_id tid) @@
+       anchor tid ++
        span (data t) ++
        ol (list li_pkg (Odig_pkg.Set.elements pkgs)))
   in
-  H.(div ~atts:(class_ "odig-tag") @@
-     h1 ~atts:(id "by-tag") (data "By tag") ++
+  let bytag = "by-tag" in
+  H.(div ~atts:(class_ bytag) @@
+     h2 ~atts:(anchor_id bytag) (anchor bytag ++ data "By tag") ++
      nav (list tlink classes) ++
      ol (list tsec classes))
 
@@ -265,15 +336,16 @@ let error_list tool pkgs =
     H.(li @@ data name ++ data " - try " ++
              code (data "odig " ++ data tool ++ data " -f " ++ data name))
   in
-  H.(h1 ~atts:(id "errors") (data "Caveat and errors") ++
+  let errid = "errors" in
+  H.(div ~atts:(class_ "odig-errors") @@
+     h2 ~atts:(anchor_id errid) (anchor errid ++ data "Caveat and errors") ++
      el "p" (data " This is a best-effort documentation generation. Toplevel \
                 modules may be missing due to errors. The following packages \
                 have \
            no API documentation; because it was not generated, because they \
            have no " ++ (code (data file_kind)) ++
           (data " files, or because of errors.")) ++
-     ol ~atts:(class_ "odig-errors") (list li_no_doc pkgs))
-
+     ol (list li_no_doc pkgs))
 
 let online_manual_link =
   H.(link "http://caml.inria.fr/pub/docs/manual-ocaml/"
@@ -297,23 +369,23 @@ let manual_link conf ~htmldir =
 let index_page conf ~tool ~htmldir ~has_doc ~no_doc =
   let libdir = Odig_conf.libdir conf in
   let title = H.(data @@ Fpath.(basename @@ parent libdir)) in
-  let style_href, cl = match tool with (* FIXME *)
-  | `Odoc -> "odoc.css", "odoc-doc"
-  | `Ocamldoc -> "style.css", "ocamldoc-doc"
+  let style_href = match tool with (* FIXME *)
+  | `Odoc -> "odoc.css"
+  | `Ocamldoc -> "style.css"
   in
   let comma = H.data ", " in
   H.(html @@
      head ~style_href title ++
-     (body ~atts:(class_ cl) @@
+     (body ~atts:(class_ "odig package-index") @@
       nav (data "\xF0\x9F\x90\xAB") ++
       h1 (data "OCaml package documentation") ++
-      p (data "For " ++ (data (Fpath.to_string libdir))  ++ data ". See the " ++
+      p (data "For " ++ (data (Fpath.to_string libdir)) ++ data ". See the " ++
          link "#errors" (data "caveat and errors") ++ data ".") ++
       p (data "Browse "
          ++ (link "#by-name" (data "by name")) ++ comma
          ++ (link "#by-tag" (data "by tag")) ++ comma
          ++ (data " the ")
-         ++ (link "ocaml/index.html" (data "standard library"))
+         ++ (link "ocaml/index.html#sel-stdlib" (data "standard library"))
          ++ data " and the " ++ (manual_link conf ~htmldir))
       ++ name_list has_doc
       ++ tag_list has_doc

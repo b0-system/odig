@@ -435,12 +435,13 @@ module Index = struct
     { cmis : ('a * cmi) list;
       cmtis : ('a * cmti) list;
       cmos : ('a * cmo) list;
-      cmxs : ('a * cmx) list }
+      cmxs : ('a * cmx) list;
+      cmts : ('a * cmt) list; }
 
   type 'a t = { digests : 'a occs Digest.Map.t;
                 names : 'a occs String.Map.t }
 
-  let empty_occs = { cmis = []; cmtis = []; cmos = []; cmxs = [] }
+  let empty_occs = { cmis = []; cmtis = []; cmos = []; cmxs = []; cmts = [] }
   let empty = { digests = Digest.Map.empty; names = String.Map.empty; }
 
   let add_cobjs digests names tag cobjs =
@@ -462,6 +463,7 @@ module Index = struct
     let add_cmti cmti acc = { acc with cmtis = (tag, cmti) :: acc.cmtis } in
     let add_cmo cmo acc = { acc with cmos = (tag, cmo) :: acc.cmos } in
     let add_cmx cmx acc = { acc with cmxs = (tag, cmx) :: acc.cmxs } in
+    let add_cmt cmt acc = { acc with cmts = (tag, cmt) :: acc.cmts } in
     let rec add_objs add_obj get_digests get_name ds ns = function
     | [] -> ds, ns
     | obj :: objs ->
@@ -478,6 +480,8 @@ module Index = struct
     let ds,ns =
       add_objs add_cmx [Cmx.digest;Cmx.cmi_digest] Cmx.name ds ns (cmxs cobjs)
     in
+    let ds, ns = add_objs add_cmt [Cmt.cmi_digest] Cmt.name ds ns (cmts cobjs)
+    in
     ds,ns
 
   let of_set ?(init = empty) v cobjs =
@@ -491,8 +495,8 @@ module Index = struct
   | `Name n -> String.Map.find n i.names
 
   let query i q = match find i q with
-  | None -> ([], [], [], [])
-  | Some occs -> (occs.cmis, occs.cmtis, occs.cmos, occs.cmxs)
+  | None -> ([], [], [], [], [])
+  | Some occs -> (occs.cmis, occs.cmtis, occs.cmos, occs.cmxs, occs.cmts)
 
   let cmis_for_interface i q =
     match find i q with None -> [] | Some occs -> occs.cmis
@@ -511,6 +515,10 @@ module Index = struct
       | `Digest d ->
           let has_cmi_digest (_, cmx) = Cmx.cmi_digest cmx = d in
           List.filter has_cmi_digest occs.cmxs
+
+  let cmts_for_interface i q =
+    match find i q with None -> [] | Some occs -> occs.cmts
+
 end
 
 type 'a index = 'a Index.t

@@ -525,8 +525,9 @@ module Cobj : sig
       ('a * cmi) list *
       ('a * cmti) list *
       ('a * cmo) list *
-      ('a * cmx) list
-    (** [query i q] is [(cmis, cmtis, cmos, cmxs)] the compilations
+      ('a * cmx) list *
+      ('a * cmt) list
+    (** [query i q] is [(cmis, cmtis, cmos, cmxs, cmt)] the compilations
         objects matching query [q] in [i]:
         {ul
         {- [cmis] are those whose {!Cobj.Cmi.name} or {!Cobj.Cmi.digest} match.}
@@ -535,7 +536,9 @@ module Cobj : sig
         {- [cmos] are those whose {!Cobj.Cmo.name} or
            {!Cobj.Cmo.cmi_digest} match.}
         {- [cmxs] are those whose {!Cobj.Cmx.name} or
-           {!Cobj.Cmx.digest} or {!Cobj.Cmx.cmi_digest} match.}} *)
+           {!Cobj.Cmx.digest} or {!Cobj.Cmx.cmi_digest} match.}
+        {- [cmts] are those whose {!Cobj.Cmt.name} or
+           {!Cobj.Cmt.cmi_digest} match.}} *)
 
     val cmis_for_interface : 'a index -> query -> ('a * cmi) list
     (** [cmi_for_interface i q] is a list of [cmi]s whose module interface
@@ -550,6 +553,10 @@ module Cobj : sig
         interface matches [q]. *)
 
     val cmxs_for_interface : 'a index -> query -> ('a * cmx) list
+    (** [cmxs_for_interface i cmx] is a list of [cmx] objects whose
+        module interface matches [q]. *)
+
+    val cmts_for_interface : 'a index -> query -> ('a * cmt) list
     (** [cmxs_for_interface i cmx] is a list of [cmx] objects whose
         module interface matches [q]. *)
   end

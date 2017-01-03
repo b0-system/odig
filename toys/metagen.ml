@@ -174,7 +174,7 @@ let pkg_requires pkg cmi_digests =
     begin
       Pkg.conf_cobj_index (Pkg.conf pkg) >>| fun index ->
       let add_digest digest acc =
-        let _, _, cmos, cmxs = Cobj.Index.query index (`Digest digest) in
+        let _, _, cmos, cmxs, _ = Cobj.Index.query index (`Digest digest) in
         let add_obj get_ar get_p acc ((`Pkg pkg), obj) =
           if (Pkg.name pkg = "ocaml") then acc else
           match get_ar obj with

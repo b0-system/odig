@@ -184,7 +184,7 @@ let pkg_header ~htmldir pkg =
   let nav_up = H.(nav @@ a ~atts:(href "../index.html") (data "Up")) in
   let version = match Odig_pkg.(field ~err:None version pkg) with
   | None -> H.empty
-  | Some v -> H.data (v ^ " ")
+  | Some v -> H.(span ~atts:(class_ "version") (data v) ++ data " ")
   in
   let h = H.(header @@ h1 ~atts:(id "pkg") @@
              (data "Package ") ++ (data @@ Odig_pkg.name pkg ^ " ") ++

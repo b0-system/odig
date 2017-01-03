@@ -229,6 +229,7 @@ div.cons,
 /* Odig */
 
 h1 nav { display: inline; font-size: 0.875rem; font-weight: normal; }
+h1 .version { font-size: 0.875rem; }
 
 ul.indexlist { list-style-type: none }
 ul.indexlist li { margin-left: 0em; }

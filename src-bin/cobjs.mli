@@ -24,6 +24,9 @@ val cmo_cmd : int Cmdliner.Term.t * Cmdliner.Term.info
 val cmx_cmd : int Cmdliner.Term.t * Cmdliner.Term.info
 (** The [cmx] command. *)
 
+val cmt_cmd : int Cmdliner.Term.t * Cmdliner.Term.info
+(** The [cmt] command. *)
+
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli
 

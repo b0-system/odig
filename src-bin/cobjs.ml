@@ -18,6 +18,7 @@ let cobj_cmi f = Cobj.Cmi.(f name digest deps path)
 let cobj_cmti f = Cobj.Cmti.(f name digest deps path)
 let cobj_cmo f = Cobj.Cmo.(f name cmi_digest cmi_deps path)
 let cobj_cmx f = Cobj.Cmx.(f name cmi_digest cmi_deps path)
+let cobj_cmt f = Cobj.Cmt.(f name cmi_digest cmi_deps path)
 
 (* Print *)
 
@@ -39,6 +40,7 @@ let print_cmi = cobj_cmi print_cobj
 let print_cmti = cobj_cmti print_cobj
 let print_cmo = cobj_cmo print_cobj
 let print_cmx = cobj_cmx print_cobj
+let print_cmt = cobj_cmt print_cobj
 
 let print_cobjs ~print_cobj ~show_loc ~show_pkg ~show_deps fields =
   let str = print_cobj ~show_loc ~show_pkg ~show_deps in
@@ -74,6 +76,7 @@ let json_cmi = cobj_cmi json_cobj
 let json_cmti = cobj_cmti json_cobj
 let json_cmo = cobj_cmo json_cobj
 let json_cmx = cobj_cmx json_cobj
+let json_cmt = cobj_cmt json_cobj
 let json_cobjs ~json_cobj ~show_loc ~show_pkg ~show_deps vs =
   let json_cobj = json_cobj ~show_loc ~show_pkg ~show_deps in
   let add_el a v = Json.(a ++ el (json_cobj v)) in
@@ -168,6 +171,9 @@ let cmx_cmd =
   cmd "cmx" ~kind:"cmx" ~get:(get Cobj.cmxs)
     ~print_cobj:print_cmx ~json_cobj:json_cmx
 
+let cmt_cmd =
+  cmd "cmt" ~kind:"cmt" ~get:(get Cobj.cmts)
+    ~print_cobj:print_cmt ~json_cobj:json_cmt
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

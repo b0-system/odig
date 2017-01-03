@@ -14,6 +14,7 @@ let cmds =
     Cobjs.cmo_cmd;
     Cobjs.cmti_cmd;
     Cobjs.cmx_cmd;
+    Cobjs.cmt_cmd;
     Distrib_doc.changes_cmd;
     Distrib_doc.license_cmd;
     Distrib_doc.readme_cmd;

@@ -139,9 +139,9 @@ h3 tt, h3 code { font-size: 1rem }
 
 /* Text alignement, this should be forbidden. */
 
-.doc-left { text-align: left; }
-.doc-right { text-align: right; }
-.doc-center { text-align: center; }
+.left { text-align: left; }
+.right { text-align: right; }
+.center { text-align: center; }
 
 /* Random other things to review. */
 

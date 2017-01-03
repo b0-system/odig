@@ -102,7 +102,9 @@ type ml =
 
 type cmt =
   { cmt_name : string;
-    cmt_path : Fpath.t; }
+    cmt_path : Fpath.t;
+    cmt_cmi_digest : digest;
+    cmt_cmi_deps : (string * digest option) list; }
 
 type cmo =
   { cmo_name : string;
@@ -232,10 +234,14 @@ module Cmt = struct
     Odig_ocamlc.read_cmt cmt_path >>= fun cmt ->
     realpath cmt_path >>| fun cmt_path ->
     let cmt_name = Odig_ocamlc.cmt_name cmt in
-    { cmt_name; cmt_path}
+    let cmt_cmi_digest = Odig_ocamlc.cmt_cmi_digest cmt in
+    let cmt_cmi_deps = Odig_ocamlc.cmt_cmi_deps cmt in
+    { cmt_name; cmt_path; cmt_cmi_digest; cmt_cmi_deps }
 
   let name cmt = cmt.cmt_name
   let path cmt = cmt.cmt_path
+  let cmi_digest cmt = cmt.cmt_cmi_digest
+  let cmi_deps cmt = cmt.cmt_cmi_deps
 end
 
 module Cma = struct

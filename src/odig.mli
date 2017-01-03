@@ -235,6 +235,14 @@ module Cobj : sig
     val name : cmt -> string
     (** [name cmt] is the name of the module interface. *)
 
+    val cmi_digest : cmt -> digest
+    (** [cmi_digest cmt] is the digest of the module interface of the
+        implementation. *)
+
+    val cmi_deps : cmt -> dep list
+    (** [cmi_deps cmt] is the list of imported module interfaces names
+        with their digest, if known. *)
+
     val path : cmt -> Fpath.t
     (** [path cm] is the file path to the [cmt] file. *)
   end

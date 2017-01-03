@@ -79,6 +79,13 @@ val read_cmt : Fpath.t -> (cmt, R.msg) result
 val cmt_name : cmt -> string
 (** [cmt_name cmt] is the interface name of [cmt]. *)
 
+val cmt_cmi_digest : cmt -> Digest.t
+(** [cmt_cmi_digest cmt] is the digest of [cmt]'s interface. *)
+
+val cmt_cmi_deps : cmt -> (string * Digest.t option) list
+(** [cmt_cmi_deps cmt] are the interfaces [cmt] depends on; without
+    itself. *)
+
 (** {1 Cma files} *)
 
 type cma

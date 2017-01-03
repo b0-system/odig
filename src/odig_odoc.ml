@@ -6,7 +6,14 @@
 
 open Bos_setup
 
-(* odoc generation *)
+(* odoc generation
+
+   We consider that what needs to be documented for a package are all
+   compilation units that have a cmi file. We do all the dependency
+   analysis on cmi files, however to generate their corresponding
+   .odoc file we check if there's not a cmt or cmti file (in that
+   order) to use at the same location instead of the cmi. *)
+
 
 let htmldir conf = Fpath.(Odig_conf.cachedir conf / "odoc")
 let css_file conf = Fpath.(Odig_etc.dir / "odoc.css")
@@ -15,56 +22,71 @@ let pkg_htmldir pkg =
   let htmldir = htmldir (Odig_pkg.conf pkg) in
   Fpath.(htmldir / Odig_pkg.name pkg)
 
-let compile_dst pkg cmti =
+let compile_dst pkg src =
   let pkgdir = Odig_pkg.libdir pkg in
   let cachedir = Odig_pkg.cachedir pkg in
-  match Fpath.rem_prefix pkgdir cmti with
+  match Fpath.rem_prefix pkgdir src with
   | None -> assert false
   | Some p -> Fpath.(cachedir // p -+ ".odoc")
 
-let cmti_deps pkg cmti =
-  let cmti_path = Odig_cobj.Cmti.path cmti in
-  let add_cmti i acc (name, d) = match d with
+let find_best_src_for_odoc pkg cmi =
+  let cobjs = Odig_pkg.cobjs pkg in
+  let find obj_cmi_digest obj_path ext objs =
+    let p = Fpath.set_ext ext (Odig_cobj.Cmi.path cmi) in
+    let digest = Odig_cobj.Cmi.digest cmi in
+    let is_src o = digest = obj_cmi_digest o && Fpath.equal p (obj_path o) in
+    try Some (obj_path @@ List.find is_src objs) with Not_found -> None
+  in
+  match Odig_cobj.(find Cmti.digest Cmti.path ".cmti" (cmtis cobjs)) with
+  | Some cmti -> cmti
+  | None ->
+      match Odig_cobj.(find Cmt.cmi_digest Cmt.path ".cmt" (cmts cobjs)) with
+      | Some cmt -> cmt
+      | None -> Odig_cobj.Cmi.path cmi
+
+let cmi_deps pkg cmi =
+  let cmi_path = Odig_cobj.Cmi.path cmi in
+  let add_cmi i acc (name, d) = match d with
   | None -> acc
   | Some d ->
-      match Odig_cobj.Index.cmtis_for_interface i (`Digest d) with
+      match Odig_cobj.Index.cmis_for_interface i (`Digest d) with
       | [] ->
           Logs.warn
-            (fun m -> m "%s: %a: No cmti found for %s (%s)"
-                (Odig_pkg.name pkg) Fpath.pp cmti_path name (Digest.to_hex d));
+            (fun m -> m "%s: %a: No cmi found for %s (%s)"
+                (Odig_pkg.name pkg) Fpath.pp cmi_path name (Digest.to_hex d));
           acc
-      | cmti :: cmtis ->
+      | cmi :: cmis ->
           (* Any should do FIXME really ? *)
-          cmti :: acc
+          cmi :: acc
   in
   Odig_pkg.conf_cobj_index (Odig_pkg.conf pkg)
   >>= fun i ->
-  let deps = Odig_cobj.Cmti.deps cmti in
-  Ok (List.fold_left (add_cmti i) [] deps)
+  let deps = Odig_cobj.Cmi.deps cmi in
+  Ok (List.fold_left (add_cmi i) [] deps)
 
 let incs_of_deps ?(odoc = false) deps =
-  let add acc ((`Pkg pkg), cmti) =
-    let path = Odig_cobj.Cmti.path cmti in
+  let add acc ((`Pkg pkg), cmi) =
+    let path = Odig_cobj.Cmi.path cmi in
     let path = if odoc then compile_dst pkg path else path in
     Fpath.(Set.add (parent path) acc)
   in
   let incs = Fpath.Set.elements @@ List.fold_left add Fpath.Set.empty deps in
   Cmd.(of_values ~slip:"-I" p incs)
 
-let rec build_cmti_deps ~odoc seen pkg cmti = (* FIXME not t.r. *)
-  let build seen (pkg, cmti) =
+let rec build_cmi_deps ~odoc seen pkg cmi = (* FIXME not t.r. *)
+  let build seen (pkg, cmi) =
     Logs.on_error_msg ~use:(fun _ -> seen)
-      (_compile_cmti ~odoc ~force:false (* really ? *) seen pkg cmti)
+      (_compile_to_odoc ~odoc ~force:false (* really ? *) seen pkg cmi)
   in
-  (cmti_deps pkg cmti >>| fun deps ->
+  (cmi_deps pkg cmi >>| fun deps ->
    deps, List.fold_left build seen deps)
   |> Logs.on_error_msg ~use:(fun _ -> [], seen)
 
-and _compile_cmti ~odoc ~force seen (`Pkg pkg) cmti =
-  let cmti_path = Odig_cobj.Cmti.path cmti in
-  if Fpath.Set.mem cmti_path seen then (Ok seen) else
-  let seen = Fpath.Set.add cmti_path seen in
-  let dst = compile_dst pkg cmti_path in
+and _compile_to_odoc ~odoc ~force seen (`Pkg pkg) cmi =
+  let cmi_path = Odig_cobj.Cmi.path cmi in
+  if Fpath.Set.mem cmi_path seen then (Ok seen) else
+  let seen = Fpath.Set.add cmi_path seen in
+  let dst = compile_dst pkg cmi_path in
   let cobjs_trail = Odig_pkg.cobjs_trail pkg in
   let dst_trail = Odig_btrail.v ~id:(Fpath.to_string dst) in
   let is_fresh =
@@ -79,11 +101,12 @@ and _compile_cmti ~odoc ~force seen (`Pkg pkg) cmti =
   | true -> Ok seen
   | false ->
       (* FIXME we should do the trail on deps *)
-      let deps, seen = build_cmti_deps ~odoc seen pkg cmti in
+      let deps, seen = build_cmi_deps ~odoc seen pkg cmi in
       let incs = incs_of_deps deps in
+      let src = find_best_src_for_odoc pkg cmi in
       let pkg = Cmd.(v "--pkg" % Odig_pkg.name pkg) in
       let odoc = Cmd.(odoc % "compile" %% incs %% pkg % "-o" % p dst %
-                      p cmti_path)
+                      p src)
       in
       OS.Dir.create ~path:true (Fpath.parent dst) >>= fun _ ->
       OS.Cmd.run_status odoc >>= begin function
@@ -94,38 +117,39 @@ and _compile_cmti ~odoc ~force seen (`Pkg pkg) cmti =
       Odig_btrail.set_witness ~preds:([cobjs_trail]) dst_trail digest;
       seen
 
-and compile_cmti ~odoc ~force pkg cmti =
-  _compile_cmti ~odoc ~force Fpath.Set.empty pkg cmti >>| fun _ -> ()
+and compile_to_odoc ~odoc ~force pkg cmi =
+  _compile_to_odoc ~odoc ~force Fpath.Set.empty pkg cmi >>| fun _ -> ()
 
 let compile ~odoc ~force pkg =
-  let cmtis = Odig_cobj.cmtis (Odig_pkg.cobjs pkg) in
-  let compile_cmti = compile_cmti ~odoc ~force (`Pkg pkg) in
+  let cmis = Odig_cobj.cmis (Odig_pkg.cobjs pkg) in
+  let compile_to_odoc = compile_to_odoc ~odoc ~force (`Pkg pkg) in
   Odig_log.time
     (fun _ m -> m "Compiled odoc files of %s" @@ Odig_pkg.name pkg)
-    (Odig_log.on_iter_error_msg List.iter compile_cmti) cmtis;
+    (Odig_log.on_iter_error_msg List.iter compile_to_odoc) cmis;
   Ok ()
 
-let html_of_odoc ~odoc ~force pkg cmti =
-  (* Force is ignored, html may create new links because of new pkgs. *)
-  let cmti_path = Odig_cobj.Cmti.path cmti in
-  let odoc_file = compile_dst pkg cmti_path in
-  cmti_deps pkg cmti >>= fun deps ->
+let html_of_odoc ~odoc ~force pkg cmi =
+  (* Force is ignored, html may create new links because of new pkgs.
+     FIXME have a more fine dep analysis of this. *)
+  let cmi_path = Odig_cobj.Cmi.path cmi in
+  let odoc_file = compile_dst pkg cmi_path in
+  cmi_deps pkg cmi >>= fun deps ->
   let incs = incs_of_deps ~odoc:true deps in
   let htmldir = htmldir (Odig_pkg.conf pkg) in
   OS.Cmd.run Cmd.(odoc % "html" %% incs % "-o" % p htmldir % p odoc_file)
 
-let html_index pkg htmldir cmtis =
-  let mods = List.map Odig_cobj.Cmti.name cmtis in
+let html_index pkg htmldir cmis =
+  let mods = List.map Odig_cobj.Cmi.name cmis in
   let page = Odig_api_doc.pkg_page ~htmldir:pkg_htmldir pkg ~mods in
   OS.File.write Fpath.(htmldir / "index.html") page
 
 let html ~odoc ~force pkg =
   let htmldir = pkg_htmldir pkg in
-  let cmtis = Odig_cobj.cmtis (Odig_pkg.cobjs pkg) in
+  let cmis = Odig_cobj.cmis (Odig_pkg.cobjs pkg) in
   let html pkg =
     let html_of_odoc = html_of_odoc ~odoc ~force pkg in
-    Odig_log.on_iter_error_msg List.iter html_of_odoc cmtis;
-    html_index pkg htmldir cmtis
+    Odig_log.on_iter_error_msg List.iter html_of_odoc cmis;
+    html_index pkg htmldir cmis
   in
   OS.Dir.create ~path:true htmldir >>= fun _ ->
   Odig_log.time

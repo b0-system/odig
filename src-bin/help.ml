@@ -109,6 +109,16 @@ let packaging =
     `I ("$(i,DOCDIR)/$(i,PKG)/CHANGE* or $(i,DOCDIR)/$(i,PKG)/HISTORY*",
          "change logs, $(b,changes) command");
     `I ("$(i,DOCDIR)/$(i,PKG)/LICENSE*", "license, $(b,license) command");
+    `S "ODOC PACKAGE API DOCUMENTATION";
+    `P "The odoc API documentation of a package $(i,PKG) is generated
+        by considering all cmi files in the path hierarchy rooted at
+        $(i,LIBDIR)/$(i,PKG).";
+    `P "Any cmi file installed by the package is considered to be part of
+        the package API. For each of these files if a corresponding
+        cmti file is found at the same location it used to generate
+        the documentation; if not, an existing cmt file is used and
+        lacking this the cmi file is used as a last resort.";
+    `P  "FIXME say something about multiple cmi files with the same name";
     `S "OCAMLDOC PACKAGE API DOCUMENTATION";
     `P "The ocamldoc API documentation of a package $(i,PKG) is generated
         by considering all mli files in the path hierarchy rooted at

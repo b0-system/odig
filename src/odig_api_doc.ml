@@ -221,15 +221,19 @@ let li_pkg pkg =
   H.(li @@ link l (data name))
 
 let name_list pkgs =
-  let classes p = [String.get_head @@ Odig_pkg.name p] in
+  let classes p = [Char.Ascii.lowercase @@ String.get_head @@ Odig_pkg.name p]in
   let classes = Odig_pkg.classify ~classes pkgs in
   let lid c = strf "name-%c" c in
   let letter_link (c, _) =
     H.(link ("#" ^ lid c) (data @@ String.of_char c))
   in
   let letter_sec (c, pkgs) =
-    H.(li ~atts:(id @@ lid c) @@
-       ol (list li_pkg (Odig_pkg.Set.elements pkgs)))
+    let cmp p p' =
+      let n p = String.Ascii.lowercase (Odig_pkg.name p) in
+      String.compare (n p) (n p')
+    in
+    let pkgs = List.sort cmp (Odig_pkg.Set.elements pkgs) in
+    H.(li ~atts:(id @@ lid c) @@ ol (list li_pkg pkgs))
   in
   H.(div ~atts:(class_ "odig-name") @@
      h1 ~atts:(id "by-name") (data "By name") ++

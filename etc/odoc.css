@@ -53,7 +53,8 @@ ol > li { margin-left: 1.7rem; }
 
 a { text-decoration:none; color:#2C5CBD; }
 a:hover { box-shadow:0 1px 0 0 #2C5CBD; }
-*:target { background-color: #FFFFCC; } /* Anchor highlight */
+*:target { /* Anchor highlight */ background-color: #FFF8E5;
+           box-shadow: 0 0 0 2px #FFF8E5, 0 0 0 3px #DDDDDD; }
 
 .spec { position: relative } /* For positioning the anchor */
 :hover > a.anchor { visibility: visible; }
@@ -165,7 +166,6 @@ td > .spec { margin-top: 0; }
 .heading + .parameters {
     margin-top: -1.25rem;
 }
-
 
 .tag.deprecated { color: orange; }
 .tag.deprecated .label { color: red; }

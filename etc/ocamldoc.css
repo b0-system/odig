@@ -59,7 +59,8 @@ h1 + pre { margin-bottom: 0.625rem } /* Toplevel module description */
 
 a { text-decoration:none; color:#2C5CBD; }
 a:hover { box-shadow:0 1px 0 0 #2C5CBD; }
-*:target { background-color: #FFFFCC; } /* Anchor highlight */
+*:target { /* Anchor highlight */ background-color: #FFF8E5;
+           box-shadow: 0 0 0 2px #FFF8E5, 0 0 0 3px #DDDDDD; }
 
 /* Sections and document divisions
 

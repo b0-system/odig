@@ -75,11 +75,6 @@ a.anchor
   padding-right: 1ex; padding-left: 1ex; /* To remain selectable */
   color: #AAA; }
 
-/* FIXME */
-nav a.package { color: #000 }
-nav a.package span { color:#2C5CBD }
-nav a.package:before { content: "— " }
-
 .xref-unresolved { box-shadow:0 1px 0 0 red }
 
 /* Section and document divisions.

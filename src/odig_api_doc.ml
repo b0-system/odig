@@ -72,7 +72,7 @@ let issues_link pkg = match get_list Odig_pkg.issues pkg with
 | [] -> H.empty
 | l :: _ -> H.(link l (data "issues") ++ data " ")
 
-let _pkg_page_header ~htmldir pkg =
+let pkg_page_header ~htmldir pkg =
   let nav_up = H.(nav @@ a ~atts:(href "../index.html") (data "Up")) in
   let version = match Odig_pkg.(field ~err:None version pkg) with
   | None -> H.empty
@@ -85,10 +85,7 @@ let _pkg_page_header ~htmldir pkg =
                      issues_link pkg ++
                      link "#info" (data "info")))
   in
-  H.(nav_up ++ h)
-
-let pkg_page_header ~htmldir pkg =
-  H.to_string ~doc_type:false @@ _pkg_page_header ~htmldir pkg
+  H.to_string ~doc_type:false @@ H.(nav_up ++ h)
 
 (* Pkg info fragment *)
 
@@ -178,7 +175,7 @@ let def_online_doc =
 let def_version pkg =
   H.(tr_anchor "version" @@ version_data pkg)
 
-let _pkg_page_info ~htmldir pkg =
+let pkg_page_info ~htmldir pkg =
   let pkg_htmldir = htmldir pkg in
   let defs pkg =
     H.(
@@ -197,11 +194,9 @@ let _pkg_page_info ~htmldir pkg =
       ++ def_version pkg)
   in
   let iid = "info" in
+  H.to_string ~doc_type:false @@
   H.(h2 ~atts:(anchor_id iid) (anchor iid ++ data "Info") ++
      table ~atts:(class_ "package info") (defs pkg))
-
-let pkg_page_info ~htmldir pkg =
-  H.to_string ~doc_type:false @@ _pkg_page_info ~htmldir pkg
 
 (* Package module index page *)
 
@@ -237,31 +232,6 @@ let group_cmis_by_archive pkg cmis =
   in
   List.sort cmp @@
   String.Map.bindings @@ List.fold_left add_cmi String.Map.empty cmis
-
-let pkg_module_lists pkg cmis =
-  let mod_groups = group_cmis_by_archive pkg cmis in
-  let mod_li cmi =
-    let m = Odig_cobj.Cmi.name cmi in
-    let mid = strf "module-%s" m in
-    H.(li ~atts:(anchor_id mid) @@
-       anchor mid ++ a ~atts:(href (strf "%s/index.html" m)) (data m))
-  in
-  let mods_ul cmis = H.(ul ~atts:(class_ "modules") @@ list mod_li cmis) in
-  let group (group, (_, cmis)) = match cmis with
-  | [] -> assert false
-  | [cmi] as cmis -> mods_ul cmis
-  | cmis ->
-      let by_name c c' = Odig_cobj.(compare (Cmi.name c) (Cmi.name c')) in
-      let cmis = List.sort by_name cmis in
-      let mods = mods_ul cmis in
-      match group with
-      | "" -> mods
-      | group ->
-          let sel = strf "sel-%s" group in
-          H.(h3 ~atts:(anchor_id ~classes:["sel"] sel)
-               (anchor sel ++ data group) ++ mods)
-  in
-  H.list group mod_groups
 
 let pkg_module_lists tool pkg =
   let group_header tool group =
@@ -305,23 +275,6 @@ let pkg_page_mld ~tool ~htmldir pkg =
     (pkg_module_lists tool pkg)
     indexes
     (pkg_page_info ~htmldir pkg)
-
-(*
-let pkg_page_mld ~tool ~htmldir pkg =
-  let cmis = Odig_cobj.cmis (Odig_pkg.cobjs pkg) in
-  let title = H.(data @@ Odig_pkg.name pkg) in
-  H.(html @@
-     head ~style_href:"../odoc.css" (* FIXME *) title ++
-     (body ~atts:(class_ "odig") @@
-      _pkg_page_header ~htmldir pkg ++
-      pkg_module_lists pkg cmis ++
-      _pkg_page_info ~htmldir pkg))
-*)
-
-(*
-let pkg_page_mld ~tool ~htmldir pkg =
-  H.to_string @@ pkg_page_mld ~tool ~htmldir pkg
-*)
 
 (* Package index *)
 

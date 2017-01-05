@@ -14,7 +14,6 @@ open Bos_setup
    .odoc file we check if there's not a cmt or cmti file (in that
    order) to use at the same location instead of the cmi. *)
 
-
 let htmldir conf = Fpath.(Odig_conf.cachedir conf / "odoc")
 let css_file conf = Fpath.(Odig_etc.dir / "odoc.css")
 
@@ -147,8 +146,6 @@ let html_index ~odoc ~force pkg =
   in
   let name = Odig_pkg.name pkg in
   let page = Odig_api_doc.pkg_page_mld ~tool:`Odoc ~htmldir:pkg_htmldir pkg in
-  Odig_log.debug (fun m -> m "ESC: %S" page);
-  Odig_log.debug (fun m -> m "%s" page);
   OS.File.tmp "odig-index-%s.mld"
   >>= fun index_file -> OS.File.write index_file page
   >>= fun () ->

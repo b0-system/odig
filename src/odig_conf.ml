@@ -9,6 +9,7 @@ open Bos_setup
 type t =
   { libdir : Fpath.t;
     docdir : Fpath.t;
+    docdir_href : string option;
     cachedir : Fpath.t;
     trust_cache : bool; }
 
@@ -24,14 +25,14 @@ let write_trails cachedir () =
   end
   |> Logs.on_error_msg ~use:(fun _ -> ())
 
-let v ?(trust_cache = false) ~cachedir ~libdir ~docdir () =
+let v ?(trust_cache = false) ~cachedir ~libdir ~docdir ~docdir_href () =
   let trails_file = trails_file cachedir in
   (Odig_btrail.read ~create:true trails_file)
   |> Odig_log.on_error_msg ~level:Logs.Warning ~use:(fun _ -> ());
   at_exit (write_trails cachedir); (* FIXME more explicit *)
-  { libdir; docdir; cachedir; trust_cache; }
+  { libdir; docdir; cachedir; docdir_href; trust_cache; }
 
-let of_opam_switch ?trust_cache ?switch () =
+let of_opam_switch ?trust_cache ?switch ?docdir_href () =
   let switch = match switch with
   | None -> Cmd.empty
   | Some s -> Cmd.(v "--switch" % s)
@@ -45,42 +46,46 @@ let of_opam_switch ?trust_cache ?switch () =
   >>= fun libdir -> get_dir opam "doc"
   >>= fun docdir -> get_dir opam "prefix"
   >>= fun prefix -> Ok Fpath.(prefix / "var" / "cache" / "odig")
-  >>= fun cachedir -> Ok (v ?trust_cache ~cachedir ~libdir ~docdir ())
+  >>= fun cachedir -> Ok (v ?trust_cache ~cachedir ~libdir ~docdir
+                            ~docdir_href ())
 
 let of_file ?trust_cache f =
   (* TODO better conf parsing *)
-  let rec parse_directives opam libdir docdir cachedir = function
+  let rec parse_directives opam libdir docdir docdir_href cachedir = function
   | (`Atom "opam", _) :: ds when not opam ->
-      parse_directives true libdir docdir cachedir ds
+      parse_directives true libdir docdir docdir_href cachedir ds
   | (`List [`Atom "libdir", _; `Atom dir, _ ], _) :: ds ->
       Fpath.of_string dir >>= fun dir ->
-      parse_directives opam (Some dir) docdir cachedir ds
+      parse_directives opam (Some dir) docdir docdir_href cachedir ds
   | (`List [`Atom "docdir", _; `Atom dir, _ ], _) :: ds ->
       Fpath.of_string dir >>= fun dir ->
-      parse_directives opam libdir (Some dir) cachedir ds
+      parse_directives opam libdir (Some dir) docdir_href cachedir ds
+  | (`List [`Atom "docdir-href", _; `Atom href, _ ], _ ) :: ds ->
+      parse_directives opam libdir docdir (Some href) cachedir  ds
   | (`List [`Atom "cachedir", _; `Atom dir, _ ], _ ) :: ds ->
       Fpath.of_string dir >>= fun dir ->
-      parse_directives opam libdir docdir (Some dir)  ds
+      parse_directives opam libdir docdir docdir_href (Some dir)  ds
   | (_, loc) :: ds ->
       R.error_msgf "%a: unknown configuration directive" Odig_sexp.pp_loc loc
   | [] ->
-      Ok (opam, libdir, docdir, cachedir)
+      Ok (opam, libdir, docdir, docdir_href, cachedir)
   in
   Odig_sexp.of_file f
-  >>= fun ds -> parse_directives false None None None ds
+  >>= fun ds -> parse_directives false None None None None ds
   >>= function
-  | true, None, None, None -> of_opam_switch ()
-  | true, _, _, _ ->
+  | true, None, None, docdir_href, None -> of_opam_switch ?docdir_href ()
+  | true, _, _, _, _ ->
       R.error_msgf "%a: inconsistent configuration" Fpath.pp f
-  | _, None, _, _
-  | _, _, None, _
-  | _, _, _, None ->
+  | _, None, _, _, _
+  | _, _, None, _, _
+  | _, _, _, _, None ->
       R.error_msgf "%a: incomplete configuration" Fpath.pp f
-  | _, Some libdir, Some docdir, Some cachedir ->
-      Ok (v ?trust_cache ~cachedir ~libdir ~docdir ())
+  | _, Some libdir, Some docdir, docdir_href, Some cachedir ->
+      Ok (v ?trust_cache ~cachedir ~libdir ~docdir ~docdir_href ())
 
 let libdir c = c.libdir
 let docdir c = c.docdir
+let docdir_href c = c.docdir_href
 let cachedir c = c.cachedir
 let trust_cache c = c.trust_cache
 

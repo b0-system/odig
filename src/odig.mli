@@ -669,20 +669,23 @@ module Conf : sig
 
   val v :
     ?trust_cache:bool -> cachedir:Fpath.t -> libdir:Fpath.t ->
-    docdir:Fpath.t -> unit -> t
-  (** [v ~trust_cache ~cachedir ~libdir ~docdir ()] is a configuration
-      using [cachedir] as the odig cache directory, [libdir] for
-      looking up package compilation objects and [docdir] for looking
-      up package documentation. If [trust_cache] is [true] (defaults
-      to [false]) indicates the data of [cachedir] should be trusted
-      regardless of whether [libdir] and [docdir] may have changed. *)
+    docdir:Fpath.t -> docdir_href:string option -> unit -> t
+  (** [v ~trust_cache ~cachedir ~libdir ~docdir ~docdir_href ()] is a
+      configuration using [cachedir] as the odig cache directory,
+      [libdir] for looking up package compilation objects, [docdir]
+      for looking up package documentation and [docdir_href] for
+      specifying the location of [docdir] in generated html. If
+      [trust_cache] is [true] (defaults to [false]) indicates the data
+      of [cachedir] should be trusted regardless of whether [libdir]
+      and [docdir] may have changed. *)
 
   val of_file : ?trust_cache:bool -> Fpath.t -> (t, [`Msg of string]) result
   (** [of_file f] reads a configuration from configuration file [f].
       See {!v}. *)
 
   val of_opam_switch :
-    ?trust_cache:bool -> ?switch:string -> unit -> (t, [`Msg of string]) result
+    ?trust_cache:bool -> ?switch:string -> ?docdir_href:string ->
+    unit -> (t, [`Msg of string]) result
   (** [of_opam_switch ~switch ()] is a configuration for the opam switch
       [switch] (defaults to the current switch). See {!v}. *)
 
@@ -691,6 +694,13 @@ module Conf : sig
 
   val docdir : t -> Fpath.t
   (** [docdir c] is [c]'s package documentation directory. *)
+
+  val docdir_href : t -> string option
+  (** [docdir_href c] is, for HTML generation, the base URI under
+      which {!docdir} is accessible expressed (if) relative to the
+      root package list.  If unspecified links to {!docdir} are made
+      by relativizing {!docdir} w.r.t. to the location of the
+      generated HTML file. *)
 
   (** {1 Cache} *)
 

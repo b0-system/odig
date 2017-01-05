@@ -36,7 +36,10 @@ let type_utf8_text =
   H.(att "type" (attv "text/plain; charset=UTF-8"))
 
 let anchored_cl = "anchored"
-let anchor_id aid = H.(id aid ++ class_ anchored_cl)
+let anchor_id ?(classes = []) aid =
+  let classes = String.concat ~sep:" " (anchored_cl :: classes) in
+  H.(id aid ++ class_ classes)
+
 let anchor ?(text = H.empty) aid =
   H.(a ~atts:(href (strf "#%s" aid) ++ class_ "anchor") text)
 
@@ -53,6 +56,39 @@ let head ~style_href title = (* a basic head *)
                      href style_href)
       empty ++
     el "title" title)
+
+(* Package page header, title and quick links *)
+
+let changes_link ~htmldir pkg = match get_list Odig_pkg.change_logs pkg with
+| [] -> H.empty
+| c :: _ ->
+    match Fpath.relativize (htmldir pkg) c with
+    | None -> H.empty
+    | Some path ->
+        H.(link ~atts:type_utf8_text
+             (fpath_to_uri path) (data "changes") ++ data " ")
+
+let issues_link pkg = match get_list Odig_pkg.issues pkg with
+| [] -> H.empty
+| l :: _ -> H.(link l (data "issues") ++ data " ")
+
+let _pkg_page_header ~htmldir pkg =
+  let nav_up = H.(nav @@ a ~atts:(href "../index.html") (data "Up")) in
+  let version = match Odig_pkg.(field ~err:None version pkg) with
+  | None -> H.empty
+  | Some v -> H.(span ~atts:(class_ "version") (data v) ++ data " ")
+  in
+  let h = H.(h1 ~atts:(class_ "package") @@
+             (data "Package ") ++ (data @@ Odig_pkg.name pkg ^ " ") ++
+             version ++
+             (nav @@ changes_link ~htmldir pkg ++
+                     issues_link pkg ++
+                     link "#info" (data "info")))
+  in
+  H.(nav_up ++ h)
+
+let pkg_page_header ~htmldir pkg =
+  H.to_string ~doc_type:false @@ _pkg_page_header ~htmldir pkg
 
 (* Pkg info fragment *)
 
@@ -142,7 +178,7 @@ let def_online_doc =
 let def_version pkg =
   H.(tr_anchor "version" @@ version_data pkg)
 
-let _pkg_info ~htmldir pkg =
+let _pkg_page_info ~htmldir pkg =
   let pkg_htmldir = htmldir pkg in
   let defs pkg =
     H.(
@@ -162,47 +198,12 @@ let _pkg_info ~htmldir pkg =
   in
   let iid = "info" in
   H.(h2 ~atts:(anchor_id iid) (anchor iid ++ data "Info") ++
-     table ~atts:(class_ "info") (defs pkg))
+     table ~atts:(class_ "package info") (defs pkg))
 
-let pkg_info ~htmldir pkg =
-  H.to_string ~doc_type:false @@ _pkg_info ~htmldir pkg
-
-(* Package title short links *)
-
-let changes_link ~htmldir pkg = match get_list Odig_pkg.change_logs pkg with
-| [] -> H.empty
-| c :: _ ->
-    match Fpath.relativize (htmldir pkg) c with
-    | None -> H.empty
-    | Some path ->
-        H.(link ~atts:type_utf8_text
-                     (fpath_to_uri path) (data "changes") ++ data " ")
-
-let issues_link pkg = match get_list Odig_pkg.issues pkg with
-| [] -> H.empty
-| l :: _ -> H.(link l (data "issues") ++ data " ")
-
-let title_links ~htmldir pkg =
-  H.(nav @@ changes_link ~htmldir pkg ++
-                    issues_link pkg ++
-                    link "#info" (data "info"))
-
-let pkg_title_links ~htmldir pkg =
-  H.to_string ~doc_type:false @@ title_links ~htmldir pkg
+let pkg_page_info ~htmldir pkg =
+  H.to_string ~doc_type:false @@ _pkg_page_info ~htmldir pkg
 
 (* Package module index page *)
-
-let pkg_header ~htmldir pkg =
-  let nav_up = H.(nav @@ a ~atts:(href "../index.html") (data "Up")) in
-  let version = match Odig_pkg.(field ~err:None version pkg) with
-  | None -> H.empty
-  | Some v -> H.(span ~atts:(class_ "version") (data v) ++ data " ")
-  in
-  let h = H.(h1 ~atts:(id "pkg") @@
-             (data "Package ") ++ (data @@ Odig_pkg.name pkg ^ " ") ++
-             version ++ title_links ~htmldir pkg)
-  in
-  H.(nav_up ++ h)
 
 let group_cmis_by_archive pkg cmis =
   let cobjs = Odig_pkg.cobjs pkg in
@@ -257,7 +258,8 @@ let pkg_module_lists pkg cmis =
       | "" -> mods
       | group ->
           let sel = strf "sel-%s" group in
-          H.(h3 ~atts:(anchor_id sel) (anchor sel ++ data group) ++ mods)
+          H.(h3 ~atts:(anchor_id ~classes:["sel"] sel)
+               (anchor sel ++ data group) ++ mods)
   in
   H.list group mod_groups
 
@@ -265,13 +267,12 @@ let pkg_page ~htmldir pkg ~cmis =
   let title = H.(data @@ Odig_pkg.name pkg) in
   H.(html @@
      head ~style_href:"../odoc.css" (* FIXME *) title ++
-     (body ~atts:(class_ "odig package") @@
-      pkg_header ~htmldir pkg ++
+     (body ~atts:(class_ "odig") @@
+      _pkg_page_header ~htmldir pkg ++
       pkg_module_lists pkg cmis ++
-      _pkg_info ~htmldir pkg))
+      _pkg_page_info ~htmldir pkg))
 
-let pkg_page ~htmldir pkg ~cmis =
-  H.to_string @@ pkg_page ~htmldir pkg ~cmis
+let pkg_page ~htmldir pkg ~cmis = H.to_string @@ pkg_page ~htmldir pkg ~cmis
 
 (* Package index *)
 
@@ -337,7 +338,7 @@ let error_list tool pkgs =
              code (data "odig " ++ data tool ++ data " -f " ++ data name))
   in
   let errid = "errors" in
-  H.(div ~atts:(class_ "odig-errors") @@
+  H.(div ~atts:(class_ "errors") @@
      h2 ~atts:(anchor_id errid) (anchor errid ++ data "Caveat and errors") ++
      el "p" (data " This is a best-effort documentation generation. Toplevel \
                 modules may be missing due to errors. The following packages \
@@ -376,7 +377,7 @@ let index_page conf ~tool ~htmldir ~has_doc ~no_doc =
   let comma = H.data ", " in
   H.(html @@
      head ~style_href title ++
-     (body ~atts:(class_ "odig package-index") @@
+     (body ~atts:(class_ "odig") @@
       nav (data "\xF0\x9F\x90\xAB") ++
       h1 (data "OCaml package documentation") ++
       p (data "For " ++ (data (Fpath.to_string libdir)) ++ data ". See the " ++

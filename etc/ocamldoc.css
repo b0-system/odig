@@ -62,6 +62,24 @@ a:hover { box-shadow:0 1px 0 0 #2C5CBD; }
 *:target { /* Anchor highlight */ background-color: #FFF8E5;
            box-shadow: 0 0 0 2px #FFF8E5, 0 0 0 3px #DDDDDD; }
 
+a { text-decoration:none; color:#2C5CBD; }
+a:hover { box-shadow:0 1px 0 0 #2C5CBD; }
+*:target /* Linked highlight */
+{ background-color: #FFF8E5;
+  box-shadow: 0 0 0 2px #FFF8E5, 0 0 0 3px #DDD; }
+
+.anchored:hover a.anchor { visibility: visible; }
+
+a.anchor:before { content: "#" }
+a.anchor:hover {  box-shadow: none; text-decoration: underline }
+a.anchor
+{ visibility: hidden; position: absolute; /* top: 0px; */
+  margin-left: -3ex;
+  font-weight: normal;
+  font-style: normal;
+  padding-right: 1ex; padding-left: 1ex; /* To remain selectable */
+  color: #AAA; }
+
 /* Sections and document divisions
 
    Many of the modules of the stdlib start at h6, we make it look like
@@ -91,7 +109,7 @@ e.info p, li p { margin-top: 0.625rem }
 
 table { margin-top: 0.625rem }
 .info.module.top { margin-left: 0em } /* Toplevel module description */
-/* td .info { margin-left: 1ex; margin-top: 0.15625rem } */
+.info { margin-left: 1ex; margin-top: 0.15625rem }
 
 td .info { margin:0; padding:0; margin-left: 2em;} /* Description in indexes */
 
@@ -156,15 +174,13 @@ img { margin-top: 1.25rem }
 ul.indexlist { list-style-type: none; margin-left:0; padding:0; }
 ul.indexlist li { margin-left:0; padding: 0; }
 
-/* Odig */
-
-.odig ul, .odig ol { list-style-type: none; margin-left:0; padding:0; }
-.odig li { margin-left:0; padding:0; }
-.odig li > ol { margin:0; }
-
 /* Odig package index */
 
+.by-name ol, .by-tag ol { list-style-type: none; margin:0; }
+.by-name li, .by-tag li { margin-left:0; }
+
 .by-name .version { font-size: 0.625rem; color: #AAA }
+.by-name nav { margin-bottom: 0.625rem }
 .by-name nav a
 { text-transform: uppercase; font-size: 1.125rem;
   margin-right:1ex; color: #222; display: inline-block; }
@@ -177,19 +193,31 @@ ul.indexlist li { margin-left:0; padding: 0; }
 
 /* Odig package page */
 
-.package h1 nav { display: inline; font-size: 0.875rem; font-weight: normal; }
+.package nav { display: inline; font-size: 0.875rem; font-weight: normal; }
 .package .version { font-size: 0.875rem; }
 
-h1 + ul.modules, h3 + ul.modules { margin-top: 0.625rem }
-ul.modules { margin:0 }
+h1.package + ul.modules, h3 + ul.modules { margin-top: 0.625rem }
+ul.modules { list-style-type: none; margin:0; }
+.modules li { margin:0;}
 
-.info * { margin: 0; padding: 0; }
-.info td:first-child { font-style: italic; padding-right: 2ex; }
-.info ul { list-style-type: none; display: inline }
-.info li { display: inline-block; margin-right: 1ex;}
+.package.info { margin: 0;}
+.package.info td:first-child { font-style: italic; padding-right: 2ex; }
+.package.info ul { list-style-type: none; display: inline; margin:0; }
+.package.info li { display: inline-block; margin:0; margin-right:1ex; }
 #info-authors li, #info-maintainers li { display:block; }
 
+/* Odig ocamldoc adjustements. */
 
+#info, .by-name h2, .by-tag h2, .errors h2
+{ font-size: 1.25rem;
+  line-height: 2.4375rem; /* 2.5 rem - border width */
+  border-top-style: solid;
+  border-width: 1px;
+  border-color: #DDDDDD; }
+
+#info + *, .by-name h2 + *, .by-tag h2 + *, .errors h2 { margin-top: 0.625rem; }
+
+body h1:first-child { display: none } /* package page. */
 
 /* Mobile adjustements
   Can't really do anything we need to get a <meta> for viewport generated */

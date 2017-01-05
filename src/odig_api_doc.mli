@@ -4,10 +4,8 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-
-
-val pkg_info : htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t -> string
-val pkg_title_links : htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t -> string
+val pkg_page_info : htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t -> string
+val pkg_page_header : htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t -> string
 
 val pkg_page :
   htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t ->

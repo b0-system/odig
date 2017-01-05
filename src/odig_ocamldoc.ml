@@ -118,27 +118,19 @@ let pkg_odocs pkg =
   in
   snd @@ List.fold_left add_odoc (String.Set.empty, []) mlis
 
-let make_version p =
-  match Odig_pkg.version p |> R.ignore_error ~use:(fun _ -> None) with
-  | None -> ""
-  | Some v -> " " ^ v
-
 let html_index_page pkg ocdocs =
   let mod_of_ocdoc ocdoc =
     String.Ascii.capitalize Fpath.(filename @@ rem_ext ocdoc)
   in
   let mods = List.map mod_of_ocdoc ocdocs in
   let mod_list = String.concat ~sep:" " @@  List.sort String.compare mods in
-  strf "{%%html:\
-         <nav><a href=\"../index.html\">Up</a></nav>%%}\n\
-        {1 Package %s%s {%%html:%s%%}}\n\
+  strf "{%%html:%s%%}\n\
         {!modules: %s}\n\
         {!indexlist}\n\
         {%%html:%s%%}"
-    (Odig_pkg.name pkg) (make_version pkg)
-    (Odig_api_doc.pkg_title_links ~htmldir:pkg_htmldir pkg)
+    (Odig_api_doc.pkg_page_header ~htmldir:pkg_htmldir pkg)
     mod_list
-    (Odig_api_doc.pkg_info ~htmldir:pkg_htmldir pkg)
+    (Odig_api_doc.pkg_page_info ~htmldir:pkg_htmldir pkg)
 
 let html ~ocamldoc ~force pkg =
   let htmldir = pkg_htmldir pkg in

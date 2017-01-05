@@ -118,20 +118,6 @@ let pkg_odocs pkg =
   in
   snd @@ List.fold_left add_odoc (String.Set.empty, []) mlis
 
-let html_index_page pkg ocdocs =
-  let mod_of_ocdoc ocdoc =
-    String.Ascii.capitalize Fpath.(filename @@ rem_ext ocdoc)
-  in
-  let mods = List.map mod_of_ocdoc ocdocs in
-  let mod_list = String.concat ~sep:" " @@  List.sort String.compare mods in
-  strf "{%%html:%s%%}\n\
-        {!modules: %s}\n\
-        {!indexlist}\n\
-        {%%html:%s%%}"
-    (Odig_api_doc.pkg_page_header ~htmldir:pkg_htmldir pkg)
-    mod_list
-    (Odig_api_doc.pkg_page_info ~htmldir:pkg_htmldir pkg)
-
 let html ~ocamldoc ~force pkg =
   let htmldir = pkg_htmldir pkg in
   let pkg_to_html pkg =
@@ -169,17 +155,21 @@ let html ~ocamldoc ~force pkg =
                 let odoc = Cmd.(ocamldoc % "-hide-warnings" %% loads %
                                 "-sort" %% html %% css % "-colorize-code" %%
                                 intro % "-short-functors" % "-d" % p htmldir)
-            in
-            OS.File.write intro_file (html_index_page pkg ocdocs)
-            >>= fun () -> OS.Cmd.run_status odoc
-            >>= begin function
-            | `Exited 0 ->
-                (* We don't really care about the digest *)
-                Odig_digest.mtimes [htmldir] >>| fun d -> Some d
-            | _ ->
-                OS.Dir.delete ~recurse:true htmldir >>| fun () -> None
-            end >>| fun digest ->
-            Odig_btrail.set_witness ~preds:ocdoc_trails html_trail digest
+                in
+                let intro =
+                  Odig_api_doc.pkg_page_mld
+                    ~tool:`Ocamldoc ~htmldir:pkg_htmldir pkg
+                in
+                OS.File.write intro_file intro
+                >>= fun () -> OS.Cmd.run_status odoc
+                >>= begin function
+                | `Exited 0 ->
+                    (* We don't really care about the digest *)
+                    Odig_digest.mtimes [htmldir] >>| fun d -> Some d
+                | _ ->
+                    OS.Dir.delete ~recurse:true htmldir >>| fun () -> None
+                end >>| fun digest ->
+                Odig_btrail.set_witness ~preds:ocdoc_trails html_trail digest
   in
   OS.Dir.create ~path:true htmldir >>= fun _ ->
   Odig_log.time

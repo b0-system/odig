@@ -75,6 +75,11 @@ a.anchor
   padding-right: 1ex; padding-left: 1ex; /* To remain selectable */
   color: #AAA; }
 
+/* FIXME */
+nav a.package { color: #000 }
+nav a.package span { color:#2C5CBD }
+nav a.package:before { content: "— " }
+
 .xref-unresolved { box-shadow:0 1px 0 0 red }
 
 /* Section and document divisions.
@@ -190,9 +195,14 @@ span.at-tag { font-weight: bold }
 .package nav { display: inline; font-size: 0.875rem; font-weight: normal; }
 .package .version { font-size: 0.875rem; }
 
-h1.package + ul.modules, h3 + ul.modules { margin-top: 0.625rem }
-ul.modules { list-style-type: none; margin:0; }
-.modules li { margin:0;}
+h1 + .modules, h1 + .sel { margin-top: 0.625rem }
+.sel { font-weight: normal; font-style: italic;
+       font-size:0.875rem; margin-top:1.25rem; }
+.sel + .modules { margin-top:0.625rem;
+                  margin-bottom: 1.25rem; margin-left: 1ex; }
+
+.modules { margin:0; }
+.modules .module { min-width:8ex; padding-right: 2ex }
 
 .package.info { margin: 0;}
 .package.info td:first-child { font-style: italic; padding-right: 2ex; }

@@ -4,19 +4,13 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-val pkg_page_info : htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t -> string
-val pkg_page_header : htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t -> string
-
-val pkg_page :
-  htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t ->
-  cmis:Odig_cobj.cmi list -> string
+val pkg_page_mld :
+  tool:[`Odoc | `Ocamldoc ] ->
+  htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t -> string
 
 val pkg_index :
-  Odig_conf.t ->
-  tool:[`Odoc | `Ocamldoc ] ->
-  htmldir:Fpath.t ->
-  has_doc:Odig_pkg.t list ->
-  no_doc:Odig_pkg.t list -> string
+  Odig_conf.t -> tool:[`Odoc | `Ocamldoc ] -> htmldir:Fpath.t ->
+  has_doc:Odig_pkg.t list -> no_doc:Odig_pkg.t list -> string
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

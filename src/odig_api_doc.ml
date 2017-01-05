@@ -263,7 +263,52 @@ let pkg_module_lists pkg cmis =
   in
   H.list group mod_groups
 
-let pkg_page ~htmldir pkg ~cmis =
+let pkg_module_lists tool pkg =
+  let group_header tool group =
+    (* We do this ourselves because in {2:id bla} [id] can't have dashes
+       and a lot of archives do have them. *)
+    let hx = match tool with `Ocamldoc -> H.h2 | `Odoc -> H.h3 in
+    let sel = strf "sel-%s" group in
+    H.(to_string ~doc_type:false @@
+       hx ~atts:(anchor_id ~classes:["sel"] sel) (anchor sel ++ data group))
+  in
+  let mods cmis =
+    let mod_of_cmi cmi =
+      let cmi = Odig_cobj.Cmi.path cmi in
+      String.Ascii.capitalize Fpath.(filename @@ rem_ext cmi)
+    in
+    let mods = List.map mod_of_cmi cmis in
+    let mod_list = String.concat ~sep:" " @@ List.sort String.compare mods in
+    strf "{!modules: %s}" mod_list
+  in
+  let cmis = Odig_cobj.cmis (Odig_pkg.cobjs pkg) in
+  let groups = group_cmis_by_archive pkg cmis in
+  let add_group acc (group, (_, cmis)) = match cmis with
+  | [] -> assert false
+  | [cmi] as cmis -> mods cmis :: acc
+  | cmis ->
+      let by_name c c' = Odig_cobj.(compare (Cmi.name c) (Cmi.name c')) in
+      let cmis = List.sort by_name cmis in
+      let mods = mods cmis in
+      match group with
+      | "" -> mods :: acc
+      | group ->
+          let h = strf "{%%html:%s%%}" (group_header tool group) in
+          mods :: h :: acc
+  in
+  String.concat ~sep:"" @@ List.rev (List.fold_left add_group [] groups)
+
+let pkg_page_mld ~tool ~htmldir pkg =
+  let indexes = match tool with `Odoc -> "" | `Ocamldoc -> "{!indexlist}" in
+  strf "{%%html:%s%%}%s%s{%%html:%s%%}"
+    (pkg_page_header ~htmldir pkg)
+    (pkg_module_lists tool pkg)
+    indexes
+    (pkg_page_info ~htmldir pkg)
+
+(*
+let pkg_page_mld ~tool ~htmldir pkg =
+  let cmis = Odig_cobj.cmis (Odig_pkg.cobjs pkg) in
   let title = H.(data @@ Odig_pkg.name pkg) in
   H.(html @@
      head ~style_href:"../odoc.css" (* FIXME *) title ++
@@ -271,8 +316,12 @@ let pkg_page ~htmldir pkg ~cmis =
       _pkg_page_header ~htmldir pkg ++
       pkg_module_lists pkg cmis ++
       _pkg_page_info ~htmldir pkg))
+*)
 
-let pkg_page ~htmldir pkg ~cmis = H.to_string @@ pkg_page ~htmldir pkg ~cmis
+(*
+let pkg_page_mld ~tool ~htmldir pkg =
+  H.to_string @@ pkg_page_mld ~tool ~htmldir pkg
+*)
 
 (* Package index *)
 

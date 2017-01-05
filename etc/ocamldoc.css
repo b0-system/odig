@@ -196,9 +196,12 @@ ul.indexlist li { margin-left:0; padding: 0; }
 .package nav { display: inline; font-size: 0.875rem; font-weight: normal; }
 .package .version { font-size: 0.875rem; }
 
-h1.package + ul.modules, h3 + ul.modules { margin-top: 0.625rem }
-ul.modules { list-style-type: none; margin:0; }
-.modules li { margin:0;}
+/* This doesn't work in 4.03 because of spurious br's */
+h1 + .indextable, h1 + .sel { margin-top: 0.625rem }
+.sel { font-weight: normal; font-style: italic;
+       font-size:0.875rem; margin-top:1.25rem; }
+.sel + .indextable { margin-top:0.625rem;
+                     margin-bottom: 1.25rem; margin-left: 1ex; }
 
 .package.info { margin: 0;}
 .package.info td:first-child { font-style: italic; padding-right: 2ex; }

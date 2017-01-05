@@ -138,9 +138,22 @@ let html_of_odoc ~odoc ~force pkg cmi =
   let htmldir = htmldir (Odig_pkg.conf pkg) in
   OS.Cmd.run Cmd.(odoc % "html" %% incs % "-o" % p htmldir % p odoc_file)
 
-let html_index pkg htmldir cmis =
-  let page = Odig_api_doc.pkg_page ~htmldir:pkg_htmldir pkg ~cmis in
-  OS.File.write Fpath.(htmldir / "index.html") page
+let html_index ~odoc ~force pkg =
+  let htmldir = htmldir (Odig_pkg.conf pkg) in
+  let incs =
+    let cmis = Odig_cobj.cmis (Odig_pkg.cobjs pkg) in
+    let to_dep cmi = `Pkg pkg, cmi in
+    incs_of_deps ~odoc:true (List.rev_map to_dep cmis)
+  in
+  let name = Odig_pkg.name pkg in
+  let page = Odig_api_doc.pkg_page_mld ~tool:`Odoc ~htmldir:pkg_htmldir pkg in
+  Odig_log.debug (fun m -> m "ESC: %S" page);
+  Odig_log.debug (fun m -> m "%s" page);
+  OS.File.tmp "odig-index-%s.mld"
+  >>= fun index_file -> OS.File.write index_file page
+  >>= fun () ->
+  OS.Cmd.run Cmd.(odoc % "html" %% incs % "-o" % p htmldir %
+                  "--index-for" % name % p index_file)
 
 let html ~odoc ~force pkg =
   let htmldir = pkg_htmldir pkg in
@@ -148,7 +161,7 @@ let html ~odoc ~force pkg =
   let html pkg =
     let html_of_odoc = html_of_odoc ~odoc ~force pkg in
     Odig_log.on_iter_error_msg List.iter html_of_odoc cmis;
-    html_index pkg htmldir cmis
+    html_index ~odoc ~force pkg
   in
   OS.Dir.create ~path:true htmldir >>= fun _ ->
   Odig_log.time

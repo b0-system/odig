@@ -16,8 +16,9 @@ let odocs ~odoc ~force conf pkgs =
   Log.on_iter_error_msg Odig.Pkg.Set.iter (odoc_pkg ~odoc ~force) pkgs;
   Odig.Odoc.htmldir_css_and_index conf
 
-let api conf odoc force pkgs =
+let api conf odoc force docdir_href pkgs =
   begin
+    let conf = Odig.Conf.with_conf ?docdir_href conf in
     Cli.lookup_pkgs conf pkgs
     >>= fun pkgs -> odocs ~odoc ~force conf pkgs
     >>= fun () -> Ok 0
@@ -43,7 +44,7 @@ let odoc =
 let cmd =
   let info = Term.info "odoc" ~sdocs:Cli.common_opts ~doc ~man in
   let term = Term.(const api $ Cli.setup () $ Cli.odoc $ Cli.doc_force $
-                   Cli.pkgs_or_all)
+                   Cli.docdir_href $ Cli.pkgs_or_all)
   in
   term, info
 

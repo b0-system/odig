@@ -8,31 +8,26 @@ open Bos_setup
 
 module H = Odig_html
 
+let fpath_to_uri p =
+  String.concat ~sep:"/" (Fpath.segs p) (* FIXME fpath #1 *)
+
+let href_is_rel href = (* Someone will hate me for this at some point. *)
+  not (String.exists (Char.equal ':') href)
+
+let href_ensure_dir href = match String.head ~rev:true href with
+    | None -> href | Some '/' -> href | Some _ -> href ^ "/"
+
 (* Access to package fields *)
 
 let get_list f pkg = Odig_pkg.field ~err:[] f pkg
 let get_opt_field f pkg = Odig_pkg.field ~err:None f pkg
-let get_rel_fpaths htmldir f pkg =
-  let ps = get_list f pkg in
-  let rel acc p = match Fpath.relativize htmldir p with
-  | None ->
-      Logs.warn (fun m -> m "%s: Could not relativize %a"
-                    (Odig_pkg.name pkg) Fpath.pp p);
-      acc
-  | Some p -> p :: acc
-  in
-  List.(rev @@ fold_left rel [] ps)
-
 let version_data pkg = match get_opt_field Odig_pkg.version pkg with
 | None -> H.data "?"
 | Some v -> H.data v
 
 (* HTML generation *)
 
-let fpath_to_uri p =
-  String.concat ~sep:"/" (Fpath.segs p) (* FIXME fpath #1 *)
-
-let type_utf8_text =
+let type_utf_8_text =
   H.(att "type" (attv "text/plain; charset=UTF-8"))
 
 let anchored_cl = "anchored"
@@ -44,29 +39,65 @@ let anchor ?(text = H.empty) aid =
   H.(a ~atts:(href (strf "#%s" aid) ++ class_ "anchor") text)
 
 let head ~style_href title = (* a basic head *)
-  H.(
-    el "head" @@
-    meta ~atts:(att "charset" (attv "utf-8")) empty ++
-    meta ~atts:(att "name" (attv "viewport") ++
-                att "content" (attv "width=device-width, initial-scale=1.0"))
-      empty ++
-    el "link" ~atts:(att "rel" (attv "stylesheet") ++
-                     att "type" (attv "text/css") ++
-                     att "media" (attv "screen, print") ++
-                     href style_href)
-      empty ++
-    el "title" title)
+  H.(el "head" @@
+     meta ~atts:(att "charset" (attv "utf-8")) empty ++
+     meta ~atts:(att "name" (attv "generator") ++
+                 att "content" (attv "odig %%VERSION%%")) empty ++
+     meta ~atts:(att "name" (attv "viewport") ++
+                 att "content" (attv "width=device-width, initial-scale=1.0"))
+       empty ++
+     el "link" ~atts:(att "rel" (attv "stylesheet") ++
+                      att "type" (attv "text/css") ++
+                      att "media" (attv "screen, print") ++
+                      href style_href)
+       empty ++
+     el "title" title)
+
+let docdir_link ?(atts = H.empty) ?text conf ~cur_dir ~cur_href_path file =
+  let text = match text with
+  | None -> H.data @@ Fpath.filename file
+  | Some t -> t
+  in
+  let link l = Some H.(link ~atts l text) in
+  let link = match Odig_conf.docdir_href conf with
+  | None ->
+      begin match Fpath.relativize ~root:cur_dir file with
+      | None -> None
+      | Some rel_file -> link (fpath_to_uri rel_file)
+      end
+  | Some href ->
+      let href = href_ensure_dir href in
+      match Fpath.rem_prefix (Odig_conf.docdir conf) file with
+      | None -> assert false
+      | Some file ->
+          let fhref = href ^ fpath_to_uri file in
+          match href_is_rel fhref with
+          | false -> link fhref
+          | true ->
+              match Fpath.of_string fhref with
+              | Error _ -> None
+              | Ok fhref ->
+                  match Fpath.relativize ~root:cur_href_path fhref with
+                  | None -> None
+                  | Some href -> link (fpath_to_uri href)
+  in
+  match link with
+  | Some link -> link
+  | None ->
+      Odig_log.warn (fun m -> m "Could not linkify %a" Fpath.pp file);
+      H.(span ~atts:(class_ ".xref-unresolved") text)
 
 (* Package page header, title and quick links *)
 
 let changes_link ~htmldir pkg = match get_list Odig_pkg.change_logs pkg with
 | [] -> H.empty
 | c :: _ ->
-    match Fpath.relativize (htmldir pkg) c with
-    | None -> H.empty
-    | Some path ->
-        H.(link ~atts:type_utf8_text
-             (fpath_to_uri path) (data "changes") ++ data " ")
+    let atts = type_utf_8_text in
+    let text = H.data "changes" in
+    let conf = Odig_pkg.conf pkg in
+    let cur_dir = htmldir (Some pkg) in
+    let cur_href_path = Fpath.v (Odig_pkg.name pkg) in
+    H.(docdir_link ~atts ~text conf ~cur_dir ~cur_href_path c ++ data " ")
 
 let issues_link pkg = match get_list Odig_pkg.issues pkg with
 | [] -> H.empty
@@ -100,10 +131,6 @@ let tr_anchor ?nid name value =
 
 let values def l = H.(ul @@ list def l)
 
-let rel_file path =
-  let l = fpath_to_uri path in
-  H.(link ~atts:type_utf8_text l (data @@ Fpath.filename path))
-
 let def_strings ?nid fname f def pkg = match get_list f pkg with
 | [] -> H.empty
 | vs ->
@@ -114,21 +141,29 @@ let def_raw_links ?nid fname f pkg = match get_list f pkg with
 | [] -> H.empty
 | links -> H.(tr_anchor ?nid fname @@ values raw_link links)
 
-let def_rel_files ?nid dir fname f pkg = match get_rel_fpaths dir f pkg with
-| [] -> H.empty
-| files -> H.(tr_anchor ?nid fname @@ values rel_file files)
+let def_docdir_links ?nid htmldir fname f pkg =
+  let link_path path =
+    let atts = type_utf_8_text in
+    let conf = Odig_pkg.conf pkg in
+    let cur_dir = htmldir (Some pkg) in
+    let cur_href_path = Fpath.v (Odig_pkg.name pkg) in
+    H.(docdir_link ~atts conf ~cur_dir ~cur_href_path path)
+  in
+  match get_list f pkg with
+  | [] -> H.empty
+  | files -> H.(tr_anchor ?nid fname @@ values link_path files)
 
 let def_readmes ~htmldir =
-  def_rel_files htmldir "readme" Odig_pkg.readmes
+  def_docdir_links htmldir "readme" Odig_pkg.readmes
 
 let def_change_logs ~htmldir =
-  def_rel_files htmldir ~nid:"changelog" "change log" Odig_pkg.change_logs
+  def_docdir_links htmldir ~nid:"changelog" "change log" Odig_pkg.change_logs
 
 let def_license_tags =
   def_strings "licenses" ~nid:"license-tags" Odig_pkg.license_tags H.data
 
 let def_licenses ~htmldir =
-  def_rel_files htmldir "licenses" Odig_pkg.licenses
+  def_docdir_links htmldir "licenses" Odig_pkg.licenses
 
 let def_issues =
   def_raw_links "issues" Odig_pkg.issues
@@ -147,8 +182,8 @@ let def_deps ~htmldir pkg =
   let linkify dep = match Odig_pkg.find conf dep with
   | None -> H.data dep
   | Some dep_pkg ->
-      let dst = Fpath.(htmldir dep_pkg / "index.html") in
-      let cur = htmldir pkg in
+      let dst = Fpath.(htmldir (Some dep_pkg) / "index.html") in
+      let cur = htmldir (Some pkg) in
       begin match Fpath.relativize ~root:cur dst with
       | None -> H.data dep
       | Some d -> H.(link (fpath_to_uri d) (data dep))
@@ -176,22 +211,20 @@ let def_version pkg =
   H.(tr_anchor "version" @@ version_data pkg)
 
 let pkg_page_info ~htmldir pkg =
-  let pkg_htmldir = htmldir pkg in
   let defs pkg =
-    H.(
-      empty
-      ++ def_authors pkg
-      ++ def_change_logs ~htmldir:pkg_htmldir pkg
-      ++ def_deps ~htmldir pkg
-      ++ def_homepage pkg
-      ++ def_issues pkg
-      ++ def_license_tags pkg
-      ++ def_licenses ~htmldir:pkg_htmldir pkg
-      ++ def_maintainers pkg
-      ++ def_online_doc pkg
-      ++ def_readmes ~htmldir:pkg_htmldir pkg
-      ++ def_tags pkg
-      ++ def_version pkg)
+    H.(empty
+       ++ def_authors pkg
+       ++ def_change_logs ~htmldir pkg
+       ++ def_deps ~htmldir pkg
+       ++ def_homepage pkg
+       ++ def_issues pkg
+       ++ def_license_tags pkg
+       ++ def_licenses ~htmldir pkg
+       ++ def_maintainers pkg
+       ++ def_online_doc pkg
+       ++ def_readmes ~htmldir pkg
+       ++ def_tags pkg
+       ++ def_version pkg)
   in
   let iid = "info" in
   H.to_string ~doc_type:false @@
@@ -355,17 +388,16 @@ let online_manual_link =
        (data "OCaml manual") ++ (data " (online, latest version)."))
 
 let manual_link conf ~htmldir =
-  let local_man =
-    Fpath.(Odig_conf.docdir conf / "ocaml-manual" / "index.html")
-  in
+  let htmlroot = htmldir None in
+  let local = Fpath.(Odig_conf.docdir conf / "ocaml-manual" / "index.html") in
   begin
-    OS.File.exists local_man >>| function
+    OS.File.exists local >>| function
     | false -> online_manual_link
     | true ->
-        match Fpath.relativize ~root:htmldir local_man with
-        | None -> online_manual_link
-        | Some path ->
-            H.(link (fpath_to_uri path) (data "OCaml manual") ++ (data "."))
+        let text = H.data "OCaml manual" in
+        let cur_dir = htmlroot in
+        let cur_href_path = Fpath.v "." in
+        H.(docdir_link ~text conf ~cur_dir ~cur_href_path local ++ data ".")
   end
   |> Odig_log.on_error_msg ~use:(fun _ -> online_manual_link)
 

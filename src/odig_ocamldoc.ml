@@ -41,12 +41,11 @@ let mli_incs idx pkg mli =
 
 (* ocamldoc generation *)
 
-let htmldir conf = Fpath.(Odig_conf.cachedir conf / "ocamldoc")
-let pkg_htmldir pkg =
-  let htmldir = htmldir (Odig_pkg.conf pkg) in
-  Fpath.(htmldir / Odig_pkg.name pkg)
-
 let css_file conf = Fpath.(Odig_etc.dir / "ocamldoc.css")
+
+let htmldir conf =
+  let root = Fpath.(Odig_conf.cachedir conf / "ocamldoc") in
+  function None -> root | Some p -> Fpath.(root / Odig_pkg.name p)
 
 let compile_dst pkg mli =
   let pkgdir = Odig_pkg.libdir pkg in
@@ -119,28 +118,29 @@ let pkg_odocs pkg =
   snd @@ List.fold_left add_odoc (String.Set.empty, []) mlis
 
 let html ~ocamldoc ~force pkg =
-  let htmldir = pkg_htmldir pkg in
+  let htmldir = htmldir (Odig_pkg.conf pkg) in
+  let htmlroot = htmldir (Some pkg) in
   let pkg_to_html pkg =
     let mlis = Odig_cobj.mlis (Odig_pkg.cobjs pkg) in
     match mlis with
     | [] ->
         Odig_log.info (fun m -> m "%s: No mli files found" (Odig_pkg.name pkg));
-        OS.Dir.delete ~recurse:true htmldir
+        OS.Dir.delete ~recurse:true htmlroot
     | _ ->
         match pkg_odocs pkg with
         | [] ->
             Odig_log.info
               (fun m -> m "%s: No odoc files generated" (Odig_pkg.name pkg));
-            OS.Dir.delete ~recurse:true htmldir
+            OS.Dir.delete ~recurse:true htmlroot
         | ocdocs ->
-            let html_trail = Odig_btrail.v ~id:(Fpath.to_string htmldir) in
+            let html_trail = Odig_btrail.v ~id:(Fpath.to_string htmlroot) in
             let ocdoc_trails =
               List.map (fun o -> Odig_btrail.v ~id:(Fpath.to_string o)) ocdocs
             in
             let is_fresh =
               if force then Ok false else
               match Odig_btrail.status html_trail with
-              | `Fresh -> OS.Dir.exists htmldir
+              | `Fresh -> OS.Dir.exists htmlroot
               | `Stale -> Ok false
             in
             is_fresh >>= function
@@ -154,33 +154,32 @@ let html ~ocamldoc ~force pkg =
   (*            let title = Cmd.(v "-t" % Odig_pkg.name pkg) in *)
                 let odoc = Cmd.(ocamldoc % "-hide-warnings" %% loads %
                                 "-sort" %% html %% css % "-colorize-code" %%
-                                intro % "-short-functors" % "-d" % p htmldir)
+                                intro % "-short-functors" % "-d" % p htmlroot)
                 in
                 let intro =
-                  Odig_api_doc.pkg_page_mld
-                    ~tool:`Ocamldoc ~htmldir:pkg_htmldir pkg
+                  Odig_api_doc.pkg_page_mld ~tool:`Ocamldoc ~htmldir pkg
                 in
                 OS.File.write intro_file intro
                 >>= fun () -> OS.Cmd.run_status odoc
                 >>= begin function
                 | `Exited 0 ->
                     (* We don't really care about the digest *)
-                    Odig_digest.mtimes [htmldir] >>| fun d -> Some d
+                    Odig_digest.mtimes [htmlroot] >>| fun d -> Some d
                 | _ ->
-                    OS.Dir.delete ~recurse:true htmldir >>| fun () -> None
+                    OS.Dir.delete ~recurse:true htmlroot >>| fun () -> None
                 end >>| fun digest ->
                 Odig_btrail.set_witness ~preds:ocdoc_trails html_trail digest
   in
-  OS.Dir.create ~path:true htmldir >>= fun _ ->
+  OS.Dir.create ~path:true htmlroot >>= fun _ ->
   Odig_log.time
     (fun _ m -> m "Compiled HTML files of %s" (Odig_pkg.name pkg))
     pkg_to_html pkg
 
 let rec htmldir_css_and_index conf =
-  let partition pkgs =
+  let partition htmldir pkgs =
     let classify p (has_doc, no_doc as acc) =
       begin
-        OS.Dir.exists (pkg_htmldir p) >>| function
+        OS.Dir.exists (htmldir (Some p)) >>| function
         | true -> (p :: has_doc, no_doc)
         | false -> (has_doc, p :: no_doc)
       end
@@ -190,13 +189,14 @@ let rec htmldir_css_and_index conf =
     List.rev has_doc, List.rev no_doc
   in
   let htmldir = htmldir conf in
+  let htmlroot = htmldir None in
   Odig_pkg.set conf
-  >>= function pkgs -> Ok (partition pkgs)
+  >>= function pkgs -> Ok (partition htmldir pkgs)
   >>= fun (has_doc, no_doc) ->
   Ok (Odig_api_doc.pkg_index conf ~tool:`Ocamldoc ~htmldir ~has_doc ~no_doc)
-  >>= fun index -> OS.File.write Fpath.(htmldir / "index.html") index
+  >>= fun index -> OS.File.write Fpath.(htmlroot / "index.html") index
   >>= fun () -> OS.File.read (css_file conf)
-  >>= fun css -> OS.File.write Fpath.(htmldir / "style.css") css
+  >>= fun css -> OS.File.write Fpath.(htmlroot / "style.css") css
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

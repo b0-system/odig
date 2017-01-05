@@ -129,6 +129,20 @@ let pkgs_or_all_opt =
   in
   Term.(ret (const select $ all $ pkgs ()))
 
+let docdir_href =
+  let doc = "Overrides the configuration key docdir-href. For HTML
+             generation, the base $(i,URI) under which $(i,DOCDIR) is
+             accessible, expressed (if) relative to the root package
+             list. If set to the empty string, links to $(i,DOCDIR) are
+             made by relativizing $(i,DOCDIR) w.r.t. to the location
+             of the generated HTML file."
+  in
+  let docv = "URI" in
+  let parse = function "" -> `Ok None | s -> `Ok (Some s) in
+  let print ppf v = match v with None -> () | Some v -> Fmt.string ppf v in
+  let uri = parse, print in
+  Arg.(value & opt (some uri) None & info [ "docdir-href" ] ~doc ~docv)
+
 (* Basic setup for every command *)
 
 let setup conf style_renderer log_level =

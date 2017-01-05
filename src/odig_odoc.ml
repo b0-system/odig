@@ -14,12 +14,10 @@ open Bos_setup
    .odoc file we check if there's not a cmt or cmti file (in that
    order) to use at the same location instead of the cmi. *)
 
-let htmldir conf = Fpath.(Odig_conf.cachedir conf / "odoc")
 let css_file conf = Fpath.(Odig_etc.dir / "odoc.css")
-
-let pkg_htmldir pkg =
-  let htmldir = htmldir (Odig_pkg.conf pkg) in
-  Fpath.(htmldir / Odig_pkg.name pkg)
+let htmldir conf =
+  let root = Fpath.(Odig_conf.cachedir conf / "odoc") in
+  function None -> root | Some p -> Fpath.(root / Odig_pkg.name p)
 
 let compile_dst pkg src =
   let pkgdir = Odig_pkg.libdir pkg in
@@ -134,8 +132,8 @@ let html_of_odoc ~odoc ~force pkg cmi =
   let odoc_file = compile_dst pkg cmi_path in
   cmi_deps pkg cmi >>= fun deps ->
   let incs = incs_of_deps ~odoc:true deps in
-  let htmldir = htmldir (Odig_pkg.conf pkg) in
-  OS.Cmd.run Cmd.(odoc % "html" %% incs % "-o" % p htmldir % p odoc_file)
+  let htmlroot = htmldir (Odig_pkg.conf pkg) None in
+  OS.Cmd.run Cmd.(odoc % "html" %% incs % "-o" % p htmlroot % p odoc_file)
 
 let html_index ~odoc ~force pkg =
   let htmldir = htmldir (Odig_pkg.conf pkg) in
@@ -145,15 +143,16 @@ let html_index ~odoc ~force pkg =
     incs_of_deps ~odoc:true (List.rev_map to_dep cmis)
   in
   let name = Odig_pkg.name pkg in
-  let page = Odig_api_doc.pkg_page_mld ~tool:`Odoc ~htmldir:pkg_htmldir pkg in
+  let page = Odig_api_doc.pkg_page_mld ~tool:`Odoc ~htmldir pkg in
+  let htmlroot = htmldir None in
   OS.File.tmp "odig-index-%s.mld"
   >>= fun index_file -> OS.File.write index_file page
   >>= fun () ->
-  OS.Cmd.run Cmd.(odoc % "html" %% incs % "-o" % p htmldir %
+  OS.Cmd.run Cmd.(odoc % "html" %% incs % "-o" % p htmlroot %
                   "--index-for" % name % p index_file)
 
 let html ~odoc ~force pkg =
-  let htmldir = pkg_htmldir pkg in
+  let htmldir = htmldir (Odig_pkg.conf pkg) (Some pkg) in
   let cmis = Odig_cobj.cmis (Odig_pkg.cobjs pkg) in
   let html pkg =
     let html_of_odoc = html_of_odoc ~odoc ~force pkg in
@@ -166,10 +165,10 @@ let html ~odoc ~force pkg =
     html pkg
 
 let htmldir_css_and_index conf =
-  let partition pkgs =
+  let partition htmldir pkgs =
     let classify p (has_doc, no_doc as acc) =
       begin
-        OS.Dir.exists (pkg_htmldir p) >>| function
+        OS.Dir.exists (htmldir (Some p)) >>| function
         | true -> (p :: has_doc, no_doc)
         | false -> (has_doc, p :: no_doc)
       end
@@ -179,13 +178,14 @@ let htmldir_css_and_index conf =
     List.rev has_doc, List.rev no_doc
   in
   let htmldir = htmldir conf in
+  let htmlroot = htmldir None in
   Odig_pkg.set conf
-  >>= function pkgs -> Ok (partition pkgs)
+  >>= function pkgs -> Ok (partition htmldir pkgs)
   >>= fun (has_doc, no_doc) ->
   Ok (Odig_api_doc.pkg_index ~tool:`Odoc ~htmldir conf ~has_doc ~no_doc)
-  >>= fun index -> OS.File.write Fpath.(htmldir / "index.html") index
+  >>= fun index -> OS.File.write Fpath.(htmlroot / "index.html") index
   >>= fun () -> OS.File.read (css_file conf)
-  >>= fun css -> OS.File.write Fpath.(htmldir / "odoc.css") css
+  >>= fun css -> OS.File.write Fpath.(htmlroot / "odoc.css") css
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

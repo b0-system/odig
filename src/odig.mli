@@ -679,6 +679,10 @@ module Conf : sig
       of [cachedir] should be trusted regardless of whether [libdir]
       and [docdir] may have changed. *)
 
+  val with_conf : ?trust_cache:bool -> ?docdir_href:string option -> t -> t
+  (** [of_conf ~trust_cache ~docdir_href c] is [c] updated with
+      arguments specified, unspecfied ones are left untouched. *)
+
   val of_file : ?trust_cache:bool -> Fpath.t -> (t, [`Msg of string]) result
   (** [of_file f] reads a configuration from configuration file [f].
       See {!v}. *)
@@ -1021,11 +1025,9 @@ module Odoc : sig
 
   (** {1 Odoc} *)
 
-  val htmldir : Conf.t -> Fpath.t
-  (** [htmldir c] is the [odoc] html directory for [c]. *)
-
-  val pkg_htmldir : Pkg.t -> Fpath.t
-  (** [pkg_htmldir p] is the [odoc] html directory for package [p]. *)
+  val htmldir : Conf.t -> (Pkg.t option -> Fpath.t)
+  (** [htmldir c] is is a function that returns the root or package
+      [odoc] HTML directory for [c]. *)
 
   val compile :
     odoc:Bos.Cmd.t -> force:bool -> Pkg.t -> (unit, [`Msg of string]) result
@@ -1047,11 +1049,9 @@ module Ocamldoc : sig
 
   (** {1 Ocamldoc} *)
 
-  val htmldir : Conf.t -> Fpath.t
-  (** [htmldir c] is the [ocamldoc] html directory for [c]. *)
-
-  val pkg_htmldir : Pkg.t -> Fpath.t
-  (** [pkg_htmldir p] is the [ocamldoc] html directory for package [p]. *)
+  val htmldir : Conf.t -> (Pkg.t option -> Fpath.t)
+  (** [htmldir c] is is a function that returns the root or package
+      [ocamldoc] HTML directory for [c]. *)
 
   val compile :
     ocamldoc:Bos.Cmd.t -> force:bool -> Pkg.t -> (unit, [`Msg of string]) result

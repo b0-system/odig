@@ -33,21 +33,21 @@ let pkg_not_found tool pkg () =
 
 let add_odoc_root conf =
   add_file (root_not_found "odoc")
-    Fpath.(Odig.Odoc.htmldir conf / "index.html")
+    Fpath.(Odig.Odoc.htmldir conf None / "index.html")
 
 let add_odoc_pkg pkg =
   add_file (pkg_not_found "odoc" pkg)
-    Fpath.(Odig.Odoc.pkg_htmldir pkg / "index.html")
+    Fpath.(Odig.Odoc.htmldir (Odig.Pkg.conf pkg) (Some pkg) / "index.html")
 
 (* ocamldoc *)
 
 let add_ocamldoc_root conf =
   add_file (root_not_found "ocamldoc")
-    Fpath.(Odig.Ocamldoc.htmldir conf / "index.html")
+    Fpath.(Odig.Ocamldoc.htmldir conf None / "index.html")
 
 let add_ocamldoc_pkg pkg =
   add_file (pkg_not_found "ocamldoc" pkg)
-    Fpath.(Odig.Ocamldoc.pkg_htmldir pkg / "index.html")
+    Fpath.(Odig.Ocamldoc.htmldir (Odig.Pkg.conf pkg) (Some pkg) / "index.html")
 
 (* Command *)
 

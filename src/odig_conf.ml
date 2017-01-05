@@ -32,6 +32,12 @@ let v ?(trust_cache = false) ~cachedir ~libdir ~docdir ~docdir_href () =
   at_exit (write_trails cachedir); (* FIXME more explicit *)
   { libdir; docdir; cachedir; docdir_href; trust_cache; }
 
+let with_conf ?trust_cache ?docdir_href c =
+  let update v nyew = match nyew with None -> v | Some v -> v in
+  let trust_cache = update c.trust_cache trust_cache in
+  let docdir_href = update c.docdir_href docdir_href in
+  { c with trust_cache; docdir_href }
+
 let of_opam_switch ?trust_cache ?switch ?docdir_href () =
   let switch = match switch with
   | None -> Cmd.empty
@@ -61,7 +67,8 @@ let of_file ?trust_cache f =
       Fpath.of_string dir >>= fun dir ->
       parse_directives opam libdir (Some dir) docdir_href cachedir ds
   | (`List [`Atom "docdir-href", _; `Atom href, _ ], _ ) :: ds ->
-      parse_directives opam libdir docdir (Some href) cachedir  ds
+      let href = if href = "" then None else Some href in
+      parse_directives opam libdir docdir href cachedir  ds
   | (`List [`Atom "cachedir", _; `Atom dir, _ ], _ ) :: ds ->
       Fpath.of_string dir >>= fun dir ->
       parse_directives opam libdir docdir docdir_href (Some dir)  ds

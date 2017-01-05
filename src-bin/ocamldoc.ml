@@ -17,8 +17,9 @@ let ocamldocs ~ocamldoc ~force conf pkgs =
   Log.on_iter_error_msg Pkg.Set.iter (ocamldoc_pkg ~force ~ocamldoc) pkgs;
   Odig.Ocamldoc.htmldir_css_and_index conf
 
-let api_doc conf ocamldoc force pkgs =
+let api_doc conf ocamldoc force docdir_href pkgs =
   begin
+    let conf = Odig.Conf.with_conf ?docdir_href conf in
     Cli.lookup_pkgs conf pkgs
     >>= fun pkgs -> ocamldocs ~ocamldoc ~force conf pkgs
     >>= fun () -> Ok 0
@@ -39,7 +40,7 @@ let man =
 let cmd =
   let info = Term.info "ocamldoc" ~sdocs:Cli.common_opts ~doc ~man in
   let term = Term.(const api_doc $ Cli.setup () $ Cli.ocamldoc $
-                   Cli.doc_force $ Cli.pkgs_or_all)
+                   Cli.doc_force $ Cli.docdir_href $ Cli.pkgs_or_all)
   in
   term, info
 

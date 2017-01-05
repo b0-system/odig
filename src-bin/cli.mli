@@ -77,6 +77,10 @@ val pkgs_or_all_opt : [`Pkgs of Odig.Pkg.name list | `All ] Term.t
     provided if [--all] is specified. It is an error if no package
     is specified and [--all] is absent. *)
 
+val docdir_href : string option option Term.t
+(** [docdir_href] is a [--docdir-href] is a command line option
+    to override the configuration's {!Conf.docdir_href} value. *)
+
 (** {1 Commonalities} *)
 
 val setup : unit -> Odig.Conf.t Term.t

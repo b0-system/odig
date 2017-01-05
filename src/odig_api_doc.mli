@@ -6,10 +6,11 @@
 
 val pkg_page_mld :
   tool:[`Odoc | `Ocamldoc ] ->
-  htmldir:(Odig_pkg.t -> Fpath.t) -> Odig_pkg.t -> string
+  htmldir:(Odig_pkg.t option -> Fpath.t) -> Odig_pkg.t -> string
 
 val pkg_index :
-  Odig_conf.t -> tool:[`Odoc | `Ocamldoc ] -> htmldir:Fpath.t ->
+  Odig_conf.t -> tool:[`Odoc | `Ocamldoc ] ->
+  htmldir:(Odig_pkg.t option -> Fpath.t) ->
   has_doc:Odig_pkg.t list -> no_doc:Odig_pkg.t list -> string
 
 (*---------------------------------------------------------------------------

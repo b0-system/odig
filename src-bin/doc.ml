@@ -85,18 +85,18 @@ let man =
 
 let backend =
   let odoc =
-    let doc = "Show odoc output." in
+    let doc = "Show odoc output (default)." in
     `Odoc, Arg.info ["odoc"] ~doc
   in
   let ocamldoc =
-    let doc = "Show ocamlbuild output (default)." in
+    let doc = "Show ocamlbuild output." in
     `Ocamldoc, Arg.info ["ocamldoc"] ~doc
   in
   let compare =
     let doc = "Show both odoc and ocamlbuild output for comparison." in
     `Compare, Arg.info ["c"; "compare"] ~doc
   in
-  Arg.(value & vflag `Ocamldoc [odoc; ocamldoc; compare])
+  Arg.(value & vflag `Odoc [odoc; ocamldoc; compare])
 
 
 let cmd =

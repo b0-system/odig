@@ -176,8 +176,9 @@ ul.indexlist li { margin-left:0; padding: 0; }
 
 /* Odig package index */
 
-.by-name ol, .by-tag ol { list-style-type: none; margin:0; }
-.by-name li, .by-tag li { margin-left:0; }
+.by-name ol, .by-tag ol, .errors ol { list-style-type: none; margin-left:0; }
+.by-name ol ol, .by-tag ol ol { margin-top:0; margin-bottom: 0 }
+.by-name li, .by-tag li, .errors li { margin-left:0; }
 
 .by-name .version { font-size: 0.625rem; color: #AAA }
 .by-name nav { margin-bottom: 0.625rem }

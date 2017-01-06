@@ -364,7 +364,7 @@ let tag_list pkgs =
 
 let error_list tool pkgs =
   let tool, file_kind = match tool with
-  | `Odoc -> "odoc", "cmti"
+  | `Odoc -> "odoc", "cmi"
   | `Ocamldoc -> "ocamldoc", "mli"
   in
   let li_no_doc pkg =

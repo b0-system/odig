@@ -47,6 +47,7 @@ ul, ol
 ul { list-style-type: square }
 ul > li { margin-left: 1.375rem; }
 ol > li { margin-left: 1.7rem; }
+li > *:first-child { margin-top: 0 }
 
 /* Text alignements, this should be forbidden. */
 
@@ -79,9 +80,9 @@ a.anchor
 
 /* Section and document divisions.
    Until at least 4.03 many of the modules of the stdlib start at .h7,
-   we make it look like h2 and .h8 like h3. */
+   we restart the sequence there like h2  */
 
-h1, h2, h3, h4, h5, h6, .h7, .h8
+h1, h2, h3, h4, h5, h6, .h7, .h8, .h9, .h10
 { font-weight: bold; margin-top: 1.25rem; }
 
 h1 + *, h2 + *, .h7 + * { margin-top: 0.625rem; }
@@ -93,9 +94,8 @@ h1, h2, .h7
   border-width: 1px;
   border-color: #DDD; }
 
-h2 + h3, .h7 + .h8 { margin-top: 0.625rem; }
 h3, .h8 { font-size: 1.125rem; }
-h4, .h9 { margin-top: 0.625rem; }
+h2 + h3, .h7 + .h8 { margin-top: 0.625rem; }
 
 /* Preformatted and code */
 
@@ -170,8 +170,9 @@ span.at-tag { font-weight: bold }
 
 /* Odig package index */
 
-.by-name ol, .by-tag ol { list-style-type: none; margin:0; }
-.by-name li, .by-tag li { margin-left:0; }
+.by-name ol, .by-tag ol, .errors ol { list-style-type: none; margin-left:0; }
+.by-name ol ol, .by-tag ol ol { margin-top:0; margin-bottom: 0 }
+.by-name li, .by-tag li, .errors li { margin-left:0; }
 
 .by-name .version { font-size: 0.625rem; color: #AAA }
 .by-name nav { margin-bottom: 0.625rem }

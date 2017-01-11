@@ -135,6 +135,23 @@ let html_of_odoc ~odoc ~force pkg cmi =
   let htmlroot = htmldir (Odig_pkg.conf pkg) None in
   OS.Cmd.run Cmd.(odoc % "html" %% incs % "-o" % p htmlroot % p odoc_file)
 
+let copy_assets ~force pkg =
+  let src = Fpath.(Odig_pkg.docdir pkg / "odoc-assets") in
+  let dst = Fpath.(htmldir (Odig_pkg.conf pkg) (Some pkg) / "_assets") in
+  let cp_dir src dst = (* FIXME bos https://github.com/dbuenzli/bos/issues/30 *)
+    let cp dst acc src =
+      acc
+      >>= fun () -> OS.File.read src
+      >>= fun file -> OS.File.write Fpath.(dst / filename src) file
+    in
+    OS.Dir.create dst
+    >>= fun _ -> OS.Dir.contents src
+    >>= fun files -> List.fold_left (cp dst) (Ok ()) files
+  in
+  OS.Dir.exists src >>= function
+  | true -> cp_dir src dst
+  | false -> Ok ()
+
 let html_index ~odoc ~force pkg =
   let htmldir = htmldir (Odig_pkg.conf pkg) in
   let incs =
@@ -150,6 +167,7 @@ let html_index ~odoc ~force pkg =
   >>= fun () ->
   OS.Cmd.run Cmd.(odoc % "html" %% incs % "-o" % p htmlroot %
                   "--index-for" % name % p index_file)
+  >>= fun () -> copy_assets ~force pkg
 
 let html ~odoc ~force pkg =
   let htmldir = htmldir (Odig_pkg.conf pkg) (Some pkg) in

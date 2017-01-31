@@ -54,7 +54,7 @@ open Cmdliner
 let doc = "List packages"
 let man =
   [ `S "DESCRIPTION";
-    `P "The $(b,list) command lists the package known to odig.";
+    `P "The $(tname) command lists the package known to odig.";
   ] @ Cli.common_man @ Cli.see_also_main_man
 
 let cmd =

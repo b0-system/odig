@@ -43,20 +43,20 @@ let main _ = `Help (`Pager, None)
 let doc = "Mine installed OCaml packages"
 let man =
   [ `S "DESCRIPTION";
-    `P "$(b,$(mname)) mines installed OCaml packages. It supports
+    `P "$(mname) mines installed OCaml packages. It supports
         package distribution documentation and metadata lookups and
         generates cross-referenced API documentation.";
-    `P "Use '$(b,$(mname)) help basics' for understanding the basics.";
+    `P "Use '$(mname) help basics' for understanding the basics.";
     `Noblank;
-    `P "Use '$(b,$(mname)) help packaging' for packaging conventions.";
+    `P "Use '$(mname) help packaging' for packaging conventions.";
     `Noblank;
-    `P "Use '$(b,$(mname)) help conf' for information about odig
+    `P "Use '$(mname) help conf' for information about odig
         configuration.";
     `Noblank;
-    `P "Use '$(b,$(mname)) help $(i,COMMAND)' for information about
+    `P "Use '$(mname) help $(i,COMMAND)' for information about
         $(i,COMMAND).";
     `S "IMPORTANT WARNING";
-    `P "$(b,$(mname)) is a usable work in progress. Command line interfaces
+    `P "$(mname) is a usable work in progress. Command line interfaces
         may change without notice in the future.";
     `S "COMMANDS";
   ] @ Cli.common_opts_man @ [

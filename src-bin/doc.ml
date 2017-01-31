@@ -80,7 +80,7 @@ open Cmdliner
 let doc = "Show package API documentation"
 let man =
   [ `S "DESCRIPTION";
-    `P "The $(b,$(tname)) command shows the API documentation of a package.";
+    `P "The $(tname) command shows the API documentation of a package.";
   ] @ Cli.common_man @ Cli.see_also_main_man
 
 let backend =

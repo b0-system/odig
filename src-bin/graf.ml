@@ -115,9 +115,9 @@ open Cmdliner
 let doc = "Generate graphs from the package install data"
 let man =
   [ `S "SYNOPSIS";
-    `P "$(b,$(mname)) $(b,$(tname)) $(i,KIND) [$(i,OPTION)]... [$(i,PKG)]...";
+    `P "$(mname) $(tname) $(i,KIND) [$(i,OPTION)]... [$(i,PKG)]...";
     `S "DESCRIPTION";
-    `P "The $(b,$(tname)) generates dot files according to
+    `P "The $(tname) generates dot files according to
         $(i,KIND). If no packages are specified, operates on all packages.";
     `P "EXAMPLES";
     `Pre " odig graph pkg-deps | dot -Tsvg > /tmp/d.svg && browse /tmp/d.svg";

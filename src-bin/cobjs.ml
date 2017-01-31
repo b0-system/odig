@@ -116,12 +116,12 @@ let cmd_info ~cmd ~kind =
   let doc = strf "Show the %s files of a package" kind in
   let man =
     [ `S "DESCRIPTION";
-      `P (strf "The $(b,$(tname)) command shows the %s of a package.
+      `P (strf "The $(tname) command shows the %s of a package.
                 See odig-packaging(7) to understand how %s are found
                 by odig." kind kinds);
     ] @ Cli.common_man @ [
       `S "EXIT STATUS";
-      `P "The $(b,$(tname)) command exits with one of the following values:";
+      `P "The $(tname) command exits with one of the following values:";
       `I ("0", "packages exist and the lookups succeeded.");
       `I ("1", "with $(b,--warn-error), a lookup is undefined.");
       `I (">1", "an error occured.");

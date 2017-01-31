@@ -87,9 +87,9 @@ open Cmdliner
 let doc = "Operate on the odig cache"
 let man =
   [ `S "SYNOPSIS";
-    `P "$(b,$(mname)) $(b,$(tname)) $(i,ACTION) [$(i,OPTION)]... [$(i,PKG)]...";
+    `P "$(mname) $(tname) $(i,ACTION) [$(i,OPTION)]... [$(i,PKG)]...";
     `S "DESCRIPTION";
-    `P "The $(b,$(tname)) command operates on the odig cache. If no packages
+    `P "The $(tname) command operates on the odig cache. If no packages
         are specified, operates on all packages.";
     `S "ACTIONS";
     `I ("$(b,path)", "Display path(s) to the cache.");

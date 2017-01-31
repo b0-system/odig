@@ -92,7 +92,7 @@ let cmd_info ~cmd ~kind =
   let doc = strf "Show the %s of a package" kind in
   let man =
     [ `S "DESCRIPTION";
-      `P (strf "The $(b,$(tname)) command shows the %s of a package. If
+      `P (strf "The $(tname) command shows the %s of a package. If
                 invoked with $(b,--no-pager) and multiple files are output
                 these are separated by a U+001C (file separator) control
                 character." kind);
@@ -101,7 +101,7 @@ let cmd_info ~cmd ~kind =
       `I ("$(i,PAGER)", "The pager used to display content.");
       `I ("$(i,TERM)", "See option $(b,--no-pager).");
       `S "EXIT STATUS";
-      `P "The $(b,$(tname)) command exits with one of the following values:";
+      `P "The $(tname) command exits with one of the following values:";
       `I ("0", "packages exist and the lookups succeeded.");
       `I ("1", "with $(b,--warn-error), a lookup is undefined.");
       `I (">1", "an error occured.");

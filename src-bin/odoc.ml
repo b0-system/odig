@@ -32,7 +32,7 @@ open Cmdliner
 let doc = "Generate package API documentation with odoc"
 let man =
   [ `S "DESCRIPTION";
-    `P "The $(b,$(tname)) odoc generates the API documentation of a package
+    `P "The $(tname) odoc generates the API documentation of a package
         using the cmti files of the package.";
   ] @ Cli.common_man @ Cli.see_also_main_man
 

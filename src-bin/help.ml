@@ -183,7 +183,7 @@ let topic =
 let doc = "Show help about odig"
 let man =
   [ `S "DESCRIPTION";
-    `P "The $(b,$(tname)) command shows help about odig.";
+    `P "The $(tname) command shows help about odig.";
     `P "Use `topics' as $(i,TOPIC) to get a list of topics.";
   ] @ Cli.see_also_main_man
 

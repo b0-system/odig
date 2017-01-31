@@ -46,12 +46,12 @@ let cmd_info ~cmd ~kind =
   let doc = strf "Show the %s of a package" kind in
   let man =
     [ `S "DESCRIPTION";
-      `P (strf "The $(b,$(tname)) command shows the %s of a package by
+      `P (strf "The $(tname) command shows the %s of a package by
                 opening or reloading the %s URI in a WWW browser."
             kind kind);
     ] @ Cli.common_man @ [
       `S "EXIT STATUS";
-      `P "The $(b,$(tname)) command exits with one of the following values:";
+      `P "The $(tname) command exits with one of the following values:";
       `I ("0", "packages exist and the lookups succeeded.");
       `I ("1", "with $(b,--warn-error), a lookup is undefined.");
       `I (">1", "an error occured.");

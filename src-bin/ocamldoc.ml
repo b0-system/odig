@@ -33,7 +33,7 @@ open Cmdliner
 let doc = "Generate package API documentation with ocamldoc"
 let man =
   [ `S "DESCRIPTION";
-    `P "The $(b,$(tname)) command generates the API documentation of
+    `P "The $(tname) command generates the API documentation of
         a package via its mli files.";
   ] @ Cli.common_man @ Cli.see_also_main_man
 

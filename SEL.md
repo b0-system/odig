@@ -58,7 +58,7 @@ x-odig-sel-$SEL:
 ```
 
 * `$SEL` the selector to which it applies (the toplevel package name
-   can be replaced by `_` following OPAM conventions).
+   can be replaced by `_` following opam conventions).
 * `$QUERY`
   `{compile,link,dynlink}-{flags,files,deps}-{byte,native}-{pre,post,replace}`
    or maybe give more structure to the subfield.

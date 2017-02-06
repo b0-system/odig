@@ -28,7 +28,7 @@ instructions.
 ## Documentation
 
 For a quick start, to access the distribution and API documentation of
-OPAM packages do:
+opam packages do:
 
 ```
 odig ocamldoc

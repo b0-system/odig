@@ -28,7 +28,7 @@ let basics =
     `Pre " odig readme bos";`Noblank;
     `Pre " odig changes bos";`Noblank;
     `Pre " odig license bos";
-    `P "If the package properly installed its OPAM metadata file you can
+    `P "If the package properly installed its opam metadata file you can
         also quickly get access to the issues, homepage, or
         online documentation pages of a package. The following commands
         opens them in your browser:";
@@ -71,7 +71,7 @@ let packaging =
         called $(i,LIBDIR) and have their distribution documentation installed
         in a library prefix called $(i,DOCDIR).";
     `P "For a package named $(i,PKG) to be recognized by odig $(i,PKG)
-        must be a valid OPAM package name and one of the following paths
+        must be a valid opam package name and one of the following paths
         must exist:";
     `P "$(i,LIBDIR)/$(i,PKG)/opam";`Noblank;
     `P "$(i,LIBDIR)/$(i,PKG)/META"; `Noblank;
@@ -83,11 +83,11 @@ let packaging =
         $(i,DOCDIR)/$(i,PKG).";
     `P "Typically the values of $(i,LIBDIR) and $(i,DOCDIR) will
         be `opam config var lib` and `opam config var doc`. However
-        odig is not tied to OPAM, the only assumption made by odig is
+        odig is not tied to opam, the only assumption made by odig is
         that the above install structure is followed.";
     `S "METADATA RECOGNITION";
     `P "Package metadata for $(i,PKG) is always read from
-        $(i,LIBDIR)/$(i,PKG)/opam which must be a valid OPAM
+        $(i,LIBDIR)/$(i,PKG)/opam which must be a valid opam
         file. If present, the following fields are consulted and used
         by odig in various context and/or commands.";
     `I ("authors:", "The authors, $(b,authors) command");

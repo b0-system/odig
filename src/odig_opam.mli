@@ -4,9 +4,9 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-(** OPAM interaction. *)
+(** opam interaction. *)
 
-(** {1 OPAM} *)
+(** {1 opam} *)
 
 open Bos_setup
 

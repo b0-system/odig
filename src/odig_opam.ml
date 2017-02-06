@@ -61,12 +61,12 @@ module File = struct
       (* FIXME add OpamFile.OPAM.extensions when supported *)
       known_fields
     in
-    Logs.info (fun m -> m "Parsing OPAM file %a" Fpath.pp file);
+    Logs.info (fun m -> m "Parsing opam file %a" Fpath.pp file);
     try Ok (parse file) with
     | exn ->
         (* Apparently in at least opam-lib 1.2.2, the error will be logged
              on stdout. *)
-        R.error_msgf "%a: could not parse OPAM file" Fpath.pp file
+        R.error_msgf "%a: could not parse opam file" Fpath.pp file
 
   let deps ?(opts = true) fields =
     let deps = match String.Map.find "depends" fields with

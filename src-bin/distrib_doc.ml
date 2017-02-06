@@ -126,7 +126,7 @@ let changes_cmd =
   cmd "changes" ~kind:"change log" ~get:Pkg.change_logs
 
 let tag =
-  let doc = "Read license tags from the package's OPAM file. Implies
+  let doc = "Read license tags from the package's opam file. Implies
              $(b,--no-pager)."
   in
   Arg.(value & flag & info ["t"; "tag"] ~doc)

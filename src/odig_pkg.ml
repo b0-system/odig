@@ -187,7 +187,7 @@ let _cache p =
 let cobjs_trail p = fst (Lazy.force p.cache)
 let cobjs p = snd (Lazy.force p.cache)
 
-(* OPAM file and fields *)
+(* opam file and fields *)
 
 let pkg_opam_fields conf name =
   let opam_file = pkg_opam_file conf name in
@@ -259,7 +259,7 @@ let conf_cobj_index c = try Hashtbl.find memo c with
     Hashtbl.add memo c i;
     i
 
-(* OPAM *)
+(* opam *)
 
 let opam_file p = pkg_opam_file p.conf p.name
 let opam_fields p = Lazy.force p.opam_fields

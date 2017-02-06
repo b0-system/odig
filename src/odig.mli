@@ -818,14 +818,14 @@ module Pkg : sig
   val conf : t -> Conf.t
   (** [conf p] is the configuration in which [p] was found. *)
 
-  (** {1 Package metadata (OPAM file)} *)
+  (** {1 Package metadata (opam file)} *)
 
   val opam_file : t -> Fpath.t
-  (** [opam_file p] is [p]'s expected OPAM file path. *)
+  (** [opam_file p] is [p]'s expected opam file path. *)
 
   val opam_fields :
     t -> (string list Astring.String.map, [`Msg of string]) result
-  (** [opam_fields p] is the package's OPAM fields. This is
+  (** [opam_fields p] is the package's opam fields. This is
       {!String.Set.empty} [opam_file p] does not exist. *)
 
   val license_tags : t -> (string list, [`Msg of string]) result
@@ -856,11 +856,11 @@ module Pkg : sig
   (** [repo p] is [p]'s [dev-repo:] field. *)
 
   val deps : ?opts:bool -> t -> (Astring.String.set, [`Msg of string]) result
-  (** [deps p] are [p]'s OPAM dependencies if [opt] is [true]
+  (** [deps p] are [p]'s opam dependencies if [opt] is [true]
       (default) includes optional dependencies. *)
 
   val depopts : t -> (Astring.String.set, [`Msg of string]) result
-  (** [deps p] are [p]'s OPAM optional dependencies. *)
+  (** [deps p] are [p]'s opam optional dependencies. *)
 
   (** {1 Standard distribution documentation}
 

@@ -1,6 +1,6 @@
 true : bin_annot, safe_string
 true : package(rresult asetmap fpath bos.setup mtime.os)
-true : package(opam-lib compiler-libs.common)
+true : package(opam-format compiler-libs.common)
 
 <src> : include
 <src/byte/*> : package(compiler-libs.toplevel)

@@ -40,8 +40,7 @@ module File = struct
     field "doc" OpamFile.OPAM.doc id;
     field "tags" OpamFile.OPAM.tags id;
     field "bug-reports" OpamFile.OPAM.bug_reports id;
-    opt_field "dev-repo"
-      OpamFile.OPAM.dev_repo (list OpamTypesBase.string_of_pin_option);
+    opt_field "dev-repo" OpamFile.OPAM.dev_repo (list OpamUrl.to_string);
     field "depends" OpamFile.OPAM.depends deps_conv;
     field "depopts" OpamFile.OPAM.depopts deps_conv;
   ]
@@ -53,7 +52,7 @@ module File = struct
   let fields file =
     let parse file  =
       let file = OpamFilename.of_string (Fpath.to_string file) in
-      let opam = OpamFile.OPAM.read file in
+      let opam = OpamFile.OPAM.read (OpamFile.make file) in
       let known_fields =
         let add_field acc (_, field) = field acc opam in
         List.fold_left add_field String.Map.empty fields

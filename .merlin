@@ -8,6 +8,7 @@ PKG mtime.os
 PKG webbrowser webbrowser.cli
 PKG asetmap
 PKG findlib
+PKG opam-format
 S src
 S src-bin
 S toys

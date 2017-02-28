@@ -1,76 +1,77 @@
 
 (* Load odig deps *)
 
+#load "unix.cma" (* FIXME this breaks utop *)
+
 #directory "+compiler-libs"
-#directory "%%LIBDIR%%/rresult"
-#directory "%%LIBDIR%%/asetmap"
-#directory "%%LIBDIR%%/astring"
-#directory "%%LIBDIR%%/fpath"
-#directory "%%LIBDIR%%/fmt"
-#directory "%%LIBDIR%%/logs"
-#directory "%%LIBDIR%%/bos"
-#directory "%%LIBDIR%%/mtime/os"
-#directory "%%LIBDIR%%/odig"
-
 #load "ocamlcommon.cma"
-#load "unix.cma"
 
+#directory "%%LIBDIR%%/rresult"
 #load "rresult.cma"
+
+#directory "%%LIBDIR%%/asetmap"
 #load "asetmap.cma"
+
+#directory "%%LIBDIR%%/astring"
 #load "astring.cma"
+
+#directory "%%LIBDIR%%/fpath"
 #load "fpath.cma"
+
+#directory "%%LIBDIR%%/fmt"
 #load "fmt.cma"
 #load "fmt_tty.cma"
+
+#directory "%%LIBDIR%%/logs"
 #load "logs.cma"
 #load "logs_fmt.cma"
+
+#directory "%%LIBDIR%%/bos"
 #load "bos.cma"
 #load "bos_setup.cma"
+
+#directory "%%LIBDIR%%/mtime/os"
 #load "mtime.cma"
 
-(* Load opam-lib dep *)
+(* Load opam-format dep *)
 
-#directory "%%LIBDIR%%/extlib"
-#directory "%%LIBDIR%%/re"
-#directory "%%LIBDIR%%/cudf"
-#directory "%%LIBDIR%%/ocamlgraph"
-#directory "%%LIBDIR%%/dose3"
+#directory "%%LIBDIR%%/opam-file-format"
+#load "opam-file-format.cma"
+
 #directory "%%LIBDIR%%/uutf"
-#directory "%%LIBDIR%%/jsonm"
-#directory "%%LIBDIR%%/opam-lib"
+#load "uutf.cma"
 
-#load "extLib.cma"
+#directory "%%LIBDIR%%/jsonm"
+#load "jsonm.cma"
+
+#directory "%%LIBDIR%%/re"
 #load "re.cma"
-#load "re_perl.cma"
-#load "re_pcre.cma"
-#load "cudf.cma"
-#load "graph.cma"
-#load "%%LIBDIR%%/dose3/common.cma"
-#load "%%LIBDIR%%/dose3/algo.cma"
-#load "%%LIBDIR%%/dose3/debian.cma"
-#load "%%LIBDIR%%/dose3/eclipse.cma"
-#load "%%LIBDIR%%/dose3/csw.cma"
-#load "%%LIBDIR%%/dose3/cv.cma"
 #load "re_emacs.cma"
 #load "re_str.cma"
-#load "re_glob.cma"
-#load "uutf.cma"
-#load "jsonm.cma"
+
+#directory "%%LIBDIR%%/ocamlgraph"
+#load "graph.cma"
+
+#directory "%%LIBDIR%%/opam-core"
 #load "opam-core.cma"
+
+#directory "%%LIBDIR%%/opam-format"
+#load "opam-format.cma"
 
 (* Load odig *)
 
+#directory "%%LIBDIR%%/odig"
 #load "odig.cma"
 
-(* Remove opam-lib cmis *)
+(* Remove opam-format cmis *)
 
-#remove_directory "%%LIBDIR%%/extlib"
 #remove_directory "%%LIBDIR%%/re"
-#remove_directory "%%LIBDIR%%/cudf"
 #remove_directory "%%LIBDIR%%/ocamlgraph"
-#remove_directory "%%LIBDIR%%/dose3"
 #remove_directory "%%LIBDIR%%/uutf"
 #remove_directory "%%LIBDIR%%/jsonm"
-#remove_directory "%%LIBDIR%%/opam-lib"
+#remove_directory "%%LIBDIR%%/opam-file-format"
+#remove_directory "%%LIBDIR%%/opam-core"
+#remove_directory "%%LIBDIR%%/opam-format"
 
 (* Keep only cmis really needed by for Odig's toplevel support. *)
 

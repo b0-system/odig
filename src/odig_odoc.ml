@@ -41,20 +41,30 @@ let find_best_src_for_odoc pkg cmi =
       | Some cmt -> cmt
       | None -> Odig_cobj.Cmi.path cmi
 
-let cmi_deps pkg cmi =
+let cmi_deps ~only_digested pkg cmi =
   let cmi_path = Odig_cobj.Cmi.path cmi in
-  let add_cmi i acc (name, d) = match d with
-  | None -> acc
+  let warn msg dep =
+    Logs.warn
+      (fun m -> m "%s: %a: %s for %a"
+          (Odig_pkg.name pkg) Fpath.pp cmi_path msg Odig_cobj.pp_dep dep)
+  in
+  let warn_not_found = warn "no cmi found" in
+  let warn_multiple = warn "multiple cmis found" in
+  let add_cmi i acc (name, d as dep) = match d with
+  | None ->
+      if only_digested then acc else
+      begin match Odig_cobj.Index.cmis_for_interface i (`Name name) with
+      | [] -> warn_not_found dep; acc
+      | cmis ->
+          (* Only resolve undigested deps in the same package *)
+          match List.filter (fun (`Pkg p, _) -> Odig_pkg.equal pkg p) cmis with
+          | [] -> warn_not_found dep; acc
+          | cmi :: cmis -> if cmis <> [] then warn_multiple dep; cmi :: acc
+      end
   | Some d ->
       match Odig_cobj.Index.cmis_for_interface i (`Digest d) with
-      | [] ->
-          Logs.warn
-            (fun m -> m "%s: %a: No cmi found for %s (%s)"
-                (Odig_pkg.name pkg) Fpath.pp cmi_path name (Digest.to_hex d));
-          acc
-      | cmi :: cmis ->
-          (* Any should do FIXME really ? *)
-          cmi :: acc
+      | [] -> warn_not_found dep; acc
+      | cmi :: cmis -> (* Any should do FIXME really ? *) cmi :: acc
   in
   Odig_pkg.conf_cobj_index (Odig_pkg.conf pkg)
   >>= fun i ->
@@ -75,7 +85,7 @@ let rec build_cmi_deps ~odoc seen pkg cmi = (* FIXME not t.r. *)
     Logs.on_error_msg ~use:(fun _ -> seen)
       (_compile_to_odoc ~odoc ~force:false (* really ? *) seen pkg cmi)
   in
-  (cmi_deps pkg cmi >>| fun deps ->
+  (cmi_deps ~only_digested:true pkg cmi >>| fun deps ->
    deps, List.fold_left build seen deps)
   |> Logs.on_error_msg ~use:(fun _ -> [], seen)
 
@@ -130,7 +140,7 @@ let html_of_odoc ~odoc ~force pkg cmi =
      FIXME have a more fine dep analysis of this. *)
   let cmi_path = Odig_cobj.Cmi.path cmi in
   let odoc_file = compile_dst pkg cmi_path in
-  cmi_deps pkg cmi >>= fun deps ->
+  cmi_deps ~only_digested:false pkg cmi >>= fun deps ->
   let incs = incs_of_deps ~odoc:true deps in
   let htmlroot = htmldir (Odig_pkg.conf pkg) None in
   OS.Cmd.run Cmd.(odoc % "html" %% incs % "-o" % p htmlroot % p odoc_file)

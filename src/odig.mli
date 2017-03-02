@@ -54,6 +54,10 @@ module Cobj : sig
   (** The type for compilation object dependencies. A module name
       and an optional digest (often a [cmi] digest). *)
 
+  val pp_dep : dep Fmt.t
+  (** [pp_dep ppf d] prints an unspecified representation of [d] on
+      [ppf]. *)
+
   type mli
   (** The type for [mli] files. *)
 

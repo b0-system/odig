@@ -30,6 +30,8 @@ end
 type digest = Digest.t
 type dep = string * Digest.t option
 
+let pp_dep ppf (n, digest) = Fmt.pf ppf "@[%s (%a)@]" n Digest.pp_opt digest
+
 (* Generic functions on compilation object archives. *)
 
 module Archive = struct

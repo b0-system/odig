@@ -20,7 +20,8 @@ let ocamldocs ~ocamldoc ~force conf pkgs =
 let api_doc conf ocamldoc force docdir_href pkgs =
   begin
     let conf = Odig.Conf.with_conf ?docdir_href conf in
-    Cli.lookup_pkgs conf pkgs
+    OS.Cmd.must_exist ocamldoc
+    >>= fun ocamldoc -> Cli.lookup_pkgs conf pkgs
     >>= fun pkgs -> ocamldocs ~ocamldoc ~force conf pkgs
     >>= fun () -> Ok 0
   end

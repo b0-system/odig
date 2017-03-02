@@ -19,7 +19,8 @@ let odocs ~odoc ~force conf pkgs =
 let api conf odoc force docdir_href pkgs =
   begin
     let conf = Odig.Conf.with_conf ?docdir_href conf in
-    Cli.lookup_pkgs conf pkgs
+    OS.Cmd.must_exist odoc
+    >>= fun odoc -> Cli.lookup_pkgs conf pkgs
     >>= fun pkgs -> odocs ~odoc ~force conf pkgs
     >>= fun () -> Ok 0
   end

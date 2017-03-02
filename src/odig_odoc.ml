@@ -99,7 +99,7 @@ and _compile_to_odoc ~odoc ~force seen (`Pkg pkg) cmi =
   | false ->
       (* FIXME we should do the trail on deps *)
       let deps, seen = build_cmi_deps ~odoc seen pkg cmi in
-      let incs = incs_of_deps deps in
+      let incs = incs_of_deps ~odoc:true deps in
       let src = find_best_src_for_odoc pkg cmi in
       let pkg = Cmd.(v "--pkg" % Odig_pkg.name pkg) in
       let odoc = Cmd.(odoc % "compile" %% incs %% pkg % "-o" % p dst %

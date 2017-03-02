@@ -9,45 +9,11 @@ open Cmdliner
 
 open Odig.Private
 
-(* Manual *)
-
-let common_opts = "COMMON OPTIONS"
-
-let common_opts_man =
-  [ `S common_opts; `P "These options are common to all commands." ]
-
-let common_man =
-  [ `S "ARGUMENTS";
-    `S "OPTIONS";
-  ] @ common_opts_man @ [
-    `S "ENVIRONMENT VARIABLES"; ]
-
-let see_also_main_man =
-  [ `S "SEE ALSO";
-    `P "odig(1)" ]
-
 (* Converters *)
 
-let path_arg =
-  let parse s = match Fpath.of_string s with
-  | Error (`Msg m) -> `Error m
-  | Ok s -> `Ok s
-  in
-  parse, Fpath.pp
-
-let cmd_arg =
-  let parse s = match Cmd.of_string s with
-  | Error (`Msg m) -> `Error m
-  | Ok cmd -> `Ok cmd
-  in
-  parse, Cmd.pp
-
-let pkg_name_arg =
-  let parser v = match Odig.Pkg.name_of_string v with
-  | Error (`Msg msg) -> `Error msg
-  | Ok v -> `Ok v
-  in
-  parser, Fmt.string
+let path_arg = Arg.conv Fpath.(of_string, pp)
+let cmd_arg = Arg.conv Cmd.(of_string, pp)
+let pkg_name_arg = Arg.conv (Odig.Pkg.name_of_string, Fmt.string)
 
 (* Arguments *)
 
@@ -67,7 +33,7 @@ let json =
 
 let no_pager =
   let doc = "Do not display the content in a pager. This automatically
-             happens if the TERM environment variable is 'dumb' or unset."
+             happens if the $(b,TERM) environment variable is 'dumb' or unset."
   in
   Arg.(value & flag & info ["no-pager"] ~doc)
 
@@ -154,13 +120,13 @@ let setup conf style_renderer log_level =
 let setup () =
   let style_renderer =
     let env = Arg.env_var "OPKG_COLOR" in
-    Fmt_cli.style_renderer ~docs:common_opts ~env ()
+    Fmt_cli.style_renderer ~docs:Manpage.s_common_options ~env ()
   in
   let log_level =
     let env = Arg.env_var "OPKG_VERBOSITY" in
-    Logs_cli.level ~docs:common_opts ~env ()
+    Logs_cli.level ~docs:Manpage.s_common_options ~env ()
   in
-  Term.(const setup $ Odig_cli.conf ~docs:common_opts () $
+  Term.(const setup $ Odig_cli.conf ~docs:Manpage.s_common_options () $
         style_renderer $ log_level)
 
 let lookup_pkgs conf pkgs =
@@ -175,7 +141,15 @@ let lookup_pkgs conf pkgs =
 
 (* Error handling *)
 
-let handle_error e = Log.on_error_msg ~use:(fun _ -> 3) e
+let handle_error = function
+| Ok 0 -> if Logs.err_count () > 0 then 3 else 0
+| Ok n -> n
+| Error _ as r -> Logs.on_error_msg ~use:(fun _ -> 3) r
+
+let indiscriminate_error_exit =
+  Term.exit_info 3 ~doc:"on indiscriminate errors reported on stderr."
+
+let exits = indiscriminate_error_exit :: Term.default_exits
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

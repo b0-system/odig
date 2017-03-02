@@ -109,26 +109,6 @@ let show
 
 open Cmdliner
 
-let cmd_info ~cmd ~kind =
-  let kinds =
-    if kind.[String.length kind - 1] = 's' then kind else kind ^ "s"
-  in
-  let doc = strf "Show the %s files of a package" kind in
-  let man =
-    [ `S "DESCRIPTION";
-      `P (strf "The $(tname) command shows the %s of a package.
-                See odig-packaging(7) to understand how %s are found
-                by odig." kind kinds);
-    ] @ Cli.common_man @ [
-      `S "EXIT STATUS";
-      `P "The $(tname) command exits with one of the following values:";
-      `I ("0", "packages exist and the lookups succeeded.");
-      `I ("1", "with $(b,--warn-error), a lookup is undefined.");
-      `I (">1", "an error occured.");
-    ] @ Cli.see_also_main_man
-  in
-  Cmdliner.Term.info cmd ~sdocs:Cli.common_opts ~doc ~man
-
 let show_deps =
   let doc = "Show the dependencies of the compilation object."
   in
@@ -138,14 +118,32 @@ let show_loc =
   let doc = "Show the location of the compilation object." in
   Arg.(value & flag & info ["l"; "show-loc"] ~doc)
 
-let cmd cmd ~kind ~get ~print_cobj ~json_cobj =
-  let info = cmd_info ~cmd ~kind in
-  let term =
-    Term.(const (show ~kind ~get ~print_cobj ~json_cobj) $ Cli.setup () $
-          Cli.pkgs_or_all $ Cli.warn_error $ show_loc $ Cli.show_pkg $
-          show_deps $ Cli.json)
+let cmd_info ~cmd ~kind =
+  let kinds =
+    if kind.[String.length kind - 1] = 's' then kind else kind ^ "s"
   in
-  term, info
+  let doc = strf "Show the %s files of a package" kind in
+  let sdocs = Manpage.s_common_options in
+  let exits =
+      Term.exit_info 0 ~doc:"packages exist and the lookups succeeded." ::
+      Term.exit_info 1 ~doc:"with $(b,--warn-error), a lookup is undefined." ::
+      Cli.indiscriminate_error_exit ::
+      Term.default_error_exits
+  in
+  let man_xrefs = [ `Main ] in
+  let man =
+    [ `S "DESCRIPTION";
+      `P (strf "The $(tname) command shows the %s of a package.
+                See odig-packaging(7) to understand how %s are found
+                by odig." kind kinds) ]
+  in
+  Cmdliner.Term.info cmd ~doc ~sdocs ~exits ~man_xrefs ~man
+
+let cmd cmd ~kind ~get ~print_cobj ~json_cobj =
+  Term.(const (show ~kind ~get ~print_cobj ~json_cobj) $ Cli.setup () $
+        Cli.pkgs_or_all $ Cli.warn_error $ show_loc $ Cli.show_pkg $
+        show_deps $ Cli.json),
+  cmd_info ~cmd ~kind
 
 (* Commands *)
 

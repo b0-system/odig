@@ -9,30 +9,15 @@
 open Bos_setup
 open Cmdliner
 
-(** {1 Manual section for common options} *)
-
-val common_opts : string
-(** [common_opts] is the manual section were common options are
-    documented. *)
-
-val common_opts_man : Cmdliner.Manpage.block list
-(** [common_opts_man] is the manual section for common options. *)
-
-val common_man : Cmdliner.Manpage.block list
-(** [common_man] is a manual fragment common to many commands. *)
-
-val see_also_main_man : Cmdliner.Manpage.block list
-(** [see_also_main_man] is a "see also" manpage fragment. *)
-
 (** {1 Converters} *)
 
-val path_arg : Fpath.t Arg.converter
+val path_arg : Fpath.t Arg.conv
 (** [path_arg] is a path argument converter. *)
 
-val cmd_arg : Cmd.t Arg.converter
+val cmd_arg : Cmd.t Arg.conv
 (** [cmd_arg] is a command argument converter. *)
 
-val pkg_name_arg : Odig.Pkg.name Arg.converter
+val pkg_name_arg : Odig.Pkg.name Arg.conv
 (** [pkg_name_arg] is a command argument for package names. *)
 
 (** {1 Arguments} *)
@@ -98,6 +83,12 @@ val lookup_pkgs :
 
 val handle_error : (int, [ `Msg of string]) result -> int
 (** [handle_error r] is [r]'s result or logs [r]'s error and returns 3. *)
+
+val indiscriminate_error_exit : Term.exit_info
+(** [indiscriminate_error_exit] describes when {!handle_error} returns 3. *)
+
+val exits : Term.exit_info list
+(** [exits] are the exit codes common to all commands. *)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

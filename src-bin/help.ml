@@ -180,19 +180,17 @@ let topic =
   let doc = "The topic to get help on, `topics' lists the topic." in
   Arg.(value & pos 0 (some string) None & info [] ~docv:"TOPIC" ~doc)
 
-let doc = "Show help about odig"
-let man =
-  [ `S "DESCRIPTION";
-    `P "The $(tname) command shows help about odig.";
-    `P "Use `topics' as $(i,TOPIC) to get a list of topics.";
-  ] @ Cli.see_also_main_man
-
 let cmd =
-  let info = Term.info "help" ~doc ~man in
-  let t = Term.(ret (const help $ Term.man_format $ topic $
-                      Term.choice_names))
+  let doc = "Show help about odig" in
+  let sdocs = Manpage.s_common_options in
+  let man_xrefs = [ `Main ] in
+  let man = [
+    `S "DESCRIPTION";
+    `P "The $(tname) command shows help about odig.";
+    `P "Use `topics' as $(i,TOPIC) to get a list of topics." ]
   in
-  (t, info)
+  Term.(ret (const help $ Term.man_format $ topic $ Term.choice_names)),
+  Term.info "help" ~doc ~sdocs ~man_xrefs ~man
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

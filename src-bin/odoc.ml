@@ -29,24 +29,24 @@ let api conf odoc force docdir_href pkgs =
 
 open Cmdliner
 
-let doc = "Generate package API documentation with odoc"
-let man =
-  [ `S "DESCRIPTION";
-    `P "The $(tname) odoc generates the API documentation of a package
-        using the cmti files of the package.";
-  ] @ Cli.common_man @ Cli.see_also_main_man
-
 let odoc =
   let doc = "The odoc command to use." in
   let env = Arg.env_var "OPKG_ODOC" in
   Arg.(value & opt string "odoc" & info ["odoc"] ~env ~docv:"CMD" ~doc)
 
 let cmd =
-  let info = Term.info "odoc" ~sdocs:Cli.common_opts ~doc ~man in
-  let term = Term.(const api $ Cli.setup () $ Cli.odoc $ Cli.doc_force $
-                   Cli.docdir_href $ Cli.pkgs_or_all)
+  let doc = "Generate package API documentation with odoc" in
+  let sdocs = Manpage.s_common_options in
+  let exits = Cli.exits in
+  let man_xrefs = [ `Main ] in
+  let man = [
+    `S "DESCRIPTION";
+    `P "The $(tname) odoc generates the API documentation of a package
+        using the cmti files of the package." ]
   in
-  term, info
+  Term.(const api $ Cli.setup () $ Cli.odoc $ Cli.doc_force $
+        Cli.docdir_href $ Cli.pkgs_or_all),
+  Term.info "odoc" ~doc ~sdocs ~exits ~man_xrefs ~man
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

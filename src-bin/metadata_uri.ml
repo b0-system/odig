@@ -44,20 +44,20 @@ open Cmdliner
 
 let cmd_info ~cmd ~kind =
   let doc = strf "Show the %s of a package" kind in
-  let man =
-    [ `S "DESCRIPTION";
-      `P (strf "The $(tname) command shows the %s of a package by
-                opening or reloading the %s URI in a WWW browser."
-            kind kind);
-    ] @ Cli.common_man @ [
-      `S "EXIT STATUS";
-      `P "The $(tname) command exits with one of the following values:";
-      `I ("0", "packages exist and the lookups succeeded.");
-      `I ("1", "with $(b,--warn-error), a lookup is undefined.");
-      `I (">1", "an error occured.");
-    ] @ Cli.see_also_main_man
+  let sdocs = Manpage.s_common_options in
+  let exits =
+    Term.exit_info 0 ~doc:"packages exist and the lookups succeeded." ::
+    Term.exit_info 1 ~doc:"with $(b,--warn-error), a lookup is undefined." ::
+    Cli.indiscriminate_error_exit :: Term.default_error_exits
   in
-  Cmdliner.Term.info cmd ~sdocs:Cli.common_opts ~doc ~man
+  let man_xrefs = [ `Main ] in
+  let man = [
+    `S "DESCRIPTION";
+    `P (strf "The $(tname) command shows the %s of a package by
+              opening or reloading the %s URI in a WWW browser."
+          kind kind) ]
+  in
+  Cmdliner.Term.info cmd ~doc ~sdocs ~exits ~man_xrefs ~man
 
 let cmd ?mkind cmd ~kind ~get =
   let mkind = match mkind with None -> kind | Some k -> k in

@@ -77,12 +77,6 @@ let api conf browser background prefix pkgs backend =
 
 open Cmdliner
 
-let doc = "Show package API documentation"
-let man =
-  [ `S "DESCRIPTION";
-    `P "The $(tname) command shows the API documentation of a package.";
-  ] @ Cli.common_man @ Cli.see_also_main_man
-
 let backend =
   let odoc =
     let doc = "Show odoc output (default)." in
@@ -98,16 +92,19 @@ let backend =
   in
   Arg.(value & vflag `Odoc [odoc; ocamldoc; compare])
 
-
 let cmd =
-  let info = Term.info "doc" ~sdocs:Cli.common_opts ~doc ~man in
-  let term = Term.(const api $ Cli.setup () $
-                   Webbrowser_cli.browser $
-                   Webbrowser_cli.background $
-                   Webbrowser_cli.prefix $
-                   Cli.pkgs () $ backend)
+  let doc = "Show package API documentation" in
+  let sdocs = Manpage.s_common_options in
+  let exits = Cli.exits in
+  let man_xrefs = [ `Main ] in
+  let man =
+    [ `S "DESCRIPTION";
+      `P "The $(tname) command shows the API documentation of a package." ]
   in
-  term, info
+  Term.(const api $ Cli.setup () $ Webbrowser_cli.browser $
+        Webbrowser_cli.background $ Webbrowser_cli.prefix $ Cli.pkgs () $
+        backend),
+  Term.info "doc" ~doc ~sdocs ~exits ~man_xrefs ~man
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

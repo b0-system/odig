@@ -90,32 +90,31 @@ open Cmdliner
 
 let cmd_info ~cmd ~kind =
   let doc = strf "Show the %s of a package" kind in
+  let sdocs = Manpage.s_common_options in
+  let envs =
+    Term.env_info "PAGER" ~doc:"The pager used to display content" ::
+    Term.env_info "TERM" ~doc:"See option $(b,--no-pager)." :: []
+  in
+  let exits =
+    Term.exit_info 0 ~doc:"packages exist and the lookups succeeded." ::
+    Term.exit_info 1 ~doc:"with $(b,--warn-error), a lookup is undefined." ::
+    Cli.indiscriminate_error_exit ::
+    Term.default_error_exits
+  in
+  let man_xrefs = [ `Main ] in
   let man =
     [ `S "DESCRIPTION";
       `P (strf "The $(tname) command shows the %s of a package. If
                 invoked with $(b,--no-pager) and multiple files are output
                 these are separated by a U+001C (file separator) control
-                character." kind);
-    ] @ Cli.common_man @ [
-      `S "ENVIRONMENT VARIABLES";
-      `I ("$(i,PAGER)", "The pager used to display content.");
-      `I ("$(i,TERM)", "See option $(b,--no-pager).");
-      `S "EXIT STATUS";
-      `P "The $(tname) command exits with one of the following values:";
-      `I ("0", "packages exist and the lookups succeeded.");
-      `I ("1", "with $(b,--warn-error), a lookup is undefined.");
-      `I (">1", "an error occured.");
-    ] @ Cli.see_also_main_man
+                character." kind); ]
   in
-  Cmdliner.Term.info cmd ~sdocs:Cli.common_opts ~doc ~man
+  Cmdliner.Term.info cmd ~doc ~sdocs ~envs ~exits ~man_xrefs ~man
 
 let cmd cmd ~kind ~get =
-  let info = cmd_info ~cmd ~kind in
-  let term =
-    Term.(const (show ~kind get) $ Cli.setup () $ Cli.pkgs_or_all_opt $
-          Cli.warn_error $ Cli.no_pager $ Cli.loc $ Cli.show_pkg)
-  in
-  term, info
+  Term.(const (show ~kind get) $ Cli.setup () $ Cli.pkgs_or_all_opt $
+        Cli.warn_error $ Cli.no_pager $ Cli.loc $ Cli.show_pkg),
+  cmd_info ~cmd ~kind
 
 (* Commands *)
 

@@ -30,19 +30,19 @@ let api_doc conf ocamldoc force docdir_href pkgs =
 
 open Cmdliner
 
-let doc = "Generate package API documentation with ocamldoc"
-let man =
-  [ `S "DESCRIPTION";
-    `P "The $(tname) command generates the API documentation of
-        a package via its mli files.";
-  ] @ Cli.common_man @ Cli.see_also_main_man
-
 let cmd =
-  let info = Term.info "ocamldoc" ~sdocs:Cli.common_opts ~doc ~man in
-  let term = Term.(const api_doc $ Cli.setup () $ Cli.ocamldoc $
-                   Cli.doc_force $ Cli.docdir_href $ Cli.pkgs_or_all)
+  let doc = "Generate package API documentation with ocamldoc" in
+  let sdocs = Manpage.s_common_options in
+  let exits = Cli.exits in
+  let man_xrefs = [ `Main ] in
+  let man = [
+    `S "DESCRIPTION";
+    `P "The $(tname) command generates the API documentation of
+        a package via its mli files." ]
   in
-  term, info
+  Term.(const api_doc $ Cli.setup () $ Cli.ocamldoc $
+        Cli.doc_force $ Cli.docdir_href $ Cli.pkgs_or_all),
+  Term.info "ocamldoc" ~doc ~sdocs ~exits ~man_xrefs ~man
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

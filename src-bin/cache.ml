@@ -84,21 +84,6 @@ let cache conf action pkgs =
 
 open Cmdliner
 
-let doc = "Operate on the odig cache"
-let man =
-  [ `S "SYNOPSIS";
-    `P "$(mname) $(tname) $(i,ACTION) [$(i,OPTION)]... [$(i,PKG)]...";
-    `S "DESCRIPTION";
-    `P "The $(tname) command operates on the odig cache. If no packages
-        are specified, operates on all packages.";
-    `S "ACTIONS";
-    `I ("$(b,path)", "Display path(s) to the cache.");
-    `I ("$(b,clear)", "Clears the cache.");
-    `I ("$(b,refresh)", "Refreshes the cache.");
-    `I ("$(b,status)", "Display cache status.");
-    `I ("$(b,trails)", "Show trails.");
-  ] @ Cli.common_man @ Cli.see_also_main_man
-
 let action =
   let action = [
     "path", `Path; "clear", `Clear; "refresh", `Refresh; "status", `Status;
@@ -111,10 +96,25 @@ let action =
   Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"ACTION")
 
 let cmd =
-  let info = Term.info "cache" ~sdocs:Cli.common_opts ~doc ~man in
-  let term = Term.(const cache $ Cli.setup () $ action $
-                   Cli.pkgs ~right_of:0 ()) in
-  term, info
+  let doc = "Operate on the odig cache" in
+  let sdocs = Manpage.s_common_options in
+  let exits = Cli.exits in
+  let man_xrefs = [ `Main ] in
+  let man = [
+    `S "SYNOPSIS";
+    `P "$(mname) $(tname) $(i,ACTION) [$(i,OPTION)]... [$(i,PKG)]...";
+    `S "DESCRIPTION";
+    `P "The $(tname) command operates on the odig cache. If no packages
+        are specified, operates on all packages.";
+    `S "ACTIONS";
+    `I ("$(b,path)", "Display path(s) to the cache.");
+    `I ("$(b,clear)", "Clears the cache.");
+    `I ("$(b,refresh)", "Refreshes the cache.");
+    `I ("$(b,status)", "Display cache status.");
+    `I ("$(b,trails)", "Show trails."); ]
+  in
+  Term.(const cache $ Cli.setup () $ action $ Cli.pkgs ~right_of:0 ()),
+  Term.info "cache" ~doc ~sdocs ~exits ~man ~man_xrefs
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

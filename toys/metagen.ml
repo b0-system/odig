@@ -353,15 +353,14 @@ let mode =
   in
   Arg.(value & vflag `Cmp [`Raw, raw; `Norm, norm; `Gen, gen; `Cmp, cmp;])
 
-let doc = "Generate package META files and compare them to existing ones"
 let cmd =
-  let info = Term.info "metagen" ~version:"%%VERSION%%" ~doc in
-  let term = Term.(const metagen $ Odig_cli.conf () $ Cli.pkgs_or_all $ mode) in
-  term, info
+  let doc = "Generate package META files and compare them to existing ones" in
+  Term.(const metagen $ Odig_cli.conf () $ Cli.pkgs_or_all $ mode),
+  Term.info "metagen" ~version:"%%VERSION%%" ~doc
 
-let () = match Term.eval cmd with
-| `Error _ -> exit 1
-| _ -> if Logs.err_count () > 0 then exit 1 else exit 0
+let main () = Term.exit @@ Term.eval cmd
+
+let () = main ()
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

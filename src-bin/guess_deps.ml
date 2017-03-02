@@ -71,17 +71,18 @@ let build_dir =
   let docv = "BUILD_DIR" in
   Arg.(value & pos 0 Cli.path_arg (Fpath.v "_build") & info [] ~doc ~docv)
 
-let doc = "Guess packages used by a build"
-let man =
-  [ `S "DESCRIPTION";
-    `P "The $(b,guess-deps) outputs a guess of the packages used by
-        a build directory.";
-  ] @ Cli.common_man @ Cli.see_also_main_man
-
 let cmd =
-  let info = Term.info "guess-deps" ~sdocs:Cli.common_opts ~doc ~man in
-  let term = Term.(const guess_deps $ Cli.setup () $ build_dir) in
-  term, info
+  let doc = "Guess packages used by a build" in
+  let sdocs = Manpage.s_common_options in
+  let exits = Cli.exits in
+  let man_xrefs = [ `Main ] in
+  let man = [
+    `S "DESCRIPTION";
+    `P "The $(b,guess-deps) outputs a guess of the packages used by
+        a build directory." ]
+  in
+  Term.(const guess_deps $ Cli.setup () $ build_dir),
+  Term.info "guess-deps" ~doc ~sdocs ~exits ~man_xrefs ~man
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

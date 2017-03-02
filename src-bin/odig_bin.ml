@@ -40,9 +40,15 @@ let main _ = `Help (`Pager, None)
 
 (* Command line interface *)
 
-let doc = "Mine installed OCaml packages"
-let man =
-  [ `S "DESCRIPTION";
+let main =
+  let version = "%%VERSION%%" in
+  let doc = "Mine installed OCaml packages" in
+  let sdocs = Manpage.s_common_options in
+  let man_xrefs =
+    [ `Page ("odig-basics", 7); `Page ("odig-packaging", 7) ]
+  in
+  let man = [
+    `S "DESCRIPTION";
     `P "$(mname) mines installed OCaml packages. It supports
         package distribution documentation and metadata lookups and
         generates cross-referenced API documentation.";
@@ -58,30 +64,20 @@ let man =
     `S "IMPORTANT WARNING";
     `P "$(mname) is a usable work in progress. Command line interfaces
         may change without notice in the future.";
-    `S "COMMANDS";
-  ] @ Cli.common_opts_man @ [
-    `S "ENVIRONMENT VARIABLES";
     `S "BUGS";
     `P "Report them, see $(i,%%PKG_HOMEPAGE%%) for contact information.";
     `S "AUTHOR";
-    `P "Daniel C. Buenzli, $(i,http://erratique.ch)";
-    `S "SEE ALSO";
-    `P "$(mname)-basics(7)"; ]
+    `P "Daniel C. Buenzli, $(i,http://erratique.ch)" ]
+  in
+  Term.(ret (const main $ Cli.setup ())),
+  Term.info "odig" ~version ~doc ~sdocs ~man_xrefs ~man
 
-let main =
-  let version = "%%VERSION%%" in
-  let info = Term.info "odig" ~version ~doc ~sdocs:Cli.common_opts ~man in
-  let t = Term.(ret (const main $ Cli.setup ())) in
-  (t, info)
+let main () =
+  Term.exit @@
+  Odig.Private.Log.time (fun _ m -> m "Total time")
+  (Term.eval_choice main) cmds
 
-let main () = match Term.eval_choice main cmds with
-| `Error _ -> 3
-| `Ok ret when ret <> 0 -> ret
-| _ -> if Logs.err_count () > 0 then 3 else 0
-
-let () =
-  exit @@
-  Odig.Private.Log.time (fun _ m -> m "Total time") main ()
+let () = main ()
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

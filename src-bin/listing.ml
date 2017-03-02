@@ -51,16 +51,16 @@ let list conf pkgs json =
 
 open Cmdliner
 
-let doc = "List packages"
-let man =
-  [ `S "DESCRIPTION";
-    `P "The $(tname) command lists the package known to odig.";
-  ] @ Cli.common_man @ Cli.see_also_main_man
-
 let cmd =
-  let info = Term.info "list" ~sdocs:Cli.common_opts ~doc ~man in
-  let term = Term.(const list $ Cli.setup () $ Cli.pkgs_or_all $ Cli.json) in
-  term, info
+  let doc = "List packages" in
+  let sdocs = Manpage.s_common_options in
+  let man_xrefs = [ `Main ] in
+  let man = [
+    `S "DESCRIPTION";
+    `P "The $(tname) command lists the package known to odig." ]
+  in
+  Term.(const list $ Cli.setup () $ Cli.pkgs_or_all $ Cli.json),
+  Term.info "list" ~doc ~sdocs ~man_xrefs ~man
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

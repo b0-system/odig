@@ -112,22 +112,6 @@ let graph conf kind pkgs =
 
 open Cmdliner
 
-let doc = "Generate graphs from the package install data"
-let man =
-  [ `S "SYNOPSIS";
-    `P "$(mname) $(tname) $(i,KIND) [$(i,OPTION)]... [$(i,PKG)]...";
-    `S "DESCRIPTION";
-    `P "The $(tname) generates dot files according to
-        $(i,KIND). If no packages are specified, operates on all packages.";
-    `P "EXAMPLES";
-    `Pre " odig graph pkg-deps | dot -Tsvg > /tmp/d.svg && browse /tmp/d.svg";
-    `S "ACTIONS";
-    `I ("$(b,pkg)", "Graph of declared, installed and recognized \
-                     package dependencies.");
-    `I ("$(b,cmi)", "Graph of cmi dependencies");
-(*    `I ("$(b,cmo)", "Graph of potential cmo dependencies."); *)
-  ] @ Cli.common_man @ Cli.see_also_main_man
-
 let kind =
   let kind = [ "pkg-deps", `Pkg_deps; "cmi-deps", `Cmi_deps;
                (* "cmo-deps", `Cmo_deps; *)]
@@ -139,10 +123,27 @@ let kind =
   Arg.(required & pos 0 (some kind) None & info [] ~doc ~docv:"KIND")
 
 let cmd =
-  let info = Term.info "graph" ~sdocs:Cli.common_opts ~doc ~man in
-  let term = Term.(const graph $ Cli.setup () $ kind $
-                   Cli.pkgs ~right_of:0 ()) in
-  term, info
+  let doc = "Generate graphs from the package install data" in
+  let sdocs = Manpage.s_common_options in
+  let exits = Cli.exits in
+  let man_xrefs = [ `Main ] in
+  let man = [
+    `S "SYNOPSIS";
+    `P "$(mname) $(tname) $(i,KIND) [$(i,OPTION)]... [$(i,PKG)]...";
+    `S "DESCRIPTION";
+    `P "The $(tname) generates dot files according to
+        $(i,KIND). If no packages are specified, operates on all packages.";
+    `P "EXAMPLES";
+    `Pre " odig graph pkg-deps | dot -Tsvg > /tmp/d.svg && browse /tmp/d.svg";
+    `S "ACTIONS";
+    `I ("$(b,pkg)", "Graph of declared, installed and recognized \
+                     package dependencies.");
+    `I ("$(b,cmi)", "Graph of cmi dependencies");
+(*    `I ("$(b,cmo)", "Graph of potential cmo dependencies."); *)
+  ]
+  in
+  Term.(const graph $ Cli.setup () $ kind $ Cli.pkgs ~right_of:0 ()),
+  Term.info "graph" ~doc ~sdocs ~exits ~man_xrefs ~man
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

@@ -1,92 +1,61 @@
 
-(* Load odig deps *)
+(* Odig toplevel bootstrap. *)
 
-#load "unix.cma" (* FIXME this breaks utop *)
+let __odig_deps =
+  (* It would be nice to be able to expunge this from the environment
+     but we need to share it between two phrases *)
+  let all = [ `Utop; `OCaml ] in
+  (* (pkg, cmas, relevant toplevels). *)
+  [ "ocaml", ["unix.cma"], [ `OCaml ];
 
-#directory "+compiler-libs"
-#load "ocamlcommon.cma"
+    (* opam-format deps *)
+    "opam-file-format", ["opam-file-format.cma"], all;
+    "uutf", ["uutf.cma"], all;
+    "jsonm", ["jsonm.cma"], all;
+    "re", ["re.cma"; "re_emacs.cma"; "re_str.cma"], all;
+    "ocamlgraph", ["graph.cma"], all;
+    "ocaml", ["bigarray.cma"], all;
+    "opam-core", ["opam-core.cma"], all;
 
-#directory "%%LIBDIR%%/rresult"
-#load "rresult.cma"
+    (* odig deps *)
+    "opam-format", ["opam-format.cma"], all;
+    "asetmap", ["asetmap.cma"], all;
+    "rresult", ["rresult.cma"], all;
+    "astring", ["astring.cma"], all;
+    "fpath", ["fpath.cma"], all;
+    "fmt", ["fmt.cma"; "fmt_tty.cma"], all;
+    "logs", ["logs.cma"; "logs_fmt.cma"], all;
+    "bos", ["bos.cma"; "bos_setup.cma"], all;
+    "mtime/os", ["mtime.cma"], all;
+    "ocaml", ["ocamlcommon.cma"], all;
 
-#directory "%%LIBDIR%%/asetmap"
-#load "asetmap.cma"
+    "odig", ["odig.cma"], all; ]
+;;
 
-#directory "%%LIBDIR%%/astring"
-#load "astring.cma"
+let () =
+  (* First we need this phrase to see Toploop's API which allows us to
+     detect utop. N.B. in ocaml we only have Topdirs and Toploop the
+     rest is expunged. *)
+  Topdirs.dir_directory "+compiler-libs"
+;;
 
-#directory "%%LIBDIR%%/fpath"
-#load "fpath.cma"
+let () =
+  (* This phrase allows us to see Odig. *)
+  let load_dep which (pkg, cmas, tops) = match List.mem which tops with
+  | false -> ()
+  | true ->
+      if pkg <> "ocaml" then Topdirs.dir_directory ("%%LIBDIR%%/" ^ pkg);
+      List.iter (Topdirs.dir_load Format.err_formatter) cmas
+  in
+  let which = match Hashtbl.mem Toploop.directive_table "utop_help" with
+  | true -> `Utop
+  | false -> `OCaml
+  in
+  List.iter (load_dep which) __odig_deps
+;;
 
-#directory "%%LIBDIR%%/fmt"
-#load "fmt.cma"
-#load "fmt_tty.cma"
-
-#directory "%%LIBDIR%%/logs"
-#load "logs.cma"
-#load "logs_fmt.cma"
-
-#directory "%%LIBDIR%%/bos"
-#load "bos.cma"
-#load "bos_setup.cma"
-
-#directory "%%LIBDIR%%/mtime/os"
-#load "mtime.cma"
-
-(* Load opam-format dep *)
-
-#directory "%%LIBDIR%%/opam-file-format"
-#load "opam-file-format.cma"
-
-#directory "%%LIBDIR%%/uutf"
-#load "uutf.cma"
-
-#directory "%%LIBDIR%%/jsonm"
-#load "jsonm.cma"
-
-#directory "%%LIBDIR%%/re"
-#load "re.cma"
-#load "re_emacs.cma"
-#load "re_str.cma"
-
-#directory "%%LIBDIR%%/ocamlgraph"
-#load "graph.cma"
-
-#directory "%%LIBDIR%%/opam-core"
-#load "bigarray.cma"
-#load "opam-core.cma"
-
-#directory "%%LIBDIR%%/opam-format"
-#load "opam-format.cma"
-
-(* Load odig *)
-
-#directory "%%LIBDIR%%/odig"
-#load "odig.cma"
-
-(* Remove opam-format cmis *)
-
-#remove_directory "%%LIBDIR%%/re"
-#remove_directory "%%LIBDIR%%/ocamlgraph"
-#remove_directory "%%LIBDIR%%/uutf"
-#remove_directory "%%LIBDIR%%/jsonm"
-#remove_directory "%%LIBDIR%%/opam-file-format"
-#remove_directory "%%LIBDIR%%/opam-core"
-#remove_directory "%%LIBDIR%%/opam-format"
-
-(* Keep only cmis really needed by for Odig's toplevel support. *)
-
-#remove_directory "+compiler-libs"
-#remove_directory "%%LIBDIR%%/rresult"
-#remove_directory "%%LIBDIR%%/asetmap"
-#remove_directory "%%LIBDIR%%/astring"
-(* #remove_directory "%%LIBDIR%%/fpath" *)
-#remove_directory "%%LIBDIR%%/fmt"
-#remove_directory "%%LIBDIR%%/logs"
-#remove_directory "%%LIBDIR%%/bos"
-#remove_directory "%%LIBDIR%%/mtime/os"
-(* #remove_directory "%%LIBDIR%%/odig" *)
-
-(* Shout *)
-
-let () = Odig.Private.Top.announce ();;
+let () =
+  (* We can now announce Odig and TODO make it aware of what we already loaded
+     in the toplevel. *)
+  Odig.Private.Top.announce ()
+;;

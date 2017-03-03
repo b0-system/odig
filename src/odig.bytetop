@@ -53,6 +53,7 @@
 #load "graph.cma"
 
 #directory "%%LIBDIR%%/opam-core"
+#load "bigarray.cma"
 #load "opam-core.cma"
 
 #directory "%%LIBDIR%%/opam-format"

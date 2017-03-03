@@ -20,7 +20,7 @@ let pp_odig = Fmt.styled_unit `Bold "Odig"
 let pp_version = Fmt.styled_unit `Cyan "%%VERSION%%"
 let announce () =
   Odig_log.app (fun m ->
-      m "%a %a loaded. Type `Odig.help ()` for more info.\n"
+      m "%a %a loaded. Type `Odig.help ();;` for more info."
         pp_odig () pp_version ());
   ()
 

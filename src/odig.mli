@@ -1115,6 +1115,12 @@ module Private : sig
     val announce : unit -> unit
     (** [announce ppf] outputs a message that odig's toplevel support was
         setup. *)
+
+    val assume_inc : Fpath.t -> unit
+    (** [assume_inc dir] assumes that [dir] has been included. *)
+
+    val assume_obj : Fpath.t -> unit
+    (** [assume_obj obj] assumes that [obj] has been loaded. *)
   end
 
   (** Abtract away the OCaml's Toploop API. *)

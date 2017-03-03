@@ -16,20 +16,24 @@ open Bos_setup
 
 (* Announce and help *)
 
+let pp_code ppf c = Fmt.(styled `Bold string) ppf c
 let pp_odig = Fmt.styled_unit `Bold "Odig"
 let pp_version = Fmt.styled_unit `Cyan "%%VERSION%%"
 let announce () =
-  Odig_log.app (fun m ->
-      m "%a %a loaded. Type `Odig.help ();;` for more info."
-        pp_odig () pp_version ());
+  Odig_log.app (fun m -> m "%a %a loaded. Type %a for more info."
+                   pp_odig () pp_version () pp_code "Odig.help ();;");
   ()
 
 let help () =
-  Odig_log.app
-    (fun m -> m "@[<v>@[Type `Odig.load \"M\"` to load module `M`.@]@,\
-                      @[Type `Odig.load_libs ()` to load local libraries.@]@,\
-                      @[Type `Odig.load_pkg \"pkg\" to load the libraries of \
-                        package `pkg`.@]@,@]");
+  Odig_log.app (fun m -> m "Commands:");
+  Odig_log.app (fun m -> m "  %a     load module %a"
+                   pp_code "Odig.load \"M\"" pp_code "M");
+  Odig_log.app (fun m -> m "  %a load local libraries"
+                   pp_code "Odig.load_libs ()");
+  Odig_log.app (fun m -> m "  %a load libraries of package %a"
+                   pp_code "Odig.load_pkg \"p\"" pp_code "p");
+  Odig_log.app (fun m -> m "  %a    list what is currently loaded"
+                   pp_code "Odig.status ()");
   ()
 
 (* Init configuration. *)
@@ -50,12 +54,12 @@ let rec get_conf () = match !conf with
 | None -> init (); get_conf ()
 | Some c -> c
 
-(* Toplevel includes and objects
-   FIXME order may be important *)
+(* Toplevel includes and objects *)
 
 module Tinc = struct
   let incs = ref Fpath.Set.empty
   let mem inc = Fpath.Set.mem inc !incs
+  let assume inc = incs := Fpath.Set.add inc !incs
   let add inc =
     Odig_ocamltop.add_inc inc
     >>| fun () -> incs := Fpath.Set.add inc !incs; ()
@@ -70,24 +74,26 @@ module Tinc = struct
     ()
 end
 
+let assume_inc = Tinc.assume
+
 module Tobj = struct
   let loaded = ref Fpath.Set.empty
   let is_loaded obj = Fpath.Set.mem obj !loaded
   let add obj = loaded := Fpath.Set.add obj !loaded; ()
+  let assume = add
   let load obj = Odig_ocamltop.load_obj obj >>| fun () -> add obj
   let load_src src = Odig_ocamltop.load_ml src >>| fun () -> add src
   let reset () = loaded := Fpath.Set.empty; ()
-  let init conf =
-    (* FIXME all the actions of odig.bytetop should be included in these sets *)
-    if not (Fpath.Set.is_empty !loaded) then Ok () else
-    (* FIXME how to reliably find the stdlib *)
-    match Odig_pkg.find conf "ocaml" with
-    | None -> R.error_msgf "Could not find the ocaml package in conf"
-    | Some p ->
-        let add_lib cma = add Fpath.(normalize (Odig_pkg.libdir p / cma)) in
-        List.iter add_lib [ "stdlib.cma"; "unix.cma" ];
-        Ok ()
 end
+
+let assume_obj = Tobj.assume
+
+let pp_labelled_path style label ppf p =
+  Fmt.pf ppf "[%a] %a" Fmt.(styled style string) label Fpath.pp p
+
+let pp_inc = pp_labelled_path `Yellow "INC"
+let pp_obj = pp_labelled_path `Blue "OBJ"
+let pp_src = pp_labelled_path `Magenta "SRC"
 
 let reset () =
   (* FIXME should we reset the configuration ? *)
@@ -97,11 +103,8 @@ let reset () =
 
 let status () =
   Logs.app (fun m ->
-      m "@[<v>Odig added the following include directories:@,%a@,\
-              Odig loaded the following libraries:@,%a@]"
-        (Fpath.Set.pp Fpath.pp) !Tinc.incs
-        (Fpath.Set.pp Fpath.pp) !Tobj.loaded);
-  ()
+      m "@[<v>%a@,@,%a@]"
+        (Fpath.Set.pp pp_inc) !Tinc.incs (Fpath.Set.pp pp_obj) !Tobj.loaded)
 
 (* Low-level loading *)
 
@@ -112,12 +115,12 @@ let load_init_file cma =
   | false -> Ok ()
   | true ->
       Tobj.load_src init >>| fun () ->
-      Odig_log.app (fun m -> m "Loaded %a" Fpath.pp init)
+      Odig_log.app (fun m -> m "%a" pp_src init)
 
 let load_obj ~init obj =
   Tinc.add (Fpath.parent obj) >>= fun () ->
   Tobj.load obj >>= fun () ->
-  Odig_log.app (fun m -> m "Loaded %a" Fpath.pp obj);
+  Odig_log.app (fun m -> m "%a" pp_obj obj);
   match init && Fpath.has_ext ".cma" obj with
   | true -> load_init_file obj
   | false -> Ok ()
@@ -260,8 +263,7 @@ let local_cobjs dir = match dir with
 
 let local_setup ?dir () =
   get_conf ()
-  >>= fun conf -> Tobj.init conf
-  >>= fun () -> local_cobjs dir
+  >>= fun conf -> local_cobjs dir
   >>= fun cobjs -> local_index conf cobjs
   >>| fun index -> (cobjs, index)
 
@@ -297,8 +299,7 @@ let load_pkg ?(force = false) ?(deps = true) ?(init = true) name =
   let resolve = if deps then resolve_local_or_pkg else resolve_local in
   begin
     get_conf ()
-    >>= fun conf -> Tobj.init conf
-    >>= fun () -> Odig_pkg.name_of_string name
+    >>= fun conf -> Odig_pkg.name_of_string name
     >>= fun name -> Odig_pkg.lookup conf name
     >>= fun pkg -> Ok (Odig_pkg.cobjs pkg)
     >>= fun cobjs -> local_index conf cobjs

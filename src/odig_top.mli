@@ -6,6 +6,9 @@
 
 open Rresult
 
+val assume_inc : Fpath.t -> unit
+val assume_obj : Fpath.t -> unit
+
 val load_libs :
   ?force:bool -> ?deps:bool -> ?init:bool -> ?dir:Fpath.t -> unit -> unit
 

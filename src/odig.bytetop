@@ -14,8 +14,7 @@ let () =
 let __odig_deps =
   let deps = (* list of (pkg, cmas, toplevels in which to load). *)
     let all = [ `Utop; `OCaml ] in
-    [ "ocaml", ["stdlib.cma"], [];
-      "ocaml", ["unix.cma"], [ `OCaml ];
+    [ "ocaml", ["unix.cma"], [ `OCaml ];
 
       (* opam-format deps *)
       "opam-file-format", ["opam-file-format.cma"], all;

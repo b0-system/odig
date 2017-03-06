@@ -26,7 +26,6 @@
    {2:loadsem Load semantics and effects}
 
     Take into account the following points:
-
     {ul
     {- Loading an object means: add its containing directory to the
        included directories, load the object and (if not prevented)
@@ -37,8 +36,11 @@
        [lib_top_init.ml] at the same location that file is loaded aswell,
        This can be prevented by using the [~init] argument of
        load functions.}
-    {- Library archive names ending with [_top] are currently prevented from
-       loading.}
+    {- Library archive with the following filenames are currently prevented
+       from loading: [ocamltoplevel.cma], [ocamlbytecomp.cma]
+       [ocamltoplevel.cma], [stdlib.cma]}
+    {- In {!load_libs} and {!load_pkg}, library archives ending with [_top.cma]
+       are excluded from the libraries to load.}
     {- Dependency searches are currently unrestricted. This semantics will
        change in the future, notably to ensure reproducible results regardless
        of the package install state.}} *)
@@ -105,7 +107,6 @@ val load_pkg :
 (**/**)
 val debug : unit -> unit
 (**/**)
-
 
 (** {1:api Odig API} *)
 

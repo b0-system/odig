@@ -128,20 +128,21 @@ let load_obj ~init obj =
   | false -> Ok ()
 
 let load_objs ~force ~init objs =
-  let should_load = match force with
-  | false -> fun o -> not (Tobj.is_loaded o)
-  | true ->
-      (* FIXME should we reload the stlib ? should we reload odig's deps ? *)
-      fun o -> match Fpath.filename o with
-      | "stdlib.cma" -> false
-      | _ -> true
+  let never_load o = match Fpath.filename o with
+  | "stdlib.cma" | "ocamlcommon.cma" | "ocamlbytecomp.cma"
+  | "ocamltoplevel.cma" -> true
+  | _ -> false
+  in
+  let don't_load = match force with
+  | false -> fun o -> Tobj.is_loaded o || never_load o
+  | true -> fun o -> never_load o
   in
   let rec loop = function
   | [] -> Ok ()
   | obj :: objs ->
-      match should_load obj with
-      | false -> loop objs
-      | true -> load_obj ~init obj >>= fun () -> loop objs
+      match don't_load obj with
+      | true -> loop objs
+      | false -> load_obj ~init obj >>= fun () -> loop objs
   in
   loop objs
 
@@ -209,6 +210,8 @@ let local_index conf cobjs =
 (* Loaders *)
 
 let cmas_cmi_roots cobjs =
+  (* [keep_cma] performs an early filtering for _top libs. Further filtering
+     is done in the load_objs functions. *)
   let keep_cma cma = not (String.is_suffix "_top" (Odig_cobj.Cma.name cma)) in
   let add_cma acc cma = match keep_cma cma with
   | false -> acc

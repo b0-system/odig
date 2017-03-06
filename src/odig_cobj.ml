@@ -571,7 +571,8 @@ let pp_rec_dep_resolution pp_obj ppf r =
     Fmt.pf ppf "@[<v>%a @, %a@]" Digest.pp d pp_src (List.hd srcs)
   in
   match r with
-  | `Resolved (obj, src) -> Fmt.pf ppf "@[%a: resolved@]" pp_obj obj
+  | `Resolved (obj, src) ->
+      Fmt.pf ppf "@[<v>%a: resolved%a@]" pp_obj obj pp_src src
   | `Unresolved (dep, reason, src) ->
       Fmt.pf ppf "@[<v>%a: %a%a@]" pp_dep dep pp_reason reason pp_src src
   | `Conflict (n, dm) ->

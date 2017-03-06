@@ -36,6 +36,8 @@ let help () =
                    pp_code "Odig.status ()");
   ()
 
+let debug () = Logs.Src.set_level Odig_log.src (Some Logs.Debug)
+
 (* Init configuration. *)
 
 let conf = ref None
@@ -226,9 +228,12 @@ let rec_cmos_for_interfaces ~resolve index cmis =
   let pp_res = Odig_cobj.pp_rec_dep_resolution pp_cmo_obj in
   let res = Odig_cobj.rec_cmos_for_interfaces ~resolve index cmis in
   let add _ r acc =
-    acc >>= fun acc -> match r with
+    acc >>= fun acc ->
+    Odig_log.debug (fun m -> m "%a"
+                     (Odig_cobj.pp_rec_dep_resolution pp_cmo_obj) r);
+    match r with
     | `Resolved ((_, cmo), _) -> Ok (cmo :: acc)
-    | `Unresolved (_, `None, _) -> (* might be due to cmi only *) Ok acc
+    | `Unresolved (dep, `None, src) -> (* might be due to cmi only *) Ok acc
     | `Conflict _ as r -> R.error_msgf "%a" pp_res r
     | `Unresolved (_, `Amb objs, _) as r -> R.error_msgf "%a" pp_res r
   in

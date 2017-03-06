@@ -102,6 +102,11 @@ val load_pkg :
     {- If [force] is [true] (defaults to [false]) reloads any loaded
        object that needs to be loaded.}} *)
 
+(**/**)
+val debug : unit -> unit
+(**/**)
+
+
 (** {1:api Odig API} *)
 
 (** OCaml compilation objects.

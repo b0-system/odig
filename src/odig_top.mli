@@ -23,6 +23,7 @@ val announce : unit -> unit
 val reset : unit -> unit
 val status : unit -> unit
 val help : unit -> unit
+val debug : unit -> unit
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

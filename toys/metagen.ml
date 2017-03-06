@@ -355,7 +355,7 @@ let mode =
 
 let cmd =
   let doc = "Generate package META files and compare them to existing ones" in
-  Term.(const metagen $ Odig_cli.conf () $ Cli.pkgs_or_all $ mode),
+  Term.(const metagen $ Odig_cli.conf () $ Cli.pkgs_or_all () $ mode),
   Term.info "metagen" ~version:"%%VERSION%%" ~doc
 
 let main () = Term.exit @@ Term.eval cmd

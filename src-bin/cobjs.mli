@@ -4,28 +4,9 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-open Bos_setup
-open Odig
+(** The [cobjs] command. *)
 
-(** Commands showing package compilation objects. *)
-
-val mli_cmd : int Cmdliner.Term.t * Cmdliner.Term.info
-(** The [mli] command. *)
-
-val cmi_cmd : int Cmdliner.Term.t * Cmdliner.Term.info
-(** The [cmi] command. *)
-
-val cmti_cmd : int Cmdliner.Term.t * Cmdliner.Term.info
-(** The [cmti] command. *)
-
-val cmo_cmd : int Cmdliner.Term.t * Cmdliner.Term.info
-(** The [cmo] command. *)
-
-val cmx_cmd : int Cmdliner.Term.t * Cmdliner.Term.info
-(** The [cmx] command. *)
-
-val cmt_cmd : int Cmdliner.Term.t * Cmdliner.Term.info
-(** The [cmt] command. *)
+val cmd : int Cmdliner.Term.t * Cmdliner.Term.info
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

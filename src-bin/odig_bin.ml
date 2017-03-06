@@ -9,12 +9,7 @@ open Cmdliner
 let cmds =
   [
     Cache.cmd;
-    Cobjs.mli_cmd;
-    Cobjs.cmi_cmd;
-    Cobjs.cmo_cmd;
-    Cobjs.cmti_cmd;
-    Cobjs.cmx_cmd;
-    Cobjs.cmt_cmd;
+    Cobjs.cmd;
     Distrib_doc.changes_cmd;
     Distrib_doc.license_cmd;
     Distrib_doc.readme_cmd;

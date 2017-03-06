@@ -42,7 +42,7 @@ let cmd =
         a package via its mli files." ]
   in
   Term.(const api_doc $ Cli.setup () $ Cli.ocamldoc $
-        Cli.doc_force $ Cli.docdir_href $ Cli.pkgs_or_all),
+        Cli.doc_force $ Cli.docdir_href $ Cli.pkgs_or_all ()),
   Term.info "ocamldoc" ~doc ~sdocs ~exits ~man_xrefs ~man
 
 (*---------------------------------------------------------------------------

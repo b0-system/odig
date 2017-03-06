@@ -59,7 +59,7 @@ let cmd =
     `S "DESCRIPTION";
     `P "The $(tname) command lists the package known to odig." ]
   in
-  Term.(const list $ Cli.setup () $ Cli.pkgs_or_all $ Cli.json),
+  Term.(const list $ Cli.setup () $ Cli.pkgs_or_all () $ Cli.json),
   Term.info "list" ~doc ~sdocs ~man_xrefs ~man
 
 (*---------------------------------------------------------------------------

@@ -53,7 +53,8 @@ val doc_force : bool Term.t
 val pkgs : ?right_of:int -> unit -> string list Term.t
 (** [pkgs] is a list of packages specified as positional arguments. *)
 
-val pkgs_or_all : [`Pkgs of Odig.Pkg.name list | `All ] Term.t
+val pkgs_or_all : ?right_of:int -> unit ->
+  [`Pkgs of Odig.Pkg.name list | `All ] Term.t
 (** [pkgs_or_all] is like {!pkgs} except if no package is specified all
     of them is implied. *)
 

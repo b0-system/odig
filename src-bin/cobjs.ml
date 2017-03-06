@@ -99,11 +99,35 @@ let show
         let vs = Pkg_field.flatten ~rev:false vs in
         begin match json with
         | true -> json_cobjs ~json_cobj ~show_loc ~show_pkg ~show_deps vs
-        | false -> print_cobjs ~print_cobj ~show_loc ~show_pkg ~show_deps vs
+      | false -> print_cobjs ~print_cobj ~show_loc ~show_pkg ~show_deps vs
         end;
         Ok 0
   end
   |> Cli.handle_error
+
+let show kind conf pkgs warn_error show_loc show_pkg show_deps json =
+  let get cobj p = Ok (cobj (Pkg.cobjs p)) in
+  let show = match kind with
+  | `Mli ->
+      show ~kind:"mli" ~get:(get Cobj.mlis) ~print_cobj:print_mli
+        ~json_cobj:json_mli
+  | `Cmi ->
+      show ~kind:"cmi" ~get:(get Cobj.cmis) ~print_cobj:print_cmi
+        ~json_cobj:json_cmi
+  | `Cmti ->
+      show ~kind:"cmti" ~get:(get Cobj.cmtis) ~print_cobj:print_cmti
+        ~json_cobj:json_cmti
+  | `Cmo ->
+      show ~kind:"cmo" ~get:(get Cobj.cmos) ~print_cobj:print_cmo
+        ~json_cobj:json_cmo
+  | `Cmx ->
+      show ~kind:"cmx" ~get:(get Cobj.cmxs) ~print_cobj:print_cmx
+        ~json_cobj:json_cmx
+  | `Cmt ->
+      show ~kind:"cmt" ~get:(get Cobj.cmts) ~print_cobj:print_cmt
+        ~json_cobj:json_cmt
+  in
+  show conf pkgs warn_error show_loc show_pkg show_deps json
 
 (* Command line interface *)
 
@@ -118,11 +142,18 @@ let show_loc =
   let doc = "Show the location of the compilation object." in
   Arg.(value & flag & info ["l"; "show-loc"] ~doc)
 
-let cmd_info ~cmd ~kind =
-  let kinds =
-    if kind.[String.length kind - 1] = 's' then kind else kind ^ "s"
+let kind =
+  let kind = [ "mli", `Mli; "cmi", `Cmi; "cmti", `Cmti; "cmo", `Cmo;
+               "cmx", `Cmx; "cmt", `Cmt; ]
   in
-  let doc = strf "Show the %s files of a package" kind in
+  let doc = strf "Kind of compilation object. $(docv) must be one of %s."
+      (Arg.doc_alts_enum kind)
+  in
+  let kind = Arg.enum kind in
+  Arg.(required & pos 0 (some kind) None & info [] ~doc ~docv:"KIND")
+
+let cmd  =
+  let doc = "Show the OCaml compilation objects of a package" in
   let sdocs = Manpage.s_common_options in
   let exits =
       Term.exit_info 0 ~doc:"packages exist and the lookups succeeded." ::
@@ -133,45 +164,13 @@ let cmd_info ~cmd ~kind =
   let man_xrefs = [ `Main ] in
   let man =
     [ `S "DESCRIPTION";
-      `P (strf "The $(tname) command shows the %s of a package.
-                See odig-packaging(7) to understand how %s are found
-                by odig." kind kinds) ]
+      `P ("The $(tname) command shows the OCaml compilation objects
+          of a package.") ]
   in
-  Cmdliner.Term.info cmd ~doc ~sdocs ~exits ~man_xrefs ~man
+  Term.(const show $ kind $ Cli.setup () $ Cli.pkgs_or_all ~right_of:0 () $
+               Cli.warn_error $ show_loc $ Cli.show_pkg $ show_deps $ Cli.json),
+  Term.info "cobjs" ~doc ~sdocs ~exits ~man_xrefs ~man
 
-let cmd cmd ~kind ~get ~print_cobj ~json_cobj =
-  Term.(const (show ~kind ~get ~print_cobj ~json_cobj) $ Cli.setup () $
-        Cli.pkgs_or_all $ Cli.warn_error $ show_loc $ Cli.show_pkg $
-        show_deps $ Cli.json),
-  cmd_info ~cmd ~kind
-
-(* Commands *)
-
-let get cobj p = Ok (cobj (Pkg.cobjs p))
-
-let mli_cmd =
-  cmd "mli" ~kind:"mli" ~get:(get Cobj.mlis)
-    ~print_cobj:print_mli ~json_cobj:json_mli
-
-let cmi_cmd =
-  cmd "cmi" ~kind:"cmi" ~get:(get Cobj.cmis)
-    ~print_cobj:print_cmi ~json_cobj:json_cmi
-
-let cmti_cmd =
-  cmd "cmti" ~kind:"cmti" ~get:(get Cobj.cmtis)
-    ~print_cobj:print_cmti ~json_cobj:json_cmti
-
-let cmo_cmd =
-  cmd "cmo" ~kind:"cmo" ~get:(get Cobj.cmos)
-    ~print_cobj:print_cmo ~json_cobj:json_cmo
-
-let cmx_cmd =
-  cmd "cmx" ~kind:"cmx" ~get:(get Cobj.cmxs)
-    ~print_cobj:print_cmx ~json_cobj:json_cmx
-
-let cmt_cmd =
-  cmd "cmt" ~kind:"cmt" ~get:(get Cobj.cmts)
-    ~print_cobj:print_cmt ~json_cobj:json_cmt
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

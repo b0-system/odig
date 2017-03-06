@@ -46,7 +46,7 @@ let cmd =
         using the cmti files of the package." ]
   in
   Term.(const api $ Cli.setup () $ Cli.odoc $ Cli.doc_force $
-        Cli.docdir_href $ Cli.pkgs_or_all),
+        Cli.docdir_href $ Cli.pkgs_or_all ()),
   Term.info "odoc" ~doc ~sdocs ~exits ~man_xrefs ~man
 
 (*---------------------------------------------------------------------------

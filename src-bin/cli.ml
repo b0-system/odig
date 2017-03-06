@@ -73,12 +73,15 @@ let pkgs ?right_of () =
   in
   Arg.(value & spec & info [] ~doc ~docv)
 
-let pkgs_or_all =
+let pkgs_or_all ?right_of () =
   let doc = "Packages to consider (repeatable). If no package is mentioned
              all of them is implied."
   in
   let docv = "PKG" in
-  let pkgs = Arg.(pos_all pkg_name_arg []) in
+  let pkgs = match right_of with
+  | None -> Arg.(pos_all pkg_name_arg [])
+  | Some r -> Arg.(pos_right r pkg_name_arg [])
+  in
   let wrap = function [] -> `All | pkgs -> `Pkgs pkgs in
   Term.(const wrap $ Arg.(value & pkgs & info [] ~doc ~docv))
 

@@ -256,7 +256,7 @@ let local_cobjs dir = match dir with
     >>| fun _ -> Odig_cobj.set_of_dir dir
 | None ->
     let absent = Fpath.v "_build" in
-    let dir = OS.Env.(value "ODIG_TOP_LOAD_DIR" ~absent path) in
+    let dir = OS.Env.(value "ODIG_TOP_LOCAL_DIR" ~absent path) in
     OS.Dir.exists dir >>| function
     | false -> Odig_cobj.empty_set
     | true -> Odig_cobj.set_of_dir dir

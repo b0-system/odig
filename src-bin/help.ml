@@ -38,13 +38,14 @@ let basics =
     `P "See the help of individual commands for more details and options.";
     `S "OCAMLDOC PACKAGE API DOCUMENTATION";
     `P "Package API documentation can be generated on a best-effort basis
-        with ocamldoc by issuing:";
-    `Pre " odig ocamldoc      # Generate API docs for all packages"; `Noblank;
-    `Pre " odig ocamldoc bos  # Generate API docs for package bos";
+        with odoc or ocamldoc by issuing:";
+    `Pre " odig (odoc|ocamldoc)      # Generate API docs for all packages";
+    `Noblank;
+    `Pre " odig (odoc|ocamldoc) bos  # Generate API docs for package bos";
     `P "To open the documentation index or the documentation of
         a package in your browser use:";
-    `Pre " odig doc      # Package index "; `Noblank;
-    `Pre " odig doc bos  # API doc for package bos";
+    `Pre " odig doc [--ocamldoc] # Package index "; `Noblank;
+    `Pre " odig doc [--ocamldoc] bos  # API doc for package bos";
     `S "TOPLEVEL SUPPORT (EXPERIMENTAL)";
     `P "Odig provides support to automatically load modules and their
         dependencies. In a toplevel simply invoke:";
@@ -109,29 +110,33 @@ let packaging =
     `I ("$(i,DOCDIR)/$(i,PKG)/CHANGE* or $(i,DOCDIR)/$(i,PKG)/HISTORY*",
          "change logs, $(b,changes) command");
     `I ("$(i,DOCDIR)/$(i,PKG)/LICENSE*", "license, $(b,license) command");
-    `S "ODOC PACKAGE API DOCUMENTATION";
+    `S "OCAML API RECOGNITION";
+    `P "The OCaml API of a package $(i,PKG) is defined by all the compiled
+        module interfaces (cmi) files that are present in the path
+        hierarchy rooted at $(i,LIBDIR)/$(i,PKG).";
+    `S "API DOCUMENTATION GENERATION via ODOC";
     `P "The odoc API documentation of a package $(i,PKG) is generated
-        by considering all cmi files in the path hierarchy rooted at
-        $(i,LIBDIR)/$(i,PKG) and the files located in
+        by considering all cmi files of the API and the files in
         $(i,DOCDIR)/$(i,PKG)/odoc-assets.";
-    `P "Any cmi file installed by the package is considered to be part of
-        the package API. For each of these files if a corresponding
-        cmti file is found at the same location it used to generate
-        the documentation; if not, an existing cmt file is used and
+    `P "For each cmi file if a corresponding cmti file is found at
+        the same location it is used to generate the documentation of the
+        module with odoc; if not, an existing cmt file is used and
         lacking this the cmi file is used as a last resort.";
-    `P  "FIXME say something about multiple cmi files with the same name";
-    `P "Any file in $(i,DOCDIR)/$(i,PKG)/odoc-assets is simply copied over
+    `P "Any file in $(i,DOCDIR)/$(i,PKG)/odoc-assets is copied over
         in an _assets directory at the root of the package's generated
         API documentation.";
-    `S "OCAMLDOC PACKAGE API DOCUMENTATION";
+    `P "FIXME say something about multiple cmi files with the same name";
+    `Noblank;
+    `P "FIXME explain that undigested dependency names are
+        only resolved in the same package.";
+    `S "API DOCUMENTATION GENERATION via OCAMLDOC (DEPRECATED)";
     `P "The ocamldoc API documentation of a package $(i,PKG) is generated
-        by considering all mli files in the path hierarchy rooted at
-        $(i,LIBDIR)/$(i,PKG).";
-    `P "Any mli file installed by the package is considered to be part of
-        the package API. For each of these files its corresponding cmi must
-        also be installed at the same location.";
+        by considering all the cmi files of the API.";
+    `P "For each cmi file if a corresponding mli file is found at the
+        same location it is used to generate the documentation of the
+        module with ocamldoc.";
     `P "If a package defines more than one mli for a given toplevel
-        compilation unit name the one residing at the lexicographically
+        module name the one residing at the lexicographically
         shorter path is taken to be part of the API documentation.";
     `S "TOPLEVEL SUPPORT (EXPERIMENTAL)";
     `P "After Odig loads a library named `lib` it loads a file

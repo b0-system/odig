@@ -17,7 +17,7 @@ open Bos_setup
 (* Announce and help *)
 
 let pp_code ppf c = Fmt.(styled `Bold string) ppf c
-let pp_odig = Fmt.styled_unit `Bold "Odig"
+let pp_odig = Fmt.styled_unit `Yellow "Odig"
 let pp_version = Fmt.styled_unit `Cyan "%%VERSION%%"
 let announce () =
   Odig_log.app (fun m -> m "%a %a loaded. Type %a for more info."

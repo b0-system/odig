@@ -226,7 +226,11 @@ let pp_cmo_obj ppf (_, o) =
 let rec_cmos_for_interfaces ~resolve index cmis =
   (* FIXME lookup unresolved for cmis and add incs ? *)
   let pp_res = Odig_cobj.pp_rec_dep_resolution pp_cmo_obj in
-  let res = Odig_cobj.rec_cmos_for_interfaces ~resolve index cmis in
+  let cmo_deps cmo = match Odig_cobj.Cmo.cma cmo with
+  | None -> Odig_cobj.Cmo.cmi_deps cmo
+  | Some cma -> Odig_cobj.Cma.cmi_deps cma
+  in
+  let res = Odig_cobj.rec_cmos_for_interfaces ~cmo_deps ~resolve index cmis in
   let add _ r acc =
     acc >>= fun acc ->
     Odig_log.debug (fun m -> m "%a"
@@ -237,11 +241,7 @@ let rec_cmos_for_interfaces ~resolve index cmis =
     | `Conflict _ as r -> R.error_msgf "%a" pp_res r
     | `Unresolved (_, `Amb objs, _) as r -> R.error_msgf "%a" pp_res r
   in
-  let deps cmo = match Odig_cobj.Cmo.cma cmo with
-  | None -> Odig_cobj.Cmo.cmi_deps cmo
-  | Some cma -> Odig_cobj.Cma.cmi_deps cma
-  in
-  Odig_cobj.fold_rec_dep_resolutions ~deps add res (Ok [])
+  Odig_cobj.fold_rec_dep_resolutions ~deps:cmo_deps add res (Ok [])
   >>| fun acc -> List.rev acc
 
 let cmos_to_paths cmos = (* preserve order, rem dupes *)

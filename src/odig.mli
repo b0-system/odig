@@ -724,17 +724,19 @@ module Cobj : sig
   (** See, {e mutatis mutandis}, {!rec_cmos_for_interfaces}. *)
 
   val rec_cmos_for_interfaces :
+    ?cmo_deps:(cmo -> dep list) ->
     resolve:('a, cmo) dep_resolver -> 'a index ->
     (dep * ('a, cmo) dep_src) list ->
     ('a, cmo) rec_dep_resolution Astring.String.map
-  (** [rec_cmos_for_interfaces ~resolve i deps] maps module names to
+  (** [rec_cmos_for_interfaces ~cmo_deps ~resolve i deps] maps module names to
       the result of recursively resolving module interface
       dependencies [deps] (tupled with a dependency source) to [cmo]s
       in [i] using [resolve]. More precisely:
       {ul
       {- First [deps] are resolved to [cmo]s. Then for each of these
-         [cmo]s, their {{!Cmo.cmi_deps}interface dependencies} are resolved
-         to [cmo]s and recursively.}
+         [cmo]s, their interface dependencies, as determined by
+         [cmo_deps] (defaults to {!Cmo.cmi_deps}) are resolved to
+         [cmo]s and recursively.}
       {- Conflicts occur if two module interface dependencies occur with the
          same module name but different interface digests. This means
          that the resolution request is inconsistent and cannot be used

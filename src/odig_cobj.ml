@@ -643,9 +643,9 @@ let rec_cmis_for_interfaces ~resolve index deps =
   rec_objs_for_interfaces
     cmi_for_interface Cmi.name Cmi.digest Cmi.deps ~resolve index deps
 
-let rec_cmos_for_interfaces ~resolve index deps =
+let rec_cmos_for_interfaces ?(cmo_deps = Cmo.cmi_deps) ~resolve index deps =
   rec_objs_for_interfaces
-    cmo_for_interface Cmo.name Cmo.cmi_digest Cmo.cmi_deps ~resolve index deps
+    cmo_for_interface Cmo.name Cmo.cmi_digest cmo_deps ~resolve index deps
 
 let fold_rec_dep_resolutions ~deps f res acc =
   (* Topological sort by depth first exploration of the DAG. *)

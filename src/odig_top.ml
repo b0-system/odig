@@ -116,13 +116,13 @@ let load_init_file cma =
   OS.File.exists init >>= function
   | false -> Ok ()
   | true ->
-      Tobj.load_src init >>| fun () ->
-      Odig_log.app (fun m -> m "%a" pp_src init)
+      Odig_log.app (fun m -> m "%a" pp_src init);
+      Tobj.load_src init
 
 let load_obj ~init obj =
   Tinc.add (Fpath.parent obj) >>= fun () ->
-  Tobj.load obj >>= fun () ->
   Odig_log.app (fun m -> m "%a" pp_obj obj);
+  Tobj.load obj >>= fun () ->
   match init && Fpath.has_ext ".cma" obj with
   | true -> load_init_file obj
   | false -> Ok ()

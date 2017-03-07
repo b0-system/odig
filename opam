@@ -19,7 +19,7 @@ depends: [
   "fmt"
   "logs"
   "bos"
-  "cmdliner"
+  "cmdliner" {>= "1.0.0"}
   "mtime"
   "webbrowser"
   "opam-format"

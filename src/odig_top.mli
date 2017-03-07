@@ -16,7 +16,7 @@ val load :
   ?force:bool -> ?deps:bool -> ?init:bool -> ?dir:Fpath.t -> string -> unit
 
 val load_pkg :
-  ?force:bool -> ?deps:bool -> ?init:bool -> string -> unit
+  ?silent:bool -> ?force:bool -> ?deps:bool -> ?init:bool -> string -> unit
 
 val init : ?conf:Odig_conf.t -> unit -> unit
 val announce : unit -> unit

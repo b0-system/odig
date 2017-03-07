@@ -93,8 +93,8 @@ val load_libs :
        object that needs to be loaded.}} *)
 
 val load_pkg :
-  ?force:bool -> ?deps:bool -> ?init:bool -> string -> unit
-(** [load_pkg ~force ~deps ~init name] loads all the libraries of the
+  ?silent:bool -> ?force:bool -> ?deps:bool -> ?init:bool -> string -> unit
+(** [load_pkg ~silent ~force ~deps ~init name] loads all the libraries of the
     package named [name].
     {ul
     {- If [init] is [true] (default) toplevel library
@@ -102,7 +102,8 @@ val load_pkg :
     {- If [deps] is [true] (default) objects in other packages that
        are needed by the package libraries are also loaded.}
     {- If [force] is [true] (defaults to [false]) reloads any loaded
-       object that needs to be loaded.}} *)
+       object that needs to be loaded.}
+    {- If [silent] is [true] loaded objects are not logged}} *)
 
 (**/**)
 val debug : unit -> unit

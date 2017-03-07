@@ -110,24 +110,24 @@ let status () =
 
 (* Low-level loading *)
 
-let load_init_file cma =
+let load_init_file ~silent cma =
   let init_base = Fpath.(basename @@ rem_ext cma) ^ "_top_init.ml" in
   let init = Fpath.(parent cma / init_base) in
   OS.File.exists init >>= function
   | false -> Ok ()
   | true ->
-      Odig_log.app (fun m -> m "%a" pp_src init);
+      if not silent then Odig_log.app (fun m -> m "%a" pp_src init);
       Tobj.load_src init
 
-let load_obj ~init obj =
+let load_obj ~silent ~init obj =
   Tinc.add (Fpath.parent obj) >>= fun () ->
-  Odig_log.app (fun m -> m "%a" pp_obj obj);
+  if not silent then Odig_log.app (fun m -> m "%a" pp_obj obj);
   Tobj.load obj >>= fun () ->
   match init && Fpath.has_ext ".cma" obj with
-  | true -> load_init_file obj
+  | true -> load_init_file ~silent obj
   | false -> Ok ()
 
-let load_objs ~force ~init objs =
+let load_objs ~silent ~force ~init objs =
   let never_load o = match Fpath.filename o with
   | "stdlib.cma" | "ocamlcommon.cma" | "ocamlbytecomp.cma"
   | "ocamltoplevel.cma" -> true
@@ -142,7 +142,7 @@ let load_objs ~force ~init objs =
   | obj :: objs ->
       match don't_load obj with
       | true -> loop objs
-      | false -> load_obj ~init obj >>= fun () -> loop objs
+      | false -> load_obj ~silent ~init obj >>= fun () -> loop objs
   in
   loop objs
 
@@ -277,6 +277,7 @@ let local_setup ?dir () =
 
 let load ?(force = false) ?(deps = true) ?(init = true) ?dir m =
   (* FIXME add a way to ignore local *)
+  let silent = false in
   let m = String.Ascii.capitalize m in
   let roots = [(m, None), []] in
   let resolve = if deps then resolve_local_or_pkg else resolve_mod m in
@@ -285,11 +286,12 @@ let load ?(force = false) ?(deps = true) ?(init = true) ?dir m =
     >>= fun (_, index) -> rec_cmos_for_interfaces ~resolve index roots
     >>= function
     | [] -> R.error_msgf "%s: found no object to load" m
-    | cmos -> load_objs ~force ~init (cmos_to_paths cmos)
+    | cmos -> load_objs ~silent ~force ~init (cmos_to_paths cmos)
   end
   |> Logs.on_error_msg ~use:(fun _ -> ())
 
 let load_libs ?(force = false) ?(deps = true) ?(init = true) ?dir () =
+  let silent = false in
   let resolve = if deps then resolve_local_or_pkg else resolve_local in
   begin
     local_setup ?dir ()
@@ -298,11 +300,13 @@ let load_libs ?(force = false) ?(deps = true) ?(init = true) ?dir () =
     | _ ->
         let cmis = cmas_cmi_roots cobjs in
         rec_cmos_for_interfaces ~resolve index cmis
-        >>= fun cmos -> load_objs ~force ~init (cmos_to_paths cmos)
+        >>= fun cmos -> load_objs ~silent ~force ~init (cmos_to_paths cmos)
   end
   |> Logs.on_error_msg ~use:(fun _ -> ())
 
-let load_pkg ?(force = false) ?(deps = true) ?(init = true) name =
+let load_pkg
+    ?(silent = false) ?(force = false) ?(deps = true) ?(init = true) name
+  =
   (* FIXME limit to pkg deps *)
   let resolve = if deps then resolve_local_or_pkg else resolve_local in
   begin
@@ -313,7 +317,7 @@ let load_pkg ?(force = false) ?(deps = true) ?(init = true) name =
     >>= fun cobjs -> local_index conf cobjs
     >>= fun index -> Ok (cmas_cmi_roots cobjs)
     >>= fun roots -> rec_cmos_for_interfaces ~resolve index roots
-    >>= fun cmos -> load_objs ~force ~init (cmos_to_paths cmos)
+    >>= fun cmos -> load_objs ~silent ~force ~init (cmos_to_paths cmos)
   end
   |> Odig_log.on_error_msg ~use:(fun _ -> ())
 

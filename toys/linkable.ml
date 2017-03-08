@@ -6,7 +6,6 @@
 
 open Bos_setup
 open Odig
-open Odig.Private
 
 let pkg_names pkg = (* set of cmo and cmx compilation unit names of [pkg] *)
   let add_cmo acc cmo = String.Set.add (Cobj.Cmo.name cmo) acc in

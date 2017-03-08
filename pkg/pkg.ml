@@ -42,4 +42,5 @@ let () =
        Pkg.etc "etc/odig.conf";
        Pkg.etc "etc/odoc.css";
        Pkg.etc "etc/ocamldoc.css";
-       Pkg.bin "toys/metagen" ~dst:"metagen"; ]
+       Pkg.bin "toys/metagen" ~dst:"metagen";
+       Pkg.bin "toys/linkable" ~dst:"linkable"; ]

@@ -14,3 +14,4 @@ true : package(opam-format compiler-libs.common)
 
 <toys> : include
 <toys/metagen.*> : package(cmdliner fmt.tty fmt.cli logs.fmt logs.cli findlib)
+<toys/linkable.*> : package(cmdliner fmt.tty fmt.cli logs.fmt logs.cli)

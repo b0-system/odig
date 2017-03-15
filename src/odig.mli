@@ -37,8 +37,7 @@
        This can be prevented by using the [~init] argument of
        load functions.}
     {- Library archive with the following filenames are currently prevented
-       from loading: [ocamltoplevel.cma], [ocamlbytecomp.cma]
-       [ocamltoplevel.cma], [stdlib.cma]}
+       from loading: [ocamltoplevel.cma], [ocamlbytecomp.cma], [stdlib.cma]}
     {- In {!load_libs} and {!load_pkg}, library archives ending with [_top.cma]
        are excluded from the libraries to load.}
     {- Dependency searches are currently unrestricted. This semantics will

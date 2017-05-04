@@ -34,7 +34,8 @@ let __odig_deps =
       "fmt", ["fmt.cma"; "fmt_tty.cma"], all;
       "logs", ["logs.cma"; "logs_fmt.cma"], all;
       "bos", ["bos.cma"; "bos_setup.cma"], all;
-      "mtime/os", ["mtime.cma"], all;
+      "mtime", ["mtime.cma"], all;
+      "mtime/os", ["mtime_clock.cma"], all;
       "ocaml", ["ocamlcommon.cma"], all;
       "odig", ["odig.cma"], all; ]
   in

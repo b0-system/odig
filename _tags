@@ -1,5 +1,5 @@
 true : bin_annot, safe_string
-true : package(rresult asetmap fpath bos.setup mtime.os)
+true : package(rresult asetmap fpath bos.setup mtime mtime.clock.os)
 true : package(opam-format compiler-libs.common)
 
 <src> : include

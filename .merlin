@@ -4,7 +4,7 @@ PKG logs logs.fmt logs.cli
 PKG astring fpath bos bos.setup cmdliner
 PKG topkg.care
 PKG compiler-libs.common
-PKG mtime.os
+PKG mtime.clock.os mtime
 PKG webbrowser webbrowser.cli
 PKG asetmap
 PKG findlib

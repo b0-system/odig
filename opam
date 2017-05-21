@@ -20,7 +20,7 @@ depends: [
   "logs"
   "bos"
   "cmdliner" {>= "1.0.0"}
-  "mtime"
+  "mtime" {>= "1.0.0"}
   "webbrowser"
   "opam-format"
 ]

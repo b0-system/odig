@@ -20,7 +20,7 @@ change without notice in the future.
 
 odig can be installed with `opam`:
 
-    opam install odig
+    opam install ocaml-manual odig
 
 If you don't use `opam` consult the [`opam`](opam) file for build
 instructions.
@@ -31,15 +31,16 @@ For a quick start, to access the distribution and API documentation of
 opam packages do:
 
 ```
-odig ocamldoc
+odig odoc
 odig doc
 ```
 
 To use in the toplevel (experimental) do:
 ```
 # #use "odig.top"
-# Odig.load_mod "Uuseg" (* load the Uuseg module and its dependencies *)
+# Odig.load "Irmin_mem" (* load the Irmin_mem module and its dependencies *)
 # Odig.load_libs ()     (* load libraries from a local build *)
+# Odig.help ()          (* get help about toplevel loaders *)
 ```
 See `odig doc odig` for the full API.
 

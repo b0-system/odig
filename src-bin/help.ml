@@ -10,7 +10,7 @@ let version = "%%VERSION%%"
 (* Help manuals *)
 
 let basics =
-  ("OPKG-BASICS", 7, "", version, odig_manual),
+  ("ODIG-BASICS", 7, "", version, odig_manual),
   [ `S "NAME";
     `P "odig-basics - short introduction to odig";
     `S "DESCRIPTION";
@@ -61,7 +61,7 @@ let basics =
     `P "odig(1), odig-packaging(7)"; ]
 
 let packaging =
-  ("OPKG-PACKAGING", 7, "", version, odig_manual),
+  ("ODIG-PACKAGING", 7, "", version, odig_manual),
   [ `S "NAME";
     `P "odig-packaging - packaging conventions for odig";
     `S "DESCRIPTION";
@@ -145,7 +145,7 @@ let packaging =
     `P "odig(1), odig-basics(7)"; ]
 
 let conf =
-  ("OPKG-CONF", 7, "", version, odig_manual),
+  ("ODIG-CONF", 7, "", version, odig_manual),
   [ `S "NAME";
     `P "odig-conf - odig configuration file";
     `S "DESCRIPTION";

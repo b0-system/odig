@@ -32,7 +32,7 @@ open Cmdliner
 
 let odoc =
   let doc = "The odoc command to use." in
-  let env = Arg.env_var "OPKG_ODOC" in
+  let env = Arg.env_var "ODIG_ODOC" in
   Arg.(value & opt string "odoc" & info ["odoc"] ~env ~docv:"CMD" ~doc)
 
 let cmd =

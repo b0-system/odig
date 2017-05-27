@@ -19,7 +19,7 @@ let path_arg =
 let conf ?docs () =
   let conf_file =
     let doc = "Use $(docv) as the odig configuration file. See odig-conf(7)."in
-    let env = Arg.env_var "OPKG_CONF" in
+    let env = Arg.env_var "ODIG_CONF" in
     Arg.(value & opt path_arg Odig.Conf.default_file & info ["C"; "conf" ]
            ~env ~doc ~docv:"FILE" ?docs)
   in

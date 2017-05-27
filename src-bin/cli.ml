@@ -43,13 +43,13 @@ let warn_error =
 
 let odoc =
   let doc = "The odoc command to use." in
-  let env = Arg.env_var "OPKG_ODOC" in
+  let env = Arg.env_var "ODIG_ODOC" in
   let odoc = Cmd.v "odoc" in
   Arg.(value & opt cmd_arg odoc & info ["odoc"] ~env ~docv:"CMD" ~doc)
 
 let ocamldoc =
   let doc = "The ocamldoc command to use." in
-  let env = Arg.env_var "OPKG_OCAMLDOC" in
+  let env = Arg.env_var "ODIG_OCAMLDOC" in
   let ocamldoc =
     let ocamldoc = Cmd.v "ocamldoc" in
     let ocamldoc_opt = Cmd.v "ocamldoc.opt" in
@@ -122,11 +122,11 @@ let setup conf style_renderer log_level =
 
 let setup () =
   let style_renderer =
-    let env = Arg.env_var "OPKG_COLOR" in
+    let env = Arg.env_var "ODIG_COLOR" in
     Fmt_cli.style_renderer ~docs:Manpage.s_common_options ~env ()
   in
   let log_level =
-    let env = Arg.env_var "OPKG_VERBOSITY" in
+    let env = Arg.env_var "ODIG_VERBOSITY" in
     Logs_cli.level ~docs:Manpage.s_common_options ~env ()
   in
   Term.(const setup $ Odig_cli.conf ~docs:Manpage.s_common_options () $

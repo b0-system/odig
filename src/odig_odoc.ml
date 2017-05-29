@@ -41,7 +41,7 @@ let find_best_src_for_odoc pkg cmi =
       | Some cmt -> cmt
       | None -> Odig_cobj.Cmi.path cmi
 
-let cmi_deps ~only_digested pkg cmi =
+let cmi_deps ~recurse ~only_digested pkg cmi =
   let cmi_path = Odig_cobj.Cmi.path cmi in
   let warn msg dep =
     Logs.warn
@@ -50,26 +50,43 @@ let cmi_deps ~only_digested pkg cmi =
   in
   let warn_not_found = warn "no cmi found" in
   let warn_multiple = warn "multiple cmis found" in
-  let add_cmi i acc (name, d as dep) = match d with
-  | None ->
-      if only_digested then acc else
+  let rec add_cmis i acc todo = function
+  | [] -> acc, todo
+  | (name, None as dep) :: deps ->
+      if only_digested then add_cmis i acc todo deps else
       begin match Odig_cobj.Index.cmis_for_interface i (`Name name) with
-      | [] -> warn_not_found dep; acc
+      | [] -> warn_not_found dep; add_cmis i acc todo deps
       | cmis ->
           (* Only resolve undigested deps in the same package *)
           match List.filter (fun (`Pkg p, _) -> Odig_pkg.equal pkg p) cmis with
-          | [] -> warn_not_found dep; acc
-          | cmi :: cmis -> if cmis <> [] then warn_multiple dep; cmi :: acc
+          | [] -> warn_not_found dep; add_cmis i acc todo deps
+          | cmi :: cmis ->
+              if cmis <> [] then warn_multiple dep;
+              let todo = if recurse then (snd cmi) :: todo else todo in
+              add_cmis i (cmi :: acc) todo deps
       end
-  | Some d ->
+  | (name, Some d as dep) :: deps ->
       match Odig_cobj.Index.cmis_for_interface i (`Digest d) with
-      | [] -> warn_not_found dep; acc
-      | cmi :: cmis -> (* Any should do FIXME really ? *) cmi :: acc
+      | [] -> warn_not_found dep; add_cmis i acc todo deps
+      | cmi :: cmis -> (* Any should do FIXME really ? *)
+          let todo = if recurse then (snd cmi) :: todo else todo in
+          add_cmis i (cmi :: acc) todo deps
   in
   Odig_pkg.conf_cobj_index (Odig_pkg.conf pkg)
   >>= fun i ->
-  let deps = Odig_cobj.Cmi.deps cmi in
-  Ok (List.fold_left (add_cmi i) [] deps)
+  let rec loop seen acc = function
+  | [] -> acc
+  | cmi :: todo ->
+      let path = Odig_cobj.Cmi.path cmi in
+      match Fpath.Set.mem path seen with
+      | true -> loop seen acc todo
+      | false ->
+          let seen = Fpath.Set.add path seen in
+          let deps = Odig_cobj.Cmi.deps cmi in
+          let acc, todo = add_cmis i acc todo deps in
+          loop seen acc todo
+  in
+  Ok (loop Fpath.Set.empty [] [cmi])
 
 let incs_of_deps ?(odoc = false) deps =
   let add acc ((`Pkg pkg), cmi) =
@@ -85,7 +102,7 @@ let rec build_cmi_deps ~odoc seen pkg cmi = (* FIXME not t.r. *)
     Logs.on_error_msg ~use:(fun _ -> seen)
       (_compile_to_odoc ~odoc ~force:false (* really ? *) seen pkg cmi)
   in
-  (cmi_deps ~only_digested:true pkg cmi >>| fun deps ->
+  (cmi_deps ~recurse:false ~only_digested:true pkg cmi >>| fun deps ->
    deps, List.fold_left build seen deps)
   |> Logs.on_error_msg ~use:(fun _ -> [], seen)
 
@@ -140,7 +157,7 @@ let html_of_odoc ~odoc ~force pkg cmi =
      FIXME have a more fine dep analysis of this. *)
   let cmi_path = Odig_cobj.Cmi.path cmi in
   let odoc_file = compile_dst pkg cmi_path in
-  cmi_deps ~only_digested:false pkg cmi >>= fun deps ->
+  cmi_deps ~recurse:true ~only_digested:false pkg cmi >>= fun deps ->
   let incs = incs_of_deps ~odoc:true deps in
   let htmlroot = htmldir (Odig_pkg.conf pkg) None in
   OS.Cmd.run Cmd.(odoc % "html" %% incs % "-o" % p htmlroot % p odoc_file)

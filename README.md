@@ -20,7 +20,7 @@ change without notice in the future.
 
 odig can be installed with `opam`:
 
-    opam install ocaml-manual odig
+    opam install odoc ocaml-manual odig
 
 If you don't use `opam` consult the [`opam`](opam) file for build
 instructions.
@@ -31,6 +31,7 @@ For a quick start, to access the distribution and API documentation of
 opam packages do:
 
 ```
+opam install odoc ocaml-manual odig
 odig odoc
 odig doc
 ```

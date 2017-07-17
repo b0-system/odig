@@ -36,7 +36,7 @@ let __odig_deps =
       "bos", ["bos.cma"; "bos_setup.cma"], all;
       "mtime", ["mtime.cma"], all;
       "mtime/os", ["mtime_clock.cma"], all;
-      "ocaml", ["ocamlcommon.cma"], all;
+      "ocaml", ["ocamlcommon.cma"], [`OCaml];
       "odig", ["odig.cma"], all; ]
   in
   let load_dep which (pkg, cmas, tops) = match List.mem which tops with

@@ -25,10 +25,13 @@ let etc_config c = match Conf.build_context c with
 let top_config c = match Conf.build_context c with
 | `Dev -> Ok ()
 | `Pin | `Distrib ->
-    let bootf = "src/odig.bytetop" in
     let lib_dir = Conf.value c lib_dir in
-    OS.File.read bootf >>= fun boot ->
-    OS.File.write_subst bootf ["LIBDIR", lib_dir] boot
+    let subst_lib_dir file =
+      OS.File.read file >>= fun contents ->
+      OS.File.write_subst file ["LIBDIR", lib_dir] contents
+    in
+    subst_lib_dir "src/odig.bytetop" >>= fun () ->
+    subst_lib_dir "src/odig.nattop"
 
 let pre c = etc_config c >>= fun () -> top_config c
 let build = Pkg.build ~pre ()
@@ -38,6 +41,7 @@ let () =
   Ok [ Pkg.mllib ~api:["Odig"] "src/odig.mllib";
        Pkg.mllib "src/odig_cli.mllib";
        Pkg.lib "src/odig.bytetop" ~dst:"../ocaml/odig.top";
+       Pkg.lib "src/odig.nattop" ~dst:"../ocaml/odig.nattop";
        Pkg.bin "src-bin/odig_bin" ~dst:"odig";
        Pkg.etc "etc/odig.conf";
        Pkg.etc "etc/odoc.css";

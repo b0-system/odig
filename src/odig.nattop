@@ -1,0 +1,67 @@
+
+(* Odig toplevel bootstrap. *)
+
+(* First we need this phrase to see Toploop's API which allows us to
+   detect utop. N.B. in ocaml we only have Opttopdirs and Toploop the
+   rest is expunged. *)
+let () =
+  Opttopdirs.dir_directory "+compiler-libs"
+;;
+
+(* This phrase allows us to use Odig in the next one. It would be nice to be
+   able to expunge this id from the environment but we need to share it for the
+   next phrase. *)
+let __odig_deps =
+  let deps = (* list of (pkg, cmxss, toplevels in which to load). *)
+    let all = [ `Utop; `OCaml ] in
+    [ "ocaml", ["unix.cmxs"], [ `OCaml ];
+
+      (* opam-format deps *)
+      "opam-file-format", ["opam-file-format.cmxs"], all;
+      "uutf", ["uutf.cmxs"], all;
+      "jsonm", ["jsonm.cmxs"], all;
+      "re", ["re.cmxs"; "re_emacs.cmxs"; "re_str.cmxs"], all;
+      "ocamlgraph", ["graph.cmxs"], all;
+      "ocaml", ["bigarray.cmxs"], all;
+      "opam-core", ["opam-core.cmxs"], all;
+
+      (* odig deps and odig *)
+      "opam-format", ["opam-format.cmxs"], all;
+      "asetmap", ["asetmap.cmxs"], all;
+      "rresult", ["rresult.cmxs"], all;
+      "astring", ["astring.cmxs"], all;
+      "fpath", ["fpath.cmxs"], all;
+      "fmt", ["fmt.cmxs"; "fmt_tty.cmxs"], all;
+      "logs", ["logs.cmxs"; "logs_fmt.cmxs"], all;
+      "bos", ["bos.cmxs"; "bos_setup.cmxs"], all;
+      "mtime", ["mtime.cmxs"], all;
+      "mtime/os", ["mtime_clock.cmxs"], all;
+      "ocaml", ["ocamlcommon.cmxs"], [`OCaml];
+      "odig", ["odig.cmxs"], all; ]
+  in
+  let load_dep which (pkg, cmxss, tops) = match List.mem which tops with
+  | false -> ()
+  | true ->
+      if pkg <> "ocaml" then Opttopdirs.dir_directory ("%%LIBDIR%%/" ^ pkg);
+      List.iter (Opttopdirs.dir_load Format.err_formatter) cmxss
+  in
+  let which = match Hashtbl.mem Opttoploop.directive_table "utop_help" with
+  | false -> `OCaml
+  | true -> `Utop
+  in
+  List.iter (load_dep which) deps;
+  deps
+;;
+
+let () =
+  (* We can now announce Odig and make it aware of what we already loaded
+     in the toplevel. *)
+  let assume_dep (pkg, cmxss, _) =
+    let dir = Fpath.v ("%%LIBDIR%%/" ^ pkg) in
+    let cmxs_path cmxs = Fpath.(dir / cmxs) in
+    if pkg <> "ocaml" then Odig.Private.Top.assume_inc dir;
+    List.iter (fun cmxs -> Odig.Private.Top.assume_obj (cmxs_path cmxs)) cmxss
+  in
+  List.iter assume_dep __odig_deps;
+  Odig.Private.Top.announce ()
+;;

@@ -4,6 +4,9 @@ true : package(opam-format compiler-libs.common)
 
 <src> : include
 <src/byte/*> : package(compiler-libs.toplevel)
+
+<src/odig_ocamltop*> or <src/byte/odig_ocamltop*> or <src/native/odig_ocamltop*> : my_no_keep_locs
+
 <src/odig_cli.*> : package(cmdliner)
 
 <src-bin> : include

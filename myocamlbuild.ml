@@ -21,6 +21,7 @@ let cp_odig_ocamltop dir ext =
 let () =
   dispatch begin function
   | After_rules ->
+      flag ["ocaml"; "compile"; "my_no_keep_locs"] (A "-no-keep-locs");
       cp_odig_ocamltop "byte" "cmo";
       cp_odig_ocamltop "native" "cmx";
       cp_odig_ocamltop "native" "o";

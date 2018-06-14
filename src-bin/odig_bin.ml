@@ -14,7 +14,6 @@ let cmds =
     Distrib_doc.license_cmd;
     Distrib_doc.readme_cmd;
     Doc.cmd;
-    Guess_deps.cmd;
     Listing.cmd;
     Metadata.authors_cmd;
     Metadata.deps_cmd;

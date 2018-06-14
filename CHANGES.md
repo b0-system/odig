@@ -1,12 +1,11 @@
 
 - `metagen` and `linkable` binaries are gone.
-- Drop the `graph` command.
-- Drop the `help` command. Provide documentation in `odig`'s API docs
-  to make it referencable and linkable. This is where the tutorial and
-  the packaging conventions now live. See `odig doc odig`.
+- Drop the data-driven toplevel loaders. Use the `omod` project for this.
+- Drop the `guess-deps` and `graph` commands.
 - Drop the best-effort `ocamldoc` support and corresponding command.
-- Drop the data-driven toplevel loaders. The `omod` project handles
-  this.
+- Drop the `help` command. Documentation is now in `odig`'s API docs
+  to make it referencable and web linkable. This is where the tutorial and
+  the packaging conventions now live. See `odig doc odig`.
 
 v0.0.3 2017-10-31 Zagreb
 ------------------------

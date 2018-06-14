@@ -12,10 +12,8 @@ Odig_json
 Odig_log
 Odig_ocamlc
 Odig_ocamldoc
-Odig_ocamltop
 Odig_odoc
 Odig_opam
 Odig_pkg
 Odig_sexp
-Odig_top
 Odig_trail

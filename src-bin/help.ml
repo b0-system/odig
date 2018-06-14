@@ -46,17 +46,6 @@ let basics =
         a package in your browser use:";
     `Pre " odig doc [--ocamldoc] # Package index "; `Noblank;
     `Pre " odig doc [--ocamldoc] bos  # API doc for package bos";
-    `S "TOPLEVEL SUPPORT (EXPERIMENTAL)";
-    `P "Odig provides support to automatically load modules and their
-        dependencies. In a toplevel simply invoke:";
-    `Pre "# #use \"odig.top\"";
-    `P "You may want to add that line to your ~/.ocamlinit file. Here
-        are a few invocations, note that those always lookup the recursive
-        dependencies.";
-    `Pre "# Odig.load \"Gg\"    (* Load module Gg *)"; `Noblank;
-    `Pre "# Odig.load_libs () (* Load locally build libraries *)"; `Noblank;
-    `Pre "# Odig.load_pkg \"p\" (* Load all libraries of package p *)";
-    `P "Consult the API in `odig doc odig` for more information.";
     `S "SEE ALSO";
     `P "odig(1), odig-packaging(7)"; ]
 

@@ -36,15 +36,6 @@ odig odoc
 odig doc
 ```
 
-To use in the toplevel (experimental) do:
-```
-# #use "odig.top"
-# Odig.load "Irmin_mem" (* load the Irmin_mem module and its dependencies *)
-# Odig.load_libs ()     (* load libraries from a local build *)
-# Odig.help ()          (* get help about toplevel loaders *)
-```
-See `odig doc odig` for the full API.
-
 Other than that `odig` is extensively documented in man pages
 available through it's help system. Type:
 

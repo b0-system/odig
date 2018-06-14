@@ -12,12 +12,8 @@ module Pkg = Odig_pkg
 module Odoc = Odig_odoc
 module Ocamldoc = Odig_ocamldoc
 
-include Odig_top
-
 module Private = struct
   module Log = Odig_log
-  module Top = Odig_top
-  module Ocamltop = Odig_ocamltop
   module Json = Odig_json
   module Html = Odig_html
   module Dot = Odig_dot

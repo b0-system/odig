@@ -6,107 +6,10 @@
 
 (** Mining OCaml package installs.
 
-    Consult the {{!toplevel}toplevel helpers} and the {{!api}Odig API}.
-
     {b Warning.} [Odig] is a work in progress. Do not expect these
     APIs to be stable.
 
     {e %%VERSION%% — {{:%%PKG_HOMEPAGE%% }homepage}} *)
-
-(** {1:toplevel Toplevel helpers}
-
-    {b WARNING.} Proof of concepts do not start using this in your
-    scripts. For now only available in the bytecode toplevel.
-
-    To use the toplevel helpers simply bring the [Odig] module
-    in your scope: type or add the following line to your
-    [~/.ocamlinit] file.
-{[#use "odig.top"]}
-
-   {2:loadsem Load semantics and effects}
-
-    Take into account the following points:
-    {ul
-    {- Loading an object means: add its containing directory to the
-       included directories, load the object and (if not prevented)
-       its dependencies.}
-    {- If an object is available both as a standalone file and in a library
-       archive, [Odig] favours loading the library archive.}
-    {- When a library archive [lib] is loaded, if there is a file called
-       [lib_top_init.ml] at the same location that file is loaded aswell,
-       This can be prevented by using the [~init] argument of
-       load functions.}
-    {- Library archive with the following filenames are currently prevented
-       from loading: [ocamltoplevel.cma], [ocamlbytecomp.cma], [stdlib.cma]}
-    {- In {!load_libs} and {!load_pkg}, library archives ending with [_top.cma]
-       are excluded from the libraries to load.}
-    {- Dependency searches are currently unrestricted. This semantics will
-       change in the future, notably to ensure reproducible results regardless
-       of the package install state.}} *)
-
-(** {2:localsearch Local search}
-
-    Some functions take a [~dir] argument that specifies a directory
-    where objects can be looked up in addition to packages.  This
-    directory defaults to [_build] or the value of the environment
-    value [ODIG_TOP_LOCAL_DIR]. These load functions always first look up
-    for objects locally and then in packages. *)
-
-(** {2:loaders Loaders} *)
-
-val help : unit -> unit
-(** [help ()] shows help about odig's toplevel support. *)
-
-val status : unit -> unit
-(** [status] outputs information about Odig's toplevel loads. *)
-
-val reset : unit -> unit
-(** [reset] removes odig included directories and pretend all odig loaded
-    objects were not. *)
-
-val load :
-  ?force:bool -> ?deps:bool -> ?init:bool -> ?dir:Fpath.t -> string -> unit
-(** [load ~force ~deps ~init ~dir "Mod"] loads and setups include directories
-    for the module [Mod] found in [dir] or in any package.
-    {ul
-    {- If [init] is [true] (default) toplevel library initialisation files
-       are loaded.}
-    {- If [deps] is [true] (default) objects that are needed by the
-       module are also loaded.}
-    {- If [force] is [true] (defaults to [false]) reloads any loaded
-       object that needs to be loaded.}}
-
-    {b Warning.} Do not use this function in scripts, its outcome
-    depends on the package install state. *)
-
-val load_libs :
-  ?force:bool -> ?deps:bool -> ?init:bool -> ?dir:Fpath.t -> unit -> unit
-(** [load_libs ~force ~deps ~init ~dir ()] loads and setups include
-    directories for libraries found in [dir].
-    {ul
-    {- If [init] is [true] (default) toplevel library initialisation files
-       are loaded.}
-    {- If [deps] is [true] (default) objects that are needed by the
-       libraries are also loaded.}
-    {- If [force] is [true] (defaults to [false]) reloads any loaded
-       object that needs to be loaded.}} *)
-
-val load_pkg :
-  ?silent:bool -> ?force:bool -> ?deps:bool -> ?init:bool -> string -> unit
-(** [load_pkg ~silent ~force ~deps ~init name] loads all the libraries of the
-    package named [name].
-    {ul
-    {- If [init] is [true] (default) toplevel library
-       initialisation files are loaded.}
-    {- If [deps] is [true] (default) objects in other packages that
-       are needed by the package libraries are also loaded.}
-    {- If [force] is [true] (defaults to [false]) reloads any loaded
-       object that needs to be loaded.}
-    {- If [silent] is [true] loaded objects are not logged}} *)
-
-(**/**)
-val debug : unit -> unit
-(**/**)
 
 (** {1:api Odig API} *)
 
@@ -1109,47 +1012,6 @@ module Private : sig
        (?tags:Logs.Tag.set -> ('b, Format.formatter, unit, 'a) format4 -> 'b) ->
        'a) ->
       ('c -> 'a) -> 'c -> 'a
-  end
-
-  (** Odig toplevel support. *)
-  module Top : sig
-
-    (** {1 Toplevel support} *)
-
-    val init : ?conf:Conf.t -> unit -> unit
-    (** [init ~conf ()] initalizes the toplevel support library with [conf]
-        (defaults to {!Odig.Conf.default_file}).
-
-        {b Note.} Only call this if you need to setup another configuration.
-        Initialisation happens automatically. *)
-
-    val announce : unit -> unit
-    (** [announce ppf] outputs a message that odig's toplevel support was
-        setup. *)
-
-    val assume_inc : Fpath.t -> unit
-    (** [assume_inc dir] assumes that [dir] has been included. *)
-
-    val assume_obj : Fpath.t -> unit
-    (** [assume_obj obj] assumes that [obj] has been loaded. *)
-  end
-
-  (** Abtract away the OCaml's Toploop API. *)
-  module Ocamltop : sig
-
-    (** {1 Toplevel directives} *)
-
-    val add_inc : Fpath.t -> (unit, [`Msg of string]) result
-    (** [add_inc dir] add [dir] to the include path. *)
-
-    val rem_inc : Fpath.t -> (unit, [`Msg of string]) result
-    (** [rem_inc dir] remove [dir] from the include path. *)
-
-    val load_ml : Fpath.t -> (unit, [`Msg of string]) result
-    (** [load_ml ml] loads the source [ml] file. *)
-
-    val load_obj : Fpath.t -> (unit, [`Msg of string]) result
-    (** [load_obj obj] loads the [cma] or [cmo] file [obj]. *)
   end
 
   (** JSON text generation.

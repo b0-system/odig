@@ -1,3 +1,9 @@
+
+
+
+- Drop the data-driven toplever loaders. The `omod` project handles
+  this.
+
 v0.0.3 2017-10-31 Zagreb
 ------------------------
 

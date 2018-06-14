@@ -32,6 +32,4 @@ let () =
        Pkg.bin "src-bin/odig_bin" ~dst:"odig";
        Pkg.etc "etc/odig.conf";
        Pkg.etc "etc/odoc.css";
-       Pkg.etc "etc/ocamldoc.css";
-       Pkg.bin "toys/metagen" ~dst:"metagen";
-       Pkg.bin "toys/linkable" ~dst:"linkable"; ]
+       Pkg.etc "etc/ocamldoc.css"; ]

@@ -1,4 +1,5 @@
 
+- `metagen` and `linkable` binaries are gone.
 - Drop the `graph` command.
 - Drop the `help` command. Provide documentation in `odig`'s API docs
   to make it referencable and linkable. This is where the tutorial and

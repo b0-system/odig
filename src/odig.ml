@@ -15,7 +15,6 @@ module Private = struct
   module Log = Odig_log
   module Json = Odig_json
   module Html = Odig_html
-  module Dot = Odig_dot
   module Digest = Odig_digest
   module Trail = Odig_btrail
   module Pkg = Odig_pkg

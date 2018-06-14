@@ -187,7 +187,7 @@ let html_index ~odoc ~force pkg =
     incs_of_deps ~odoc:true (List.rev_map to_dep cmis)
   in
   let name = Odig_pkg.name pkg in
-  let page = Odig_api_doc.pkg_page_mld ~tool:`Odoc ~htmldir pkg in
+  let page = Odig_api_doc.pkg_page_mld ~htmldir pkg in
   let htmlroot = htmldir None in
   OS.File.tmp "odig-index-%s.mld"
   >>= fun index_file -> OS.File.write index_file page
@@ -227,7 +227,7 @@ let htmldir_css_and_index conf =
   Odig_pkg.set conf
   >>= function pkgs -> Ok (partition htmldir pkgs)
   >>= fun (has_doc, no_doc) ->
-  Ok (Odig_api_doc.pkg_index ~tool:`Odoc ~htmldir conf ~has_doc ~no_doc)
+  Ok (Odig_api_doc.pkg_index ~htmldir conf ~has_doc ~no_doc)
   >>= fun index -> OS.File.write Fpath.(htmlroot / "index.html") index
   >>= fun () -> OS.File.read (css_file conf)
   >>= fun css -> OS.File.write Fpath.(htmlroot / "odoc.css") css

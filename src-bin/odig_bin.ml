@@ -27,7 +27,6 @@ let cmds =
     Metadata_uri.issues_cmd;
     Metadata_uri.online_doc_cmd;
     Metadata_uri.repo_cmd;
-    Ocamldoc.cmd;
     Odoc.cmd;
   ]
 

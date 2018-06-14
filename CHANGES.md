@@ -1,14 +1,13 @@
 
 
-
-- Drop the data-driven toplever loaders. The `omod` project handles
+- Drop the best-effort `ocamldoc` support and corresponding command.
+- Drop the data-driven toplevel loaders. The `omod` project handles
   this.
 
 v0.0.3 2017-10-31 Zagreb
 ------------------------
 
 - Fix obscure build bug on 4.06.0 (#32)
-
 
 v0.0.2 2017-05-31 Cambridge (UK)
 --------------------------------

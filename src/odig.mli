@@ -870,7 +870,7 @@ module Pkg : sig
 
   (** {1 Standard distribution documentation}
 
-      See {!Odoc} and {!Ocamldoc} for generated documentation. *)
+      See {!Odoc} for generated documentation. *)
 
   val readmes : t -> (Fpath.t list, [`Msg of string]) result
   (** [readmes p] are the readme files of [p]. *)
@@ -959,30 +959,6 @@ module Odoc : sig
 
   val htmldir_css_and_index : Conf.t -> (unit, [`Msg of string]) result
   (** [htmldir_css_and_index c] generates the [odoc] css and html
-      package index for configuration [c]. *)
-end
-
-(** [ocamldoc] API documentation generation. *)
-module Ocamldoc : sig
-
-  (** {1 Ocamldoc} *)
-
-  val htmldir : Conf.t -> (Pkg.t option -> Fpath.t)
-  (** [htmldir c] is is a function that returns the root or package
-      [ocamldoc] HTML directory for [c]. *)
-
-  val compile :
-    ocamldoc:Bos.Cmd.t -> force:bool -> Pkg.t -> (unit, [`Msg of string]) result
-  (** [compile ~ocamldoc ~force p] compiles the [.ocodoc] files from the [.mli]
-      and [.cmi] files of package [p]. *)
-
-  val html :
-    ocamldoc:Bos.Cmd.t -> force:bool -> Pkg.t -> (unit, [`Msg of string]) result
-  (** [html ~ocamldoc ~force] generates the html files from the [.ocodoc] files
-      files of package [p]. *)
-
-  val htmldir_css_and_index : Conf.t -> (unit, [`Msg of string]) result
-  (** [htmldir_css_and_index c] generates the [ocamldoc] css and html
       package index for configuration [c]. *)
 end
 

@@ -266,14 +266,13 @@ let group_cmis_by_archive pkg cmis =
   List.sort cmp @@
   String.Map.bindings @@ List.fold_left add_cmi String.Map.empty cmis
 
-let pkg_module_lists tool pkg =
-  let group_header tool group =
+let pkg_module_lists pkg =
+  let group_header group =
     (* We do this ourselves because in {2:id bla} [id] can't have dashes
        and a lot of archives do have them. *)
-    let hx = match tool with `Ocamldoc -> H.h2 | `Odoc -> H.h3 in
     let sel = strf "sel-%s" group in
     H.(to_string ~doc_type:false @@
-       hx ~atts:(anchor_id ~classes:["sel"] sel) (anchor sel ++ data group))
+       h3 ~atts:(anchor_id ~classes:["sel"] sel) (anchor sel ++ data group))
   in
   let mods cmis =
     let mod_of_cmi cmi =
@@ -296,17 +295,15 @@ let pkg_module_lists tool pkg =
       match group with
       | "" -> mods :: acc
       | group ->
-          let h = strf "{%%html:%s%%}" (group_header tool group) in
+          let h = strf "{%%html:%s%%}" (group_header group) in
           mods :: h :: acc
   in
   String.concat ~sep:"" @@ List.rev (List.fold_left add_group [] groups)
 
-let pkg_page_mld ~tool ~htmldir pkg =
-  let indexes = match tool with `Odoc -> "" | `Ocamldoc -> "{!indexlist}" in
-  strf "{%%html:%s%%}%s%s{%%html:%s%%}"
+let pkg_page_mld ~htmldir pkg =
+  strf "{%%html:%s%%}%s{%%html:%s%%}"
     (pkg_page_header ~htmldir pkg)
-    (pkg_module_lists tool pkg)
-    indexes
+    (pkg_module_lists pkg)
     (pkg_page_info ~htmldir pkg)
 
 (* Package index *)
@@ -362,11 +359,8 @@ let tag_list pkgs =
      nav (list tlink classes) ++
      ol (list tsec classes))
 
-let error_list tool pkgs =
-  let tool, file_kind = match tool with
-  | `Odoc -> "odoc", "cmi"
-  | `Ocamldoc -> "ocamldoc", "mli"
-  in
+let error_list pkgs =
+  let tool, file_kind = "odoc", "cmi" in
   let li_no_doc pkg =
     let name = Odig_pkg.name pkg in
     H.(li @@ data name ++ data " - try " ++
@@ -401,13 +395,10 @@ let manual_link conf ~htmldir =
   end
   |> Odig_log.on_error_msg ~use:(fun _ -> online_manual_link)
 
-let index_page conf ~tool ~htmldir ~has_doc ~no_doc =
+let index_page conf ~htmldir ~has_doc ~no_doc =
   let libdir = Odig_conf.libdir conf in
   let title = H.(data @@ Fpath.(basename @@ parent libdir)) in
-  let style_href = match tool with (* FIXME *)
-  | `Odoc -> "odoc.css"
-  | `Ocamldoc -> "style.css"
-  in
+  let style_href = "odoc.css" in
   let comma = H.data ", " in
   H.(html @@
      head ~style_href title ++
@@ -424,10 +415,10 @@ let index_page conf ~tool ~htmldir ~has_doc ~no_doc =
          ++ data " and the " ++ (manual_link conf ~htmldir))
       ++ name_list has_doc
       ++ tag_list has_doc
-      ++ error_list tool no_doc))
+      ++ error_list no_doc))
 
-let pkg_index conf ~tool ~htmldir ~has_doc ~no_doc =
-  H.to_string @@ index_page conf ~tool ~htmldir ~has_doc ~no_doc
+let pkg_index conf ~htmldir ~has_doc ~no_doc =
+  H.to_string @@ index_page conf ~htmldir ~has_doc ~no_doc
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2016 Daniel C. Bünzli

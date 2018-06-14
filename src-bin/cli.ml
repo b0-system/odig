@@ -47,19 +47,6 @@ let odoc =
   let odoc = Cmd.v "odoc" in
   Arg.(value & opt cmd_arg odoc & info ["odoc"] ~env ~docv:"CMD" ~doc)
 
-let ocamldoc =
-  let doc = "The ocamldoc command to use." in
-  let env = Arg.env_var "ODIG_OCAMLDOC" in
-  let ocamldoc =
-    let ocamldoc = Cmd.v "ocamldoc" in
-    let ocamldoc_opt = Cmd.v "ocamldoc.opt" in
-    (OS.Cmd.exists ocamldoc_opt >>| function
-     | true -> ocamldoc_opt
-     | false -> ocamldoc)
-    |> R.ignore_error ~use:(fun _ -> ocamldoc)
-  in
-  Arg.(value & opt cmd_arg ocamldoc & info ["ocamldoc"] ~env ~docv:"CMD" ~doc)
-
 let doc_force =
   let doc = "Force generation even if files are up-to-date." in
   Arg.(value & flag & info ["f"; "force"] ~doc)

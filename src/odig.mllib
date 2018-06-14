@@ -11,7 +11,6 @@ Odig_html
 Odig_json
 Odig_log
 Odig_ocamlc
-Odig_ocamldoc
 Odig_odoc
 Odig_opam
 Odig_pkg

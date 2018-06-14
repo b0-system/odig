@@ -39,33 +39,15 @@ let add_odoc_pkg pkg =
   add_file (pkg_not_found "odoc" pkg)
     Fpath.(Odig.Odoc.htmldir (Odig.Pkg.conf pkg) (Some pkg) / "index.html")
 
-(* ocamldoc *)
-
-let add_ocamldoc_root conf =
-  add_file (root_not_found "ocamldoc")
-    Fpath.(Odig.Ocamldoc.htmldir conf None / "index.html")
-
-let add_ocamldoc_pkg pkg =
-  add_file (pkg_not_found "ocamldoc" pkg)
-    Fpath.(Odig.Ocamldoc.htmldir (Odig.Pkg.conf pkg) (Some pkg) / "index.html")
-
 (* Command *)
 
-let api conf browser background prefix pkgs backend =
+let api conf browser background prefix pkgs =
   begin
-    let add odoc_v ocamldoc_v acc = match backend with
-    | `Odoc -> odoc_v acc
-    | `Ocamldoc -> ocamldoc_v acc
-    | `Compare -> odoc_v @@ ocamldoc_v acc
-    in
     let uris = match pkgs with
-    | [] -> Ok (add (add_odoc_root conf) (add_ocamldoc_root conf) [])
+    | [] -> Ok (add_odoc_root conf [])
     | pkgs ->
-        let add_pkg pkg acc =
-          add (add_odoc_pkg pkg) (add_ocamldoc_pkg pkg) acc
-        in
         Cli.lookup_pkgs conf (`Pkgs pkgs) >>= fun pkgs ->
-        Ok (List.rev (Pkg.Set.fold add_pkg pkgs []))
+        Ok (List.rev (Pkg.Set.fold add_odoc_pkg pkgs []))
     in
     uris
     >>= fun uris -> Ok (show ~background ~prefix ?browser uris)
@@ -77,21 +59,6 @@ let api conf browser background prefix pkgs backend =
 
 open Cmdliner
 
-let backend =
-  let odoc =
-    let doc = "Show odoc output (default)." in
-    `Odoc, Arg.info ["odoc"] ~doc
-  in
-  let ocamldoc =
-    let doc = "Show ocamlbuild output." in
-    `Ocamldoc, Arg.info ["ocamldoc"] ~doc
-  in
-  let compare =
-    let doc = "Show both odoc and ocamlbuild output for comparison." in
-    `Compare, Arg.info ["c"; "compare"] ~doc
-  in
-  Arg.(value & vflag `Odoc [odoc; ocamldoc; compare])
-
 let cmd =
   let doc = "Show package API documentation" in
   let sdocs = Manpage.s_common_options in
@@ -102,8 +69,7 @@ let cmd =
       `P "The $(tname) command shows the API documentation of a package." ]
   in
   Term.(const api $ Cli.setup () $ Webbrowser_cli.browser $
-        Webbrowser_cli.background $ Webbrowser_cli.prefix $ Cli.pkgs () $
-        backend),
+        Webbrowser_cli.background $ Webbrowser_cli.prefix $ Cli.pkgs ()),
   Term.info "doc" ~doc ~sdocs ~exits ~man_xrefs ~man
 
 (*---------------------------------------------------------------------------

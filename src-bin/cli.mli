@@ -42,10 +42,6 @@ val odoc : Cmd.t Term.t
 (** [odoc] is a [--odoc] command line option for specifying
     [odoc]. *)
 
-val ocamldoc : Cmd.t Term.t
-(** [ocamldoc] is a [--ocamldoc] command line option for specifying
-    [ocamldoc]. *)
-
 val doc_force : bool Term.t
 (** [doc_force] is [--force] command line option for forcing
     doc rebuild. *)

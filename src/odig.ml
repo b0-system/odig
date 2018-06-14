@@ -10,7 +10,6 @@ module Conf = Odig_conf
 module Cobj = Odig_cobj
 module Pkg = Odig_pkg
 module Odoc = Odig_odoc
-module Ocamldoc = Odig_ocamldoc
 
 module Private = struct
   module Log = Odig_log

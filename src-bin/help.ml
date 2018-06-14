@@ -36,16 +36,16 @@ let basics =
     `Pre " odig homepage bos"; `Noblank;
     `Pre " odig online-doc bos";
     `P "See the help of individual commands for more details and options.";
-    `S "OCAMLDOC PACKAGE API DOCUMENTATION";
+    `S "ODOC PACKAGE API DOCUMENTATION";
     `P "Package API documentation can be generated on a best-effort basis
-        with odoc or ocamldoc by issuing:";
-    `Pre " odig (odoc|ocamldoc)      # Generate API docs for all packages";
+        with odoc by issuing:";
+    `Pre " odig odoc      # Generate API docs for all packages";
     `Noblank;
-    `Pre " odig (odoc|ocamldoc) bos  # Generate API docs for package bos";
+    `Pre " odig odoc bos  # Generate API docs for package bos";
     `P "To open the documentation index or the documentation of
         a package in your browser use:";
-    `Pre " odig doc [--ocamldoc] # Package index "; `Noblank;
-    `Pre " odig doc [--ocamldoc] bos  # API doc for package bos";
+    `Pre " odig doc # Package index "; `Noblank;
+    `Pre " odig doc bos  # API doc for package bos";
     `S "SEE ALSO";
     `P "odig(1), odig-packaging(7)"; ]
 
@@ -118,18 +118,6 @@ let packaging =
     `Noblank;
     `P "FIXME explain that undigested dependency names are
         only resolved in the same package.";
-    `S "API DOCUMENTATION GENERATION via OCAMLDOC (DEPRECATED)";
-    `P "The ocamldoc API documentation of a package $(i,PKG) is generated
-        by considering all the cmi files of the API.";
-    `P "For each cmi file if a corresponding mli file is found at the
-        same location it is used to generate the documentation of the
-        module with ocamldoc.";
-    `P "If a package defines more than one mli for a given toplevel
-        module name the one residing at the lexicographically
-        shorter path is taken to be part of the API documentation.";
-    `S "TOPLEVEL SUPPORT (EXPERIMENTAL)";
-    `P "After Odig loads a library named `lib` it loads a file
-        named `lib_top_init.ml` at the same location if it exists.";
     `S "SEE ALSO";
     `P "odig(1), odig-basics(7)"; ]
 

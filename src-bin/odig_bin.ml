@@ -16,7 +16,6 @@ let cmds =
     Doc.cmd;
     Graf.cmd;
     Guess_deps.cmd;
-    Help.cmd;
     Listing.cmd;
     Metadata.authors_cmd;
     Metadata.deps_cmd;
@@ -38,33 +37,20 @@ let main =
   let version = "%%VERSION%%" in
   let doc = "Mine installed OCaml packages" in
   let sdocs = Manpage.s_common_options in
-  let man_xrefs =
-    [ `Page ("odig-basics", 7); `Page ("odig-packaging", 7) ]
-  in
   let man = [
-    `S "DESCRIPTION";
+    `S Manpage.s_description;
     `P "$(mname) mines installed OCaml packages. It supports
         package distribution documentation and metadata lookups and
         generates cross-referenced API documentation.";
-    `P "Use '$(mname) help basics' for understanding the basics.";
-    `Noblank;
-    `P "Use '$(mname) help packaging' for packaging conventions.";
-    `Noblank;
-    `P "Use '$(mname) help conf' for information about odig
-        configuration.";
-    `Noblank;
-    `P "Use '$(mname) help $(i,COMMAND)' for information about
-        $(i,COMMAND).";
-    `S "IMPORTANT WARNING";
-    `P "$(mname) is a usable work in progress. Command line interfaces
-        may change without notice in the future.";
-    `S "BUGS";
-    `P "Report them, see $(i,%%PKG_HOMEPAGE%%) for contact information.";
-    `S "AUTHOR";
-    `P "Daniel C. Buenzli, $(i,http://erratique.ch)" ]
+    `P "See $(b,odig $doc odig) for a tutorial and more details."; `Noblank;
+    `P "See $(mname) $(b,conf) for information about $(mname) configuration.";
+    `S Manpage.s_see_also;
+    `P "Consult $(b,odig doc odig) for a tutorial and more details.";
+    `S Manpage.s_bugs;
+    `P "Report them, see $(i,%%PKG_HOMEPAGE%%) for contact information." ];
   in
   Term.(ret (const main $ Cli.setup ())),
-  Term.info "odig" ~version ~doc ~sdocs ~man_xrefs ~man
+  Term.info "odig" ~version ~doc ~sdocs ~man
 
 let main () =
   Term.exit @@

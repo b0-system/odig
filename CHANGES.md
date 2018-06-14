@@ -1,4 +1,5 @@
 
+- Drop `mtime` package dependency.
 - `metagen` and `linkable` binaries are gone.
 - Drop the data-driven toplevel loaders. Use the `omod` project for this.
 - Drop the `guess-deps` and `graph` commands.

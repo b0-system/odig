@@ -14,10 +14,10 @@ let on_iter_error_msg ?level ?header ?tags iter f vs =
   iter f vs
 
 let time ?(level = Logs.Info) m f v =
-  let time = Mtime_clock.counter () in
+  let start = Sys.time () in
   let r = f v in
-  let span = Mtime_clock.count time in
-  let header = Fmt.strf "%a" Mtime.Span.pp span in
+  let span = Sys.time () -. start in
+  let header = Fmt.strf "%gs" span in
   kmsg (fun () -> r) level (fun w -> m r (w ~header))
 
 (*---------------------------------------------------------------------------

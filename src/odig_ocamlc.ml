@@ -1,5 +1,5 @@
 (*---------------------------------------------------------------------------
-   Copyright (c) 2016 Daniel C. Bünzli. All rights reserved.
+   Copyright (c) 2016 The odig programmers. All rights reserved.
    Distributed under the ISC license, see terms at the end of the file.
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
@@ -251,7 +251,7 @@ let read_cmxs cmxa = OS.File.must_exist cmxa >>= fun cmxa ->
 let cmxs_name cmxs = cmxs.name
 
 (*---------------------------------------------------------------------------
-   Copyright (c) 2016 Daniel C. Bünzli
+   Copyright (c) 2016 The odig programmers
 
    Permission to use, copy, modify, and/or distribute this software for any
    purpose with or without fee is hereby granted, provided that the above

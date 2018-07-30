@@ -298,10 +298,10 @@ let pkg_module_lists pkg =
           let h = strf "{%%html:%s%%}" (group_header group) in
           mods :: h :: acc
   in
-  String.concat ~sep:"" @@ List.rev (List.fold_left add_group [] groups)
+  String.concat ~sep:"\n" @@ List.rev (List.fold_left add_group [] groups)
 
 let pkg_page_mld ~htmldir pkg =
-  strf "{%%html:%s%%}%s{%%html:%s%%}"
+  strf "{%%html:%s%%}\n%s\n{%%html:%s%%}"
     (pkg_page_header ~htmldir pkg)
     (pkg_module_lists pkg)
     (pkg_page_info ~htmldir pkg)

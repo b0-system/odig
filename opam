@@ -6,25 +6,15 @@ doc: "http://erratique.ch/software/odig/doc"
 license: "ISC"
 dev-repo: "http://erratique.ch/repos/odig.git"
 bug-reports: "https://github.com/dbuenzli/odig/issues"
-tags: [ "org:erratique" "build" "dev" "meta" "doc" "packaging" ]
+tags: [ "org:erratique" "org:b0-system" "build" "dev" "meta" "doc" "packaging" ]
 available: [ ocaml-version >= "4.03"]
 depends: [
   "ocamlfind" {build}
   "ocamlbuild" {build}
   "topkg" {build & >= "0.9.1"}
-  "rresult" {>= "0.5.0"}
-  "asetmap"
-  "fpath"
-  "fmt"
-  "logs"
-  "bos" {>= "0.1.6"}
   "cmdliner" {>= "1.0.0"}
-  "webbrowser"
-  "opam-format"
+  "b0"
 ]
+
 depopts: []
-build: [
-  "ocaml" "pkg/pkg.ml" "build"
-           "--pinned" "%{pinned}%"
-           "--etc-dir" "%{odig:etc}%"
-           "--lib-dir" "%{lib}%" ]
+build: [ "ocaml" "pkg/pkg.ml" "build" "--pinned" "%{pinned}%" ]

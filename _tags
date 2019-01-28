@@ -1,15 +1,13 @@
 true : bin_annot, safe_string
-true : package(rresult asetmap fpath bos.setup)
-true : package(opam-format compiler-libs.common)
+true : package(b0.std), package(b0.b00), package(b0.care)
+#true : package(compiler-libs.common)
+#true : package(landmarks.ppx,landmarks)
 
 <src> : include
-<src/odig_cli.*> : package(cmdliner)
-<src-bin> : include
-<src-bin/*> : package(cmdliner fmt.tty fmt.cli logs.fmt logs.cli), \
-              package(webbrowser webbrowser.cli)
-
+<src/odig_bin.*> : package(cmdliner unix)
+<src/odig_odoc.*> : package(unix)
+<src/odig_support.*> : package(unix)
+<sample> : include
 <test> : include
-
-<toys> : include
-<toys/metagen.*> : package(cmdliner fmt.tty fmt.cli logs.fmt logs.cli findlib)
-<toys/linkable.*> : package(cmdliner fmt.tty fmt.cli logs.fmt logs.cli)
+<sample/_opam> : -traverse
+<_opam> : -traverse

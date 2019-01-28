@@ -1,15 +1,6 @@
-PKG bytes uchar result rresult
-PKG fmt fmt.tty fmt.cli
-PKG logs logs.fmt logs.cli
-PKG astring fpath bos bos.setup cmdliner
-PKG topkg.care
+PKG bytes
 PKG compiler-libs.common
-PKG webbrowser webbrowser.cli
-PKG asetmap
-PKG findlib
-PKG opam-format
+PKG cmdliner b0.std b0.b00 b0.care
 S src
-S src-bin
-S toys
 S test
-B _build/**
+B _build/src/**

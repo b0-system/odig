@@ -1,0 +1,13 @@
+#!/bin/sh
+
+# For testing the development version. Uses current
+# opam prefix and a cache in /tmp/odig-cache.
+
+P=$(opam var prefix)
+
+export ODIG_CACHEDIR=/tmp/odig-cache
+export ODIG_LIBDIR=$P/lib
+export ODIG_DOCDIR=$P/doc
+export ODIG_SHAREDIR=$P/share
+export ODIG_ODOC_TRACE=/tmp/odig-cache/trace.json
+export ODIG_VERBOSITY=info

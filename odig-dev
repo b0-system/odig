@@ -1,0 +1,5 @@
+#!/bin/sh
+
+# For testing the development version.
+. dev-env
+_build/src/odig_bin.native "$@"

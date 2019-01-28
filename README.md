@@ -1,14 +1,14 @@
-odig — Mine installed OCaml packages
+odig — Lookup documentation of installed OCaml packages
 -------------------------------------------------------------------------------
 %%VERSION%%
 
-odig is a library and command line tool to mine installed OCaml
-packages. It supports package lookups for distribution documentation,
-metadata and generates cross-referenced API documentation.
+odig is a command line tool to lookup documentation of installed OCaml
+packages. It shows package metadata, readmes, change logs, licenses,
+cross-referenced `odoc` API documentation and manuals.
 
 odig is distributed under the ISC license.
 
-Homepage: http://erratique.ch/software/odig  
+Homepage: https://erratique.ch/software/odig  
 
 ## Installation
 
@@ -19,15 +19,24 @@ odig can be installed with `opam`:
 If you don't use `opam` consult the [`opam`](opam) file for build
 instructions.
 
-## Usage
+## Documentation
 
-    odig doc
-    odig changes PKG
-    odig readme PKG
+A few commands to get you started:
 
-## Documentation & tutorial
+    odig doc           # Show API docs and manuals of installed packages
+    odig readme odig   # Consult the readme of odig
+    odig changes odig  # Consult the changelog of odig
+    odig browse issues odig  # Browse odig's issues.
 
-The documentation, tutorial and API reference is generated from the source
-interfaces. It can be consulted [online][doc] or via `odig doc odig`.
+The manual and packaging conventions can be consulted [online][doc] or
+via `odig doc odig`.
 
-[doc]: http://erratique.ch/software/odig/doc
+[doc]: https://b0-system.github.io/odig/doc/odig/
+
+## Sample odoc API documentation and manuals
+
+A sample output of generated API documentation and manuals on a
+best-effort maximal set of packages of the OCaml opam repository is
+available [here](sample).
+
+[sample]: https://b0-system.github.io/odig/doc/ 

@@ -1,0 +1,76 @@
+===== 1.1.2 (2018-01-05) =====
+
+  * Actually put sockets into non-blocking mode on recent Lwt (ocsigen/lwt#530,
+    reported Romain Slootmaekers).
+
+===== 1.1.1 (2018-10-11) =====
+
+  * Compatibility with -safe-string, and thus OCaml 4.06. Lwt_ssl.read and
+    Lwt_ssl.write now take a buffer of type bytes as argument, rather than a
+    buffer of type string (ocsigen/lwt#479).
+
+===== Lwt 3.1.0 (2017-07-19) =====
+
+====== Miscellaneous ======
+
+  * The additional packages lwt_ssl, lwt_react, lwt_glib get new minor
+    releases, the change being new Jbuilder build systems (#374, Andrew
+    Ray).
+
+===== Lwt 3.0.0 (2017-04-10) =====
+
+====== Breaking ======
+
+  * ocamlfind packages lwt.react, lwt.ssl, lwt.glib are replaced by lwt_react,
+    lwt_ssl, lwt_glib. These have been separate OPAM packages, under those
+    names, since 2.7.0 (#301).
+
+===== Lwt 2.7.0 (2017-01-03) =====
+
+====== Planned to break in 3.0.0 ======
+
+  * ocamlfind packages lwt.react, lwt.ssl, and lwt.glib will be replaced by the
+    new lwt_react, lwt_ssl, and lwt_glib. These are now distributed in new OPAM
+    packages with the same names, separately from OPAM package lwt (#301).
+
+===== Lwt 2.5.0 (2015-07-03) =====
+
+  * Accept ?buffer argument in Lwt_ssl.{in,out}_channel_of_descr.
+  * Use newer Ssl bigarray read/write functionality to avoid
+    allocation in Lwt_ssl.
+
+===== Lwt 2.4.7 (2015-01-06) =====
+
+  * Add safe_string compliance except for Lwt_ssl (need ocaml-ssl fix).
+
+===== Lwt 2.4.5 (2014-04-21) =====
+
+  * Lwt_ssl: expand API to allow setting socket options with Ssl
+    functions
+
+===== Lwt 2.4.4 (2013-10-22) =====
+
+  * add Lwt_ssl.get_fd
+
+===== Lwt 2.4.3 (2012-12-27) =====
+
+  * fix Lwt_ssl.{in,out}_channel_of_descr: shutdown and close the
+    socket when the channel is closed
+
+===== Lwt 2.4.0 (2012-07-16) =====
+
+  * Fix #277: add a function to return the Ssl.socket of a Lwt_ssl.socket
+
+===== Lwt 2.2.0 (2010-12-13) =====
+
+  * Add function {{{Lwt_ssl.embed_socket}}}
+
+===== Lwt 1.1.0 (2008-06-25) =====
+
+  * Putting {{{Lwt_preemptive}}}, {{{Lwt_lib}}} and {{{Lwt_ssl}}} in
+    separate libraries and findlib subpackages so that lwt.cma depends
+    only on unix.cma.
+
+===== Lwt 1.0.0 (and before) =====
+
+  * See Ocsigen changelog

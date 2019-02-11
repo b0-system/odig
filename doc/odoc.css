@@ -1,7 +1,7 @@
 @charset "UTF-8";
 /* Copyright (c) 2016 Daniel C. Bünzli. All rights reserved.
    Distributed under the ISC license, see terms at the end of the file.
-   odoc v1.1.1-908-gd76b0d4 */
+   odoc v1.1.1-916-g67a856d6 */
 
 /* Fonts */
 @import url('https://fonts.googleapis.com/css?family=Fira+Mono:400,500');
@@ -448,7 +448,7 @@ span.at-tag {
 
 .heading {
   margin-top: 10px;
-  border-top: solid;
+  border-bottom: solid;
   border-width: 1px;
   border-color: #DDD;
   text-align: right;

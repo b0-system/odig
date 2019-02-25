@@ -8,7 +8,7 @@ open Odig_support
 open B0_std
 open B00
 
-let index_salt = "1"
+let index_salt = "%%VERSION%%"
 
 let link_if_exists src dst = match src with
 | None -> ()
@@ -211,8 +211,19 @@ let mld_to_odoc b pkg pkg_odocs mld =
 let index_mld_for_pkg b pkg pkg_info pkg_odocs ~user_index_mld =
   let index_mld = Fpath.(pkg_odocdir b pkg / "index.mld") in
   let write_index_mld ~user_index =
-    let reads = Option.to_list user_index_mld in
-    Memo.write b.m ~salt:index_salt ~reads index_mld @@ fun () ->
+    (* FIXME better salt for docdirs info *)
+    let reads = Option.(to_list user_index_mld @ to_list (Opam.file pkg)) in
+    let salt =
+      (* Influences the index content *)
+      let readmes = Docdir.readme_files (Pkg_info.docdir pkg_info) in
+      let changes = Docdir.changes_files (Pkg_info.docdir pkg_info) in
+      let licenses = Docdir.license_files (Pkg_info.docdir pkg_info) in
+      let files = List.(rev_append readmes (rev_append changes licenses)) in
+      let data = index_salt :: List.rev_map Fpath.to_string files in
+      let module Hashfun = (val (Memo.hash_fun b.m)) in
+      Hash.to_bytes (Hashfun.string (String.concat "" data))
+    in
+    Memo.write b.m ~salt ~reads index_mld @@ fun () ->
     Ok (Odig_odoc_page.index_mld b.conf pkg pkg_info ~user_index)
   in
   begin match user_index_mld with

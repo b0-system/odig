@@ -37,6 +37,19 @@ via `odig doc odig`.
 
 A sample output of generated API documentation and manuals on a
 best-effort maximal set of packages of the OCaml opam repository is
-available [here](sample).
+available [here](https://b0-system.github.io/odig/doc/).
 
-[sample]: https://b0-system.github.io/odig/doc/ 
+The different themes distributed with `odig` can be seen on the sample
+at these addresses:
+
+* https://b0-system.github.io/odig/doc@odig.dark/
+* https://b0-system.github.io/odig/doc@odig.light/
+* https://b0-system.github.io/odig/doc@odig.gruvbox.dark/
+* https://b0-system.github.io/odig/doc@odig.gruvbox.light/
+* https://b0-system.github.io/odig/doc@odig.solarized.dark/
+* https://b0-system.github.io/odig/doc@odig.solarized.light/
+* https://b0-system.github.io/odig/doc@odoc.default/
+
+The [Vg](https://b0-system.github.io/odig/doc/vg/Vg/index.html) module
+and its sub-modules is a good example to look at since, it has a good
+mix of documentation cases.

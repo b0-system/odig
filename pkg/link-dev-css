@@ -1,9 +1,0 @@
-#!/bin/sh
-
-# Invoke from the root of the distribution.
-# Links the stylesheets from etc into $(odig cache path)
-
-CACHE_ODOC_CSS=$(odig cache path)/odoc/odoc.css
-
-rm -f $CACHE_ODOC_CSS
-ln -s $(pwd)/etc/odoc.css $CACHE_ODOC_CSS

@@ -162,7 +162,7 @@ let doc_cmd background browser pkg_names update no_update show_files conf =
 
 let odoc_cmd odoc pkg_names index_title index_intro force trace conf =
   handle_name_error (find_pkgs conf pkg_names) @@ fun pkgs ->
-  handle_some_error (Odig_odoc.gen conf ~force ~index_title ~index_intro pkgs)
+  handle_some_error (odoc_gen conf ~force ~index_title ~index_intro pkgs)
   @@ fun () ->
   match trace with
   | None -> 0

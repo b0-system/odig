@@ -1,7 +1,5 @@
 true : bin_annot, safe_string
 true : package(b0.std), package(b0.b00), package(b0.care)
-#true : package(compiler-libs.common)
-#true : package(landmarks.ppx,landmarks)
 
 <src> : include
 <src/odig_bin.*> : package(cmdliner unix)

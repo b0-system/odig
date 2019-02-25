@@ -173,13 +173,16 @@ let tag_list conf pkgs =
   let tag_id t = Fmt.str "tag-%s" t in
   let tag_links tags =
     let tag_li (t, _) = El.(li [a ~a:Att.[anchor_href (tag_id t)] [txt t]]) in
-    let tags_by_letter (_, tags) =
-      El.ol ~a:Att.[class' "tags"] (List.map tag_li tags)
+    let tags_by_letter (letter, tags) =
+      let lid = Fmt.str "tags-%s" letter in
+      El.(tr ~a:Att.[id lid]
+            [td [anchor_a lid; txt letter];
+             td [ol ~a:Att.[class' "tags"] (List.map tag_li tags)]])
     in
     let classes (t, _) = [String.of_char (Char.Ascii.lowercase t.[0])] in
     let cmp_elts (t, _) (t', _) = String.compare t t' in
     let tag_classes = List.classify ~cmp_elts ~classes tags in
-    List.map tags_by_letter tag_classes
+    El.table (List.map tags_by_letter tag_classes)
   in
   let tag_section (t, pkgs) =
     let pkgs = List.sort Pkg.compare_by_caseless_name pkgs in
@@ -198,7 +201,7 @@ let tag_list conf pkgs =
   let open El in
   div ~a:Att.[class' by_tag] [
     h2 ~a:Att.[id by_tag] [anchor_a by_tag; txt "Packages by tag"];
-    nav (tag_links classes);
+    nav [tag_links classes];
     El.splice (List.map tag_section classes)]
 
 let pkgs_with_htmldoc conf =

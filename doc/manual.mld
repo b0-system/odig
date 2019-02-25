@@ -153,6 +153,6 @@ gh-pages-amend $(odig cache path)/html doc
 v}
 
 by default this fetches the [gh-pages] on the [origin] remote, checks
-it out, replaces the directoy [doc] by the contents of [$(odig cache
+it out, replaces the directory [doc] by the contents of [$(odig cache
 path)/html] and pushes it back. See [gh-pages-amend --help] for more
 information.

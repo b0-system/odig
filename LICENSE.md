@@ -2,12 +2,12 @@
 
 The odig project is covered by the following copyrights.
 
-* The woff2 PT Sans fonts in [theme/fonts][theme/fonts]
+* The woff2 PT Sans fonts in [`theme/fonts`](theme/fonts)
   are covered by [this license](#pt-sans-fonts).
-* The woff2 DejaVu fonts in [theme/fonts][theme/fonts]
+* The woff2 DejaVu fonts in [`theme/fonts`](theme/fonts)
   license are covered by [this license](#dejavu-fonts).
 
-All the rest is covered by the following copyrights.
+All the rest is covered by the following copyright.
 
 ```
 Copyright (c) 2016 The odig programmers

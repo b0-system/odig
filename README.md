@@ -51,5 +51,5 @@ at these addresses:
 * https://b0-system.github.io/odig/doc@odoc.default/
 
 The [Vg](https://b0-system.github.io/odig/doc/vg/Vg/index.html) module
-and its sub-modules is a good example to look at since, it has a good
+and its sub-modules is a good example to look at, it has a good
 mix of documentation cases.

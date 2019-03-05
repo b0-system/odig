@@ -218,28 +218,13 @@ let pkgs_with_htmldoc conf =
   let pkgs = pkgs |> Log.warn_if_error ~use:[] in
   List.sort Pkg.compare pkgs
 
-let manual_reference conf =
-  (* As a dirty side effect we create a symlink in htmldir if the manual
-     package is installed *)
+let manual_reference conf ~ocaml_manual_uri =
   let manual_online = "https://caml.inria.fr/pub/docs/manual-ocaml/" in
-  let manual_pkg = "ocaml-manual" in
-  let manual_pkg_dir = Fpath.(Conf.docdir conf / manual_pkg) in
-  let manual_index = Fpath.(manual_pkg_dir / "index.html") in
-  let manual_link ~uri =
-    let uri, suff = match uri with
-    | None -> manual_online, El.txt " (online, latest version)."
-    | Some href -> href, El.txt ""
-    in
-    El.splice @@ El.[a ~a:Att.[href uri] [txt "OCaml manual"]; suff], uri
+  let uri, suff = match ocaml_manual_uri with
+  | None -> manual_online, El.txt " (online, latest version)."
+  | Some href -> href, El.txt ""
   in
-  match Os.File.exists manual_index |> Log.if_error ~use:false with
-  | false -> manual_link ~uri:None
-  | true ->
-      let src = manual_pkg_dir in
-      let dst = Fpath.(Conf.htmldir conf / manual_pkg) in
-      match Os.Path.symlink ~force:true ~make_path:true ~src dst with
-      | Ok () -> manual_link ~uri:(Some "ocaml-manual/index.html")
-      | Error _ as e -> Log.if_error ~use:() e; manual_link ~uri:None
+  El.splice @@ El.[a ~a:Att.[href uri] [txt "OCaml manual"]; suff], uri
 
 let stdlib_link conf =
   let htmldir = Conf.htmldir conf in
@@ -250,7 +235,7 @@ let stdlib_link conf =
   | false -> old_style_stdlib
   | true -> new_style_stdlib ^ "#modules"
 
-let pkg_list conf ~index_title ~raw_index_intro =
+let pkg_list conf ~index_title ~raw_index_intro ~ocaml_manual_uri =
   (* XXX for now it's easier to do it this way. In the future we should
      rather use the ocamldoc language. Either by using
      https://github.com/ocaml/odoc/issues/94 or `--fragment`. So
@@ -267,7 +252,7 @@ let pkg_list conf ~index_title ~raw_index_intro =
   in
   let doc_header =
     let comma = El.txt ", " in
-    let manual_markup, manual_href = manual_reference conf in
+    let manual_markup, manual_href = manual_reference conf ~ocaml_manual_uri in
     let contents = match raw_index_intro with
     | Some h -> El.[raw h]
     | None ->

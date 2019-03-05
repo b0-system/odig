@@ -17,12 +17,37 @@ let link_if_exists src dst = match src with
 
 (* Theme handling *)
 
+let ocaml_manual_pkg = "ocaml-manual"
 let theme_dir = "_odoc-theme"
-let set_theme conf t =
+
+let set_theme conf t = (* Not symlinking because of file: and FF. *)
+  Log.time (fun _ m -> m "setting theme") @@ fun () ->
   let src = Odoc_theme.path t in
   let dst = Fpath.(Conf.htmldir conf / theme_dir) in
-  Result.bind (Os.Path.delete ~recurse:true dst) @@ fun _ ->
-  Os.Dir.copy ~allow_hardlinks:true ~make_path:true ~recurse:true ~src dst
+  let replace src dst =
+    let allow_hardlinks = true and make_path = true and recurse = true in
+    Result.bind (Os.Path.delete ~recurse:true dst) @@ fun _ ->
+    Os.Dir.copy ~allow_hardlinks ~make_path ~recurse ~src dst
+  in
+  Result.bind (replace src dst) @@ fun () ->
+  let manual_dir = Fpath.(Conf.htmldir conf / ocaml_manual_pkg) in
+  match Os.Dir.exists manual_dir |> Log.if_error ~use:false with
+  | false -> Ok ()
+  | true ->
+      let theme_man_css = Fpath.(src / "manual.css") in
+      let manual_css = Fpath.(manual_dir / "manual.css") in
+      match Os.File.exists theme_man_css |> Log.if_error ~use:false with
+      | false ->
+          let css = Fpath.(Conf.docdir conf / ocaml_manual_pkg / "manual.css")
+          in
+          Os.File.copy ~force:true ~make_path:true ~src:css manual_css
+      | true ->
+          let dst = Fpath.(manual_dir / theme_dir) in
+          (* We copy the theme again in ocaml-manual because of FF... *)
+          Result.bind (replace src dst) @@ fun () ->
+          let css = "@charset UTF-8;\n@import url(\"_odoc-theme/manual.css\");"
+          in
+          Os.File.write ~force:true ~make_path:true manual_css css
 
 let find_and_set_theme conf =
   let set t = set_theme conf t |> Log.if_error ~level:Log.Warning ~use:() in
@@ -316,6 +341,21 @@ let write_support_files b =
   B0_odoc.Support_files.Writes.read b.m o @@ fun writes ->
   B0_odoc.Support_files.cmd b.m ~writes ~without_theme ~to_dir
 
+let write_ocaml_manual b =
+  (* Not symlinking because of file: and FF *)
+  (* FIXME this is out of b0 we should make a decision about copy files & co *)
+  let manual_pkg_dir = Fpath.(Conf.docdir b.conf / ocaml_manual_pkg) in
+  let manual_index = Fpath.(manual_pkg_dir / "index.html") in
+  let src = manual_pkg_dir in
+  let dst = Fpath.(Conf.htmldir b.conf / ocaml_manual_pkg) in
+  match Os.File.exists manual_index |> Log.if_error ~use:false with
+  | false -> Ok None
+  | true ->
+      let recurse = true and make_path = true and allow_hardlinks = true in
+      Result.bind (Os.Path.delete ~recurse dst) @@ fun _ ->
+      Result.bind (Os.Dir.copy ~allow_hardlinks ~make_path ~recurse ~src dst)
+      @@ fun _ -> Ok (Some "ocaml-manual/index.html")
+
 let index_intro_to_html b k = match b.index_intro with
 | None -> k None
 | Some mld ->
@@ -327,7 +367,7 @@ let index_intro_to_html b k = match b.index_intro with
     B0_odoc.Html_fragment.cmd b.m ~odoc_deps mld ~o;
     Memo.read b.m o @@ fun index_header -> k (Some index_header)
 
-let write_pkgs_index b =
+let write_pkgs_index b ~ocaml_manual_uri =
   let index = Fpath.(b.htmldir / "index.html") in
   let index_title = b.index_title in
   let pkg_index p = Fpath.(b.htmldir / Pkg.name p / "index.html") in
@@ -335,14 +375,20 @@ let write_pkgs_index b =
   let reads = match b.index_intro with None -> reads | Some f -> f :: reads in
   index_intro_to_html b @@ fun raw_index_intro ->
   Memo.write b.m ~salt:index_salt ~reads index @@ fun () ->
-  Ok (Odig_odoc_page.pkg_list b.conf ~index_title ~raw_index_intro)
+  Ok (Odig_odoc_page.pkg_list b.conf ~index_title ~raw_index_intro
+        ~ocaml_manual_uri)
 
 let rec build b = match Pkg.Set.choose b.pkgs_todo with
 | exception Not_found ->
     Memo.stir ~block:true b.m;
-    if Pkg.Set.is_empty b.pkgs_todo
-    then (write_support_files b; write_pkgs_index b; Memo.finish b.m)
-    else build b
+    begin match Pkg.Set.is_empty b.pkgs_todo with
+    | false -> build b
+    | true ->
+        write_support_files b;
+        let ocaml_manual_uri = write_ocaml_manual b |> Log.if_error ~use:None in
+        write_pkgs_index b ~ocaml_manual_uri ;
+        Memo.finish b.m
+    end
 | pkg ->
     b.pkgs_todo <- Pkg.Set.remove pkg b.pkgs_todo;
     b.pkgs_seen <- Pkg.Set.add pkg b.pkgs_seen;
@@ -356,9 +402,9 @@ let pp_never ppf fs =
 let gen conf ~force ~index_title ~index_intro ~pkg_deps pkgs_todo =
   try
     Result.bind (Conf.memo conf) @@ fun memo ->
-    find_and_set_theme conf;
     let b = builder memo conf index_title index_intro pkg_deps pkgs_todo in
     build b |> Log.if_error_pp pp_never ~use:();
+    find_and_set_theme conf;
     Log.info (fun m -> m ~header:"STATS" "%a" B0_ui.Memo.pp_stats memo);
     Ok ()
   with Failure e -> Error e

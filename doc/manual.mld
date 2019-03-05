@@ -84,6 +84,10 @@ odig odoc       # Generate API docs and manuals for all packages
 odig odoc odig  # Generate API docs and manuals for the odig package
 v}
 
+If the OCaml manual is installed as the [ocaml-manual] package
+(e.g. via [opam install ocaml-manual]), the local copy gets linked
+from the package list page.
+
 {1:odoc_themes odoc API documentation theme}
 
 The way new themes can be installed is described

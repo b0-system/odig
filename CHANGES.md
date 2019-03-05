@@ -6,6 +6,9 @@
   be done automatically install-wise.
 - Support for odoc themes (#21). Themes can be distributed via `opam`, see
   command `odig odoc-theme` and the packaging conventions in `odig doc odig`.
+- Support for best-effort OCaml manual theming. Themes can provide a stylesheet
+  to style the local manual installed by the `ocaml-manual` package and linked
+  from the generated documentation sets.
 - Support for customizing the title and introduction of the package list
   page (#19). See the `--index-title` and `--index-intro` options of
   `odig odoc`.

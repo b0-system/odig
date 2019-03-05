@@ -8,7 +8,7 @@ let theme t =
   let dst f = strf "odoc-theme/%s/%s" t f in
   let mv f = Pkg.share (src f) ~dst:(dst f) in
   Pkg.flatten
-  [ mv "odoc.css"; mv "theme.css";
+  [ mv "odoc.css"; mv "theme.css"; mv "manual.css";
     mv "fonts/fonts.css";
     mv "fonts/DejaVuSansMono-Bold.woff2";
     mv "fonts/DejaVuSansMono-BoldOblique.woff2";

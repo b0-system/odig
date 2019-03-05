@@ -17,12 +17,18 @@ val set_theme : Conf.t -> Odoc_theme.t -> (unit, string) result
 
 val gen :
   Conf.t -> force:bool -> index_title:string option ->
-  index_intro:B0_std.Fpath.t option -> Pkg.t list ->
+  index_intro:B0_std.Fpath.t option -> pkg_deps:bool -> Pkg.t list ->
   (unit, string) result
-(** [gen c ~force ~index_intro pkgs] generates API reference for
-    packages [pkgs]. If specified [index_title] is the title of the page
-    with the list of packages. [index_intro] if specified is an mld file to
-    define the introduction of the page with the list of packages. *)
+(** [gen c ~force ~index_intro ~pkg_deps pkgs] generates API reference for
+    packages [pkgs].
+    {ul
+    {- [index_title] is the title of the page
+       with the list of packages.}
+    {- [index_intro] if specified is an mld file to
+       define the introduction of the page with the list of packages.}
+    {- [pkg_deps] if [true] dependencies of [pkgs] are also generated.
+       If [false] only [pkgs] are generated which may lead to broken
+       links in the output.}} *)
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2018 The odig programmers

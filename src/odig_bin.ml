@@ -52,11 +52,11 @@ let find_pkgs conf = function
         in
         Error (String.concat "\n" (List.fold_left add_error [] miss))
 
-let odoc_gen conf ~force ~index_title ~index_intro pkgs =
+let odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps pkgs =
   Log.app begin fun m ->
     m "Updating documentation, this may take some time..."
   end;
-  Odig_odoc.gen conf ~force ~index_title ~index_intro pkgs
+  Odig_odoc.gen conf ~force ~index_title ~index_intro ~pkg_deps pkgs
 
 (* Commands *)
 
@@ -119,8 +119,10 @@ let doc_cmd background browser pkg_names update no_update show_files conf =
       | _ ->
           let pkgs = Conf.pkgs conf in
           let index_title = None and index_intro = None in
-          let g = odoc_gen conf ~force:false ~index_title ~index_intro pkgs in
-          Result.bind g @@ fun () -> Ok [root_index]
+          let force = false and pkg_deps = true in
+          Result.bind
+            (odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps pkgs)
+            (fun () -> Ok [root_index])
       end
   | pkgs ->
       let index conf pkg =
@@ -137,8 +139,10 @@ let doc_cmd background browser pkg_names update no_update show_files conf =
             Fmt.(list Pkg.pp_name) pkgs
       | _ ->
           let index_title = None and index_intro = None in
-          let g = odoc_gen conf ~force:false ~index_title ~index_intro pkgs in
-          Result.bind g @@ fun () -> Ok files
+          let force = false and pkg_deps = true in
+          Result.bind
+            (odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps pkgs)
+            (fun () -> Ok files)
   in
   Log.if_error ~use:err_some @@
   Result.bind prepare_files @@ fun files ->
@@ -160,9 +164,13 @@ let doc_cmd background browser pkg_names update no_update show_files conf =
       Fmt.error "@[<v>No doc could be generated for:@,%a@]"
         (Fmt.list Fpath.pp) fs
 
-let odoc_cmd odoc pkg_names index_title index_intro force trace conf =
+let odoc_cmd
+    odoc pkg_names index_title index_intro force trace no_pkg_deps conf
+  =
+  let pkg_deps = not no_pkg_deps in
   handle_name_error (find_pkgs conf pkg_names) @@ fun pkgs ->
-  handle_some_error (odoc_gen conf ~force ~index_title ~index_intro pkgs)
+  handle_some_error
+    (odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps pkgs)
   @@ fun () ->
   match trace with
   | None -> 0
@@ -513,7 +521,9 @@ let odoc_cmd =
     Arg.(value & opt some_path None & info ["trace"] ~env ~docv:"FILE" ~doc)
   in
   let force =
-    let doc = "Force generation even if files are up-to-date." in
+    let doc = "Force generation even if files are up-to-date. FIXME not
+               implemented"
+    in
     Arg.(value & flag & info ["f"; "force"] ~doc)
   in
   let index_title =
@@ -528,8 +538,16 @@ let odoc_cmd =
     let some_path = Arg.some B0_ui.Cli.Arg.path in
     Arg.(value & opt some_path None & info ["index-intro"] ~docv:"MLDFILE" ~doc)
   in
+  let no_pkg_deps =
+    let doc = "Restrict documentation generation to the packages mentioned \
+               on the command line, their dependencies are not automatically \
+               included in the result. Note that this may lead to broken \
+               links in the documentation set."
+    in
+    Arg.(value & flag & info ["no-pkg-deps"] ~doc)
+  in
   let cmd = Term.(const odoc_cmd $ odoc $ pkgs_pos $ index_title $ index_intro $
-                  force $ trace)
+                  force $ trace $ no_pkg_deps)
   in
   Term.(wrap_cmd $ cmd), Term.info "odoc" ~doc ~sdocs ~exits ~man ~man_xrefs
 

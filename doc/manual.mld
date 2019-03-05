@@ -140,7 +140,8 @@ page. Continue with:
 opam switch create .
 opam install odig PKG...
 odig odoc-theme set --default $MYTHEME
-odig odoc -v --index-title='My docset' --index-intro=intro.mld
+odig odoc -v --index-title='My docset' --index-intro=intro.mld \
+  --no-pkg-deps PKG...
 ln -s $(odig cache path)/html /var/www/doc
 v}
 

@@ -211,8 +211,11 @@ let mld_to_odoc b pkg pkg_odocs mld =
 let index_mld_for_pkg b pkg pkg_info pkg_odocs ~user_index_mld =
   let index_mld = Fpath.(pkg_odocdir b pkg / "index.mld") in
   let write_index_mld ~user_index =
-    (* FIXME better salt for docdirs info *)
-    let reads = Option.(to_list user_index_mld @ to_list (Opam.file pkg)) in
+    let reads = Option.to_list user_index_mld in
+    let reads = match Opam.file pkg with
+    | None -> reads
+    | Some file -> Memo.file_ready b.m file; file :: reads
+    in
     let salt =
       (* Influences the index content *)
       let readmes = Docdir.readme_files (Pkg_info.docdir pkg_info) in

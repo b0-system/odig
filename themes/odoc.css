@@ -18,7 +18,7 @@
         --size-font-large: calc(1.25 * var(--size-font));
         --size-font-big:   calc(1.5 * var(--size-font));
         --size-font-huge:  calc(1.75 * var(--size-font));
-        --size-font-mono-ratio: 0.9;
+        --size-font-mono-ratio: 0.87097;
         --size-line-ratio: 1.5;
         --size-line: calc(var(--size-line-ratio) * var(--size-font));
         --size-half-line: calc(0.5 * var(--size-line)); }
@@ -162,13 +162,22 @@ dd *:first-child { margin-top: 0 }
 dd > *:last-child { padding-bottom: var(--size-half-line) }
 dt table p:first-child { margin-top: 0 }
 
+dt + dt { padding-top: var(--size-line) } /* When there are no doc strings */
+
 .record { margin-left: 2ch }
-.variant .doc, .record .doc { padding-left: 1ch }
+.variant .doc, .record .doc { padding-left: 1ch; }
 
 /* Indent on wrap */
-dt.value, dt.module { padding-left: 4ch; text-indent: -4ch }
-dt.value a.anchor, dt.module a.anchor
-{ padding-right: 0.5ch; padding-left: 2ch; }
+td.field, td.constructor, dt.spec { padding-left: 4ch; text-indent: -4ch }
+td.field > a.anchor, td.constructor > a.anchor,
+dt.spec > a.anchor { padding-right: 0.5ch; padding-left: 2ch; }
+
+/* But we don't do it for types for now because of variants and
+   records. This makes :target highlight be off. And poses
+   other problems (e.g. need to indent back the last ] or }.
+   A better markup strategy should be found here. */
+dt.spec.type { padding-left: 0; text-indent: 0 }
+dt.spec.type > a.anchor { padding-left: 0; padding-right: 0; }
 
 /* ocamldoc tags we'd like a targeting class and more info here
    https://github.com/ocaml/odoc/issues/329 */
@@ -184,6 +193,10 @@ code, pre
   font-weight: 400;
   font-size: calc(1em * var(--size-font-mono-ratio));
   color: var(--color-code-fg); }
+
+code span, pre span /* Allows to use spans to control breakpoints */
+{ display: inline-block;
+  text-indent: 0; /* That bit is important because of dt.spec's text-indent */ }
 
 pre code { font-size: inherit } /* don't apply transform twice... */
 a code { color: inherit }

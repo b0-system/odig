@@ -15,6 +15,7 @@ Publish sample to gh-pages
 ```
 cd sample
 ./setup.sh
+eval $(opam env)
 ./gen.sh
 cd ..
 topkg run publish
@@ -25,8 +26,8 @@ Working on themes
 
 An easy way is to generate a representative docset and then:
 
-    rm -r $(opam var share)/odig/odoc-theme
-    ln -s $(pwd)/themes $(opam var share)/odig/odoc-theme
+    mkdir -p $(opam var share)/odig.dev
+    ln -s $(pwd)/themes $(opam var share)/odig.dev/odoc-theme
 
 
 

@@ -40,7 +40,7 @@ let main () =
   let some_path = Arg.some B0_ui.Cli.Arg.path in
   let cmd =
     let preserve_symlinks =
-      let doc = "Do not follow symlinks in $(v,SRC), preserve them." in
+      let doc = "Do not follow symlinks in $(i,SRC), preserve them." in
       Arg.(value & flag & info ["preserve-symlinks"] ~doc)
     in
     let new_commit =
@@ -58,7 +58,7 @@ let main () =
     in
     let msg =
       let doc = "$(docv) is the commit message. If unspecified one is
-                 made up using $(b,SRC) and $(b,DST)."
+                 made up using $(i,SRC) and $(i,DST)."
       in
       let docv = "MSG" in
       Arg.(value & opt (some string) None & info ["m"; "message"] ~doc ~docv)

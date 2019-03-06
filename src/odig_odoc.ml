@@ -21,7 +21,8 @@ let theme_dir = "_odoc-theme"
 let set_theme conf t =
   let src = Odoc_theme.path t in
   let dst = Fpath.(Conf.htmldir conf / theme_dir) in
-  Os.Path.symlink ~force:true ~make_path:true ~src dst
+  Result.bind (Os.Path.delete ~recurse:true dst) @@ fun _ ->
+  Os.Dir.copy ~allow_hardlinks:true ~make_path:true ~recurse:true ~src dst
 
 let find_and_set_theme conf =
   let set t = set_theme conf t |> Log.if_error ~level:Log.Warning ~use:() in

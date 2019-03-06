@@ -1,20 +1,16 @@
-## v0.9.2
+## v0.11
 
-- `per_file` --> `per_module` in jbuild files
-
-## v0.9.1
-
-- Use cookies as well as command line options
-
-## v0.9.0
-
-No changelog available
+- Depend on ppxlib instead of (now deprecated) ppx\_core, ppx\_driver and
+  ppx\_metaquot.
 
 ## 113.33.03
 
 - Changed the runtime API to make it easier to build test runners:
   replace the `Runtime.Test_result.record` system by
   `Runtime.add_evaluator`
+
+- Tell the build system via output metadata whether a file contains
+  tests or not
 
 ## 113.33.00
 

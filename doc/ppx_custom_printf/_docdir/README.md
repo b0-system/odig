@@ -1,7 +1,5 @@
----
-title: ppx_custom_printf
-parent: ../README.md
----
+ppx_custom_printf
+=================
 
 Extensions to printf-style format-strings for user-defined string conversion.
 

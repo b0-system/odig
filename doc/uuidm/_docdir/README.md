@@ -1,6 +1,6 @@
 Uuidm — Universally unique identifiers (UUIDs) for OCaml
 -------------------------------------------------------------------------------
-v0.9.6-8-g1126c7c
+v0.9.6
 
 Uuidm is an OCaml module implementing 128 bits universally unique
 identifiers version 3, 5 (named based with MD5, SHA-1 hashing) and 4

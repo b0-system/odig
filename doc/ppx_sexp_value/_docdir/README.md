@@ -1,7 +1,5 @@
----
-title: ppx_sexp_value
-parent: ../README.md
----
+ppx_sexp_value
+==============
 
 A ppx rewriter that simplifies building s-expressions from ocaml values.
 
@@ -37,9 +35,9 @@ List [List [Atom "a"; Atom "hello"];
 This does not require a record with fields a and b to exist (and if
 one does exist, its sexp_of function will be ignored unless a type
 annotation is added around the record).
-One can annotate a record field with the type `sexp_option` to achieve
-the same result as when using sexplib. `sexp_option` has the same
-behavior inside tuples.
+One can annotate a record field with the type `sexp_option` or with
+`[@sexp.omit_nil]` to achieve the same result as when using
+sexplib. They both have the same behavior inside tuples.
 
 Variant, polymorphic variants, tuples and lists are supported as
 well.  Variants are analogous to records in that a type containing the
@@ -93,54 +91,3 @@ with exn ->
       }
     ]
 ```
-
-Application syntax (deprecated)
--------------------------------
-
-The toplevel expression of `[%sexp]` can be a function application. In
-this case it is treated the same as a tuple, and `~~` is added to
-elements that are of the form `(expr : type)`. For instance:
-
-```ocaml
-[%sexp (x : int) (y + z : int) "literal" ]
-```
-
-is the same as:
-
-```ocaml
-[%sexp ~~(x : int), ~~(y + z : int), "literal"]
-```
-
-The first form is more compact but doesn't follow the general idea of
-ppx\_sexp\_value. It is explored more in details in
-[ppx_sexp_message](https://github.com/janestreet/ppx_sexp_message).
-
-Derived extensions (deprecated)
--------------------------------
-
-Some derived extensions are built on top of the base extension.
-
-```ocaml
-[%structural_sexp expr]
-```
-
-in an alias for `[%sexp expr]`.
-
-```ocaml
-[%structural_error string-expr expr]
-```
-
-will build a value of type `Error.t` rather than return a sexp. The
-string expression is a message which will appear in the error.
-
-```ocaml
-[%raise_structural_sexp string-expr expr]
-```
-
-is equivalent to `Error.raise [%structural_error string-expr expr]`.
-
-```ocaml
-[%structural_or_error string-expr expr]
-```
-
-is equivalent to `Result.Error [%structural_error string-expr expr]`.

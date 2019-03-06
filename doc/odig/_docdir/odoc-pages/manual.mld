@@ -1,0 +1,163 @@
+{0:manual Odig manual}
+
+[odig] helps you to access information about installed OCaml
+packages. The following shows basic [odig] usage, to understand how
+odig looks up that information see the {{!page-packaging}packaging
+conventions}.
+
+In this manual we use [odig] itself as the example package.
+
+{1:meta Package metadata}
+
+Basic information about packages and their metadata is available with
+the [pkg] command.
+
+{v
+odig pkg              # List recognized packages and their version
+odig pkg odig --long  # Show odig's package full metadata
+v}
+
+Metadata fields of packages can be queried individually with the [show]
+command:
+
+{v
+odig show repo odig        # Show odig's repository address
+odig show homepage odig    # Show odig's homepage address
+odig show license odig     # Show odig's license(s) tags
+v}
+
+A few URI metadata fields can be opened directly in your browser with
+the [browse] command:
+
+{v
+odig browse homepage odig    # Open odig's homepage in your browser
+odig browse issues odig      # Open odig's issue tracker in your browser
+odig browse online-doc odig  # Open odig's online docs in your browser
+v}
+
+{1:distrib Package distribution documentation}
+
+If the package installed them [odig] provides instant access to the
+the readme, change log and license files of a package via: the
+
+{v
+odig readme odig    # Show the readme of odig
+odig changes odig   # Show the changes of odig
+odig license odig   # Show the license of odig
+v}
+
+If you want to access the file paths rather than the content use
+[show]:
+
+{v
+odig show readme-files odig    # Show path to the readme of odig
+odig show changes-files odig   # Show path the changes of odig
+odig show license-files odig   # Show path the license of odig
+v}
+
+{1:odoc_docs Package odoc API documentation and manuals}
+
+To open the HTML package list or the page of a package in
+your browser use:
+
+{v
+odig doc          # Package list
+odig doc odig     # Doc for the odig package
+v}
+
+In general if [odig doc] can't satisfy your request it will try to
+generate documentation for it unless prevented by the [-n] option.  If
+the documentation for your request was already generated it will open
+it without checking if it's up-to-date, use the option [-u] to guarantee
+it's fresh.
+
+{v
+odig doc -u       # Up-to-date package list and package docs
+odig doc -u odig  # Up-to-date doc for the odig package
+v}
+
+If you only want to generate the documentation use the `odoc`
+command:
+
+{v
+odig odoc       # Generate API docs and manuals for all packages
+odig odoc odig  # Generate API docs and manuals for the odig package
+v}
+
+If the OCaml manual is installed as the [ocaml-manual] package
+(e.g. via [opam install ocaml-manual]), the local copy gets linked
+from the package list page.
+
+{1:odoc_themes odoc API documentation theme}
+
+The way new themes can be installed is described
+{{!page-packaging.theme_install}here}.
+
+The [odoc] theme used for odoc API documentation and manuals can be
+changed via the [odoc-theme] command:
+
+{v
+odig odoc-theme list            # List available themes
+odig odoc-theme default         # Show the default theme name
+v}
+
+The default theme is used and restored whenever a documentation
+generation action occurs either through [odig doc] or [odig odoc]. It
+is defined in order: on the command line via the [--odoc-theme]
+option, in the [ODIG_ODOC_THEME] environment variable or in the
+[~/.config/odig/odoc-theme] file.
+
+The theme can be set on the current documentation set via the [set]
+action:
+
+{v
+odig odoc-theme set odig.dark   # Use the theme odig.dark
+odig odoc-theme set             # Use the default theme
+v}
+
+However whenever a documentation generation action occurs this
+restores the default theme. If you want to persist your choice, use
+the [--default] option when you [set] the theme; this writes the theme
+name to [~/.config/odig/odoc-theme].
+
+{v
+odig odoc-theme set --default odig.dark # Use theme and set as default
+v}
+
+{1:publish Publishing odoc documentation sets}
+
+In general the self-contained bundle of generated HTML files is
+available in:
+
+{v
+$(odig cache path)/html
+v}
+
+The following describes one possible workflow to publish the
+documentation for a set of packages.
+
+Write an [intro.mld] file that briefly documents the purpose of the
+documentation set, it will be used as a preamble on the package list
+page. Continue with:
+
+{v
+opam switch create .
+opam install odig PKG...
+odig odoc-theme set --default $MYTHEME
+odig odoc -v --index-title='My docset' --index-intro=intro.mld \
+  --no-pkg-deps PKG...
+ln -s $(odig cache path)/html /var/www/doc
+v}
+
+The odig package also installs the [gh-pages-amend] tool that helps
+with publishing a documentation set on GitHub for the current git
+repository:
+
+{v
+gh-pages-amend $(odig cache path)/html doc
+v}
+
+by default this fetches the [gh-pages] on the [origin] remote, checks
+it out, replaces the directory [doc] by the contents of [$(odig cache
+path)/html] and pushes it back. See [gh-pages-amend --help] for more
+information.

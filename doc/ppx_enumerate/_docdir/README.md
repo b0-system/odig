@@ -1,7 +1,5 @@
----
-title: ppx_enumerate
-parent: ../README.md
----
+ppx_enumerate
+=============
 
 Generate a list containing all values of a finite type.
 

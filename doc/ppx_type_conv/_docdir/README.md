@@ -1,7 +1,5 @@
----
-title: ppx_type_conv - Support Library for type-driven code generators
-parent: ../README.md
----
+ppx_type_conv - Support Library for type-driven code generators
+===============================================================
 
 What is `type_conv`?
 --------------------
@@ -20,7 +18,7 @@ libraries currently depending on `type_conv`:
 -----------------------------------------------------------------------------------
 
 `type_conv` based code generators are meant to be used with
-[ppx_driver://github.com/janestreet/ppx_driver). However
+[ppx_driver](https://github.com/janestreet/ppx_driver). However
 `type_conv` allows to export a compatible `ppx_deriving` plugin.
 By default, when not linked as part of a driver, packages using
 `type_conv` will just use ppx_deriving.
@@ -97,4 +95,4 @@ contact the maintainers:
 
   * Jane Street Capital, LLC <opensource@janestreet.com>
 
-Up-to-date information should be available at <https://github.com/janestreet/type_conv>.
+Up-to-date information should be available at <https://github.com/janestreet/ppx_type_conv>.

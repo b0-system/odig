@@ -4,10 +4,10 @@
 [travis-img]: https://api.travis-ci.org/ocaml/odoc.svg?branch=master
 
 **odoc** is a documentation generator for OCaml. It reads *doc comments* ,
-delimited with `(** ... *)`, and outputs HTML. See example output at
-[docs.mirage.io][mirage-docs].
+delimited with `(** ... *)`, and outputs HTML.
+See [example output][odig-sample].
 
-[mirage-docs]: http://docs.mirage.io/
+[odig-sample]: https://b0-system.github.io/odig/doc/index.html
 
 Text inside doc comments is marked up in ocamldoc syntax:
 
@@ -36,12 +36,23 @@ a work in progress :)
 
 ## Using `odoc` with OCaml
 
+To install odoc with opam:
+
 ```
 opam install odoc
 ```
 
-The easiest way to use odoc right now is by having Dune drive it. This command
-should work in most Dune projects out of the box:
+If you want to use odoc on the packages you have installed in your
+opam switch type:
+
+```
+opam install ocaml-manual odig
+odig doc
+```
+
+When you are developing the easiest way to use odoc right now is by
+having Dune drive it. This command should work in most Dune projects
+out of the box:
 
 ```
 dune build @doc

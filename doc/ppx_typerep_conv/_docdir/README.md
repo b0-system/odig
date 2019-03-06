@@ -1,7 +1,5 @@
----
-title: ppx_typerep_conv
-parent: ../README.md
----
+ppx_typerep_conv
+================
 
 Automatic generation of runtime types from type definitions.
 

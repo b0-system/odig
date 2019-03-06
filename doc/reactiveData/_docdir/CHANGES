@@ -1,3 +1,8 @@
+===== 0.2.2 =====
+
+  * additional functions in RList and RMap
+  * do not use a generic hashtable as it does not work with functional values
+
 ===== 0.2.1 =====
 
   * Add ?eq parameter to S.signal

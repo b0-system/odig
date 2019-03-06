@@ -1,11 +1,7 @@
-## v0.9.1
+## v0.11
 
-- Change the default behavior when no `-dirname` option is passed: use
-  the filename as it instead of making it absolute
+- Depend on ppxlib instead of (now deprecated) ppx\_core and ppx\_driver.
 
-## v0.9.0
-
-No changelog available
 
 ## 113.24.00
 

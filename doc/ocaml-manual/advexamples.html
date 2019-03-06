@@ -1,48 +1,58 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII">
-<meta name="generator" content="hevea 2.18">
+<meta name="generator" content="hevea 2.32">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
 <link rel="stylesheet" type="text/css" href="manual.css">
-<title>Advanced examples with classes and modules</title>
+<title>Chapter&#XA0;6&#XA0;&#XA0;Advanced examples with classes and modules</title>
 </head>
 <body>
-<a href="lablexamples.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="language.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="polymorphism.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="language.html"><img src="next_motif.svg" alt="Next"></a>
 <hr>
-<h1 class="chapter" id="sec50">Chapter&#XA0;5&#XA0;&#XA0;Advanced examples with classes and modules</h1>
+<h1 class="chapter" id="sec62">Chapter&#XA0;6&#XA0;&#XA0;Advanced examples with classes and modules</h1>
 <ul>
-<li><a href="advexamples.html#sec51">Extended example: bank accounts</a>
-</li><li><a href="advexamples.html#sec52">Simple modules as classes</a>
-</li><li><a href="advexamples.html#sec57">The subject/observer pattern</a>
+<li><a href="advexamples.html#sec63">6.1&#XA0;&#XA0;Extended example: bank accounts</a>
+</li><li><a href="advexamples.html#sec64">6.2&#XA0;&#XA0;Simple modules as classes</a>
+</li><li><a href="advexamples.html#sec69">6.3&#XA0;&#XA0;The subject/observer pattern</a>
 </li></ul>
 <p>
-<a id="c:advexamples"></a></p><p><span class="c012">(Chapter written by Didier R&#XE9;my)</span></p><p><br>
+<a id="c:advexamples"></a></p><p><span class="c009">(Chapter written by Didier R&#XE9;my)</span></p><p><br>
 <br>
 </p><p>In this chapter, we show some larger examples using objects, classes
 and modules. We review many of the object features simultaneously on
 the example of a bank account. We show how modules taken from the
 standard library can be expressed as classes. Lastly, we describe a
-programming pattern know of as <em>virtual types</em> through the example
+programming pattern known as <em>virtual types</em> through the example
 of window managers.</p>
-<h2 class="section" id="sec51">5.1&#XA0;&#XA0;Extended example: bank accounts</h2>
+<h2 class="section" id="sec63">6.1&#XA0;&#XA0;Extended example: bank accounts</h2>
 <p>
 
 <a id="ss:bank-accounts"></a></p><p>In this section, we illustrate most aspects of Object and inheritance
 by refining, debugging, and specializing the following
 initial naive definition of a simple bank account. (We reuse the
-module <span class="c006">Euro</span> defined at the end of chapter&#XA0;<a href="objectexamples.html#c%3Aobjectexamples">3</a>.)
-</p><pre><span class="c003">#</span><span class="c002"> let euro = new Euro.c;;
-<span class="c005">val euro : float -&gt; Euro.c = &lt;fun&gt;
+module <span class="c003">Euro</span> defined at the end of chapter&#XA0;<a href="objectexamples.html#c%3Aobjectexamples">3</a>.)
 
-</span><span class="c003">#</span> let zero = euro 0.;;
-<span class="c005">val zero : Euro.c = &lt;obj&gt;
 
-</span><span class="c003">#</span> let neg x = x#times (-1.);;
-<span class="c005">val neg : &lt; times : float -&gt; 'a; .. &gt; -&gt; 'a = &lt;fun&gt;
+</p><div class="caml-example toplevel">
 
-</span><span class="c003">#</span> class account =
+<pre><div class="caml-input"> let euro = new Euro.c;;
+</div><div class="caml-output ok">val euro : float -&gt; Euro.c = &lt;fun&gt;
+</div></pre>
+
+<pre><div class="caml-input"> let zero = euro 0.;;
+</div><div class="caml-output ok">val zero : Euro.c = &lt;obj&gt;
+</div></pre>
+
+<pre><div class="caml-input"> let neg x = x#times (-1.);;
+</div><div class="caml-output ok">val neg : &lt; times : float -&gt; 'a; .. &gt; -&gt; 'a = &lt;fun&gt;
+</div></pre>
+
+<pre><div class="caml-input"> class account =
     object
       val mutable balance = zero
       method balance = balance
@@ -50,24 +60,33 @@ module <span class="c006">Euro</span> defined at the end of chapter&#XA0;<a href
       method withdraw x =
         if x#leq balance then (balance &lt;- balance # plus (neg x); x) else zero
     end;;
-<span class="c005">class account :
+</div><div class="caml-output ok">class account :
   object
     val mutable balance : Euro.c
     method balance : Euro.c
     method deposit : Euro.c -&gt; unit
     method withdraw : Euro.c -&gt; Euro.c
   end
+</div></pre>
 
-</span><span class="c003">#</span> let c = new account in c # deposit (euro 100.); c # withdraw (euro 50.);;
-</span><span class="c005">- : Euro.c = &lt;obj&gt;
-</span></pre><p>
+<pre><div class="caml-input"> let c = new account in c # deposit (euro 100.); c # withdraw (euro 50.);;
+</div><div class="caml-output ok">- : Euro.c = &lt;obj&gt;
+</div></pre>
+
+
+</div><p>
+
 We now refine this definition with a method to compute interest.
-</p><pre><span class="c003">#<span class="c002"> class account_with_interests =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class account_with_interests =
     object (self)
       inherit account
       method private interest = self # deposit (self # balance # times 0.03)
     end;;
-<span class="c005">class account_with_interests :
+</div><div class="caml-output ok">class account_with_interests :
   object
     val mutable balance : Euro.c
     method balance : Euro.c
@@ -75,49 +94,74 @@ We now refine this definition with a method to compute interest.
     method private interest : unit
     method withdraw : Euro.c -&gt; Euro.c
   end
-</span></span></span></pre><p>
-We make the method <span class="c006">interest</span> private, since clearly it should not be
+</div></pre>
+
+
+</div><p>
+
+We make the method <span class="c003">interest</span> private, since clearly it should not be
 called freely from the outside. Here, it is only made accessible to subclasses
 that will manage monthly or yearly updates of the account.</p><p>We should soon fix a bug in the current definition: the deposit method can
 be used for withdrawing money by depositing negative amounts. We can
 fix this directly:
-</p><pre><span class="c003">#<span class="c002"> class safe_account =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class safe_account =
     object
       inherit account
       method deposit x = if zero#leq x then balance &lt;- balance#plus x
     end;;
-<span class="c005">class safe_account :
+</div><div class="caml-output ok">class safe_account :
   object
     val mutable balance : Euro.c
     method balance : Euro.c
     method deposit : Euro.c -&gt; unit
     method withdraw : Euro.c -&gt; Euro.c
   end
-</span></span></span></pre><p>
+</div></pre>
+
+
+</div><p>
+
 However, the bug might be fixed more safely by the following definition:
-</p><pre><span class="c003">#<span class="c002"> class safe_account =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class safe_account =
     object
       inherit account as unsafe
       method deposit x =
         if zero#leq x then unsafe # deposit x
         else raise (Invalid_argument "deposit")
     end;;
-<span class="c005">class safe_account :
+</div><div class="caml-output ok">class safe_account :
   object
     val mutable balance : Euro.c
     method balance : Euro.c
     method deposit : Euro.c -&gt; unit
     method withdraw : Euro.c -&gt; Euro.c
   end
-</span></span></span></pre><p>
-In particular, this does not require the knowledge of the implementation of
-the method <span class="c006">deposit</span>.</p><p>To keep track of operations, we extend the class with a mutable field
-<span class="c006">history</span> and a private method <span class="c006">trace</span> to add an operation in the
-log. Then each method to be traced is redefined.
-</p><pre><span class="c003">#</span><span class="c002"> type 'a operation = Deposit of 'a | Retrieval of 'a;;
-<span class="c005">type 'a operation = Deposit of 'a | Retrieval of 'a
+</div></pre>
 
-</span><span class="c003">#</span> class account_with_history =
+
+</div><p>
+
+In particular, this does not require the knowledge of the implementation of
+the method <span class="c003">deposit</span>.</p><p>To keep track of operations, we extend the class with a mutable field
+<span class="c003">history</span> and a private method <span class="c003">trace</span> to add an operation in the
+log. Then each method to be traced is redefined.
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> type 'a operation = Deposit of 'a | Retrieval of 'a;;
+</div><div class="caml-output ok">type 'a operation = Deposit of 'a | Retrieval of 'a
+</div></pre>
+
+<pre><div class="caml-input"> class account_with_history =
     object (self)
       inherit safe_account as super
       val mutable history = []
@@ -126,7 +170,7 @@ log. Then each method to be traced is redefined.
       method withdraw x = self#trace (Retrieval x); super#withdraw x
       method history = List.rev history
     end;;
-</span><span class="c005">class account_with_history :
+</div><div class="caml-output ok">class account_with_history :
   object
     val mutable balance : Euro.c
     val mutable history : Euro.c operation list
@@ -136,16 +180,24 @@ log. Then each method to be traced is redefined.
     method private trace : Euro.c operation -&gt; unit
     method withdraw : Euro.c -&gt; Euro.c
   end
-</span></pre><p>
+</div></pre>
+
+
+</div><p>
+
 One may wish to open an account and simultaneously deposit some initial
 amount. Although the initial implementation did not address this
 requirement, it can be achieved by using an initializer.
-</p><pre><span class="c003">#<span class="c002"> class account_with_deposit x =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class account_with_deposit x =
     object
       inherit account_with_history
       initializer balance &lt;- x
     end;;
-<span class="c005">class account_with_deposit :
+</div><div class="caml-output ok">class account_with_deposit :
   Euro.c -&gt;
   object
     val mutable balance : Euro.c
@@ -156,14 +208,22 @@ requirement, it can be achieved by using an initializer.
     method private trace : Euro.c operation -&gt; unit
     method withdraw : Euro.c -&gt; Euro.c
   end
-</span></span></span></pre><p>
+</div></pre>
+
+
+</div><p>
+
 A better alternative is:
-</p><pre><span class="c003">#<span class="c002"> class account_with_deposit x =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class account_with_deposit x =
     object (self)
       inherit account_with_history
       initializer self#deposit x
     end;;
-<span class="c005">class account_with_deposit :
+</div><div class="caml-output ok">class account_with_deposit :
   Euro.c -&gt;
   object
     val mutable balance : Euro.c
@@ -174,22 +234,46 @@ A better alternative is:
     method private trace : Euro.c operation -&gt; unit
     method withdraw : Euro.c -&gt; Euro.c
   end
-</span></span></span></pre><p>
-Indeed, the latter is safer since the call to <span class="c006">deposit</span> will automatically
+</div></pre>
+
+
+</div><p>
+
+Indeed, the latter is safer since the call to <span class="c003">deposit</span> will automatically
 benefit from safety checks and from the trace.
 Let&#X2019;s test it:
-</p><pre><span class="c003">#<span class="c002"> let ccp = new account_with_deposit (euro 100.) in
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> let ccp = new account_with_deposit (euro 100.) in
   let _balance = ccp#withdraw (euro 50.) in
   ccp#history;;
-<span class="c005">- : Euro.c operation list = [Deposit &lt;obj&gt;; Retrieval &lt;obj&gt;]
-</span></span></span></pre><p>
+</div><div class="caml-output ok">- : Euro.c operation list = [Deposit &lt;obj&gt;; Retrieval &lt;obj&gt;]
+</div></pre>
+
+
+</div><p>
+
 Closing an account can be done with the following polymorphic function:
-</p><pre><span class="c003">#<span class="c002"> let close c = c#withdraw c#balance;;
-<span class="c005">val close : &lt; balance : 'a; withdraw : 'a -&gt; 'b; .. &gt; -&gt; 'b = &lt;fun&gt;
-</span></span></span></pre><p>
-Of course, this applies to all sorts of accounts.</p><p>Finally, we gather several versions of the account into a module <span class="c006">Account</span>
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> let close c = c#withdraw c#balance;;
+</div><div class="caml-output ok">val close : &lt; balance : 'a; withdraw : 'a -&gt; 'b; .. &gt; -&gt; 'b = &lt;fun&gt;
+</div></pre>
+
+
+</div><p>
+
+Of course, this applies to all sorts of accounts.</p><p>Finally, we gather several versions of the account into a module <span class="c003">Account</span>
 abstracted over some currency.
-</p><pre><span class="c003">#</span><span class="c002"> let today () = (01,01,2000) (* an approximation *)
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> let today () = (01,01,2000) (* an approximation *)
   module Account (M:MONEY) =
     struct
       type m = M.c
@@ -224,7 +308,10 @@ abstracted over some currency.
       class virtual check_client x =
         let y = if (m 100.)#leq x then x
         else raise (Failure "Insufficient initial deposit") in
-        object (self) initializer <U>self#deposit</U> y end
+        object (self)
+          initializer self#deposit y
+          method virtual deposit: m -&gt; unit
+        end
 
       module Client (B : sig class bank : client_view end) =
         struct
@@ -239,35 +326,57 @@ abstracted over some currency.
             if today() &lt; (1998,10,30) then c # deposit (m 100.); c
         end
     end;;
-</span></pre><p>
+</div>
+</pre>
+
+
+</div><p>
+
 This shows the use of modules to group several class definitions that can in
 fact be thought of as a single unit. This unit would be provided by a bank
 for both internal and external uses.
 This is implemented as a functor that abstracts over the currency so that
-the same code can be used to provide accounts in different currencies.</p><p>The class <span class="c006">bank</span> is the <em>real</em> implementation of the bank account (it
+the same code can be used to provide accounts in different currencies.</p><p>The class <span class="c003">bank</span> is the <em>real</em> implementation of the bank account (it
 could have been inlined). This is the one that will be used for further
 extensions, refinements, etc. Conversely, the client will only be given the client view.
-</p><pre><span class="c003">#<span class="c002"> module Euro_account = Account(Euro);;
 
-  module Client = Euro_account.Client (Euro_account);;
 
-  new Client.account (new Euro.c 100.);;
-</span></span></pre><p>
-Hence, the clients do not have direct access to the <span class="c006">balance</span>, nor the
-<span class="c006">history</span> of their own accounts. Their only way to change their balance is
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> module Euro_account = Account(Euro);;
+</div>
+</pre>
+
+<pre><div class="caml-input"> module Client = Euro_account.Client (Euro_account);;
+</div>
+</pre>
+
+<pre><div class="caml-input"> new Client.account (new Euro.c 100.);;
+</div>
+</pre>
+
+
+</div><p>
+
+Hence, the clients do not have direct access to the <span class="c003">balance</span>, nor the
+<span class="c003">history</span> of their own accounts. Their only way to change their balance is
 to deposit or withdraw money. It is important to give the clients
 a class and not just the ability to create accounts (such as the
-promotional <span class="c006">discount</span> account), so that they can
+promotional <span class="c003">discount</span> account), so that they can
 personalize their account.
-For instance, a client may refine the <span class="c006">deposit</span> and <span class="c006">withdraw</span> methods
+For instance, a client may refine the <span class="c003">deposit</span> and <span class="c003">withdraw</span> methods
 so as to do his own financial bookkeeping, automatically. On the
-other hand, the function <span class="c006">discount</span> is given as such, with no
+other hand, the function <span class="c003">discount</span> is given as such, with no
 possibility for further personalization.</p><p>It is important to provide the client&#X2019;s view as a functor
-<span class="c006">Client</span> so that client accounts can still be built after a possible
-specialization of the <span class="c006">bank</span>.
-The functor <span class="c006">Client</span> may remain unchanged and be passed
+<span class="c003">Client</span> so that client accounts can still be built after a possible
+specialization of the <span class="c003">bank</span>.
+The functor <span class="c003">Client</span> may remain unchanged and be passed
 the new definition to initialize a client&#X2019;s view of the extended account.
-</p><pre><span class="c003">#<span class="c002"> module Investment_account (M : MONEY) =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> module Investment_account (M : MONEY) =
     struct
       type m = M.c
       module A = Account(M)
@@ -283,10 +392,19 @@ the new definition to initialize a client&#X2019;s view of the extended account.
 
       module Client = A.Client
     end;;
-</span></span></pre><p>
-The functor <span class="c006">Client</span> may also be redefined when some new features of the
+</div>
+</pre>
+
+
+</div><p>
+
+The functor <span class="c003">Client</span> may also be redefined when some new features of the
 account can be given to the client.
-</p><pre><span class="c003">#<span class="c002"> module Internet_account (M : MONEY) =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> module Internet_account (M : MONEY) =
     struct
       type m = M.c
       module A = Account(M)
@@ -315,42 +433,58 @@ account can be given to the client.
             end
         end
     end;;
-</span></span></pre>
-<h2 class="section" id="sec52">5.2&#XA0;&#XA0;Simple modules as classes</h2>
+</div>
+</pre>
+
+
+</div>
+<h2 class="section" id="sec64">6.2&#XA0;&#XA0;Simple modules as classes</h2>
 <p>
 
 <a id="ss:modules-as-classes"></a></p><p>One may wonder whether it is possible to treat primitive types such as
 integers and strings as objects. Although this is usually uninteresting
 for integers or strings, there may be some situations where
-this is desirable. The class <span class="c006">money</span> above is such an example.
+this is desirable. The class <span class="c003">money</span> above is such an example.
 We show here how to do it for strings.</p>
-<h3 class="subsection" id="sec53">5.2.1&#XA0;&#XA0;Strings</h3>
+<h3 class="subsection" id="sec65">6.2.1&#XA0;&#XA0;Strings</h3>
 <p>
 <a id="module:string"></a></p><p>A naive definition of strings as objects could be:
-</p><pre><span class="c003">#<span class="c002"> class ostring s =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class ostring s =
     object
        method get n = String.get s n
        method print = print_string s
        method escaped = new ostring (String.escaped s)
     end;;
-<span class="c005">class ostring :
+</div><div class="caml-output ok">class ostring :
   string -&gt;
   object
     method escaped : ostring
     method get : int -&gt; char
     method print : unit
   end
-</span></span></span></pre><p>
-However, the method <span class="c006">escaped</span> returns an object of the class <span class="c006">ostring</span>,
+</div></pre>
+
+
+</div><p>
+
+However, the method <span class="c003">escaped</span> returns an object of the class <span class="c003">ostring</span>,
 and not an object of the current class. Hence, if the class is further
-extended, the method <span class="c006">escaped</span> will only return an object of the parent
+extended, the method <span class="c003">escaped</span> will only return an object of the parent
 class.
-</p><pre><span class="c003">#<span class="c002"> class sub_string s =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class sub_string s =
     object
        inherit ostring s
        method sub start len = new sub_string (String.sub s  start len)
     end;;
-<span class="c005">class sub_string :
+</div><div class="caml-output ok">class sub_string :
   string -&gt;
   object
     method escaped : ostring
@@ -358,11 +492,19 @@ class.
     method print : unit
     method sub : int -&gt; int -&gt; sub_string
   end
-</span></span></span></pre><p>
+</div></pre>
+
+
+</div><p>
+
 As seen in section <a href="objectexamples.html#ss%3Abinary-methods">3.16</a>, the solution is to use
 functional update instead. We need to create an instance variable
-containing the representation <span class="c006">s</span> of the string.
-</p><pre><span class="c003">#<span class="c002"> class better_string s =
+containing the representation <span class="c003">s</span> of the string.
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class better_string s =
     object
        val repr = s
        method get n = String.get repr n
@@ -370,7 +512,7 @@ containing the representation <span class="c006">s</span> of the string.
        method escaped = {&lt; repr = String.escaped repr &gt;}
        method sub start len = {&lt; repr = String.sub s start len &gt;}
     end;;
-<span class="c005">class better_string :
+</div><div class="caml-output ok">class better_string :
   string -&gt;
   object ('a)
     val repr : string
@@ -379,14 +521,22 @@ containing the representation <span class="c006">s</span> of the string.
     method print : unit
     method sub : int -&gt; int -&gt; 'a
   end
-</span></span></span></pre><p>
-As shown in the inferred type, the methods <span class="c006">escaped</span> and <span class="c006">sub</span> now return
-objects of the same type as the one of the class.</p><p>Another difficulty is the implementation of the method <span class="c006">concat</span>.
+</div></pre>
+
+
+</div><p>
+
+As shown in the inferred type, the methods <span class="c003">escaped</span> and <span class="c003">sub</span> now return
+objects of the same type as the one of the class.</p><p>Another difficulty is the implementation of the method <span class="c003">concat</span>.
 In order to concatenate a string with another string of the same class,
 one must be able to access the instance variable externally. Thus, a method
-<span class="c006">repr</span> returning s must be defined. Here is the correct definition of
+<span class="c003">repr</span> returning s must be defined. Here is the correct definition of
 strings:
-</p><pre><span class="c003">#<span class="c002"> class ostring s =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class ostring s =
     object (self : 'mytype)
        val repr = s
        method repr = repr
@@ -396,7 +546,7 @@ strings:
        method sub start len = {&lt; repr = String.sub s start len &gt;}
        method concat (t : 'mytype) = {&lt; repr = repr ^ t#repr &gt;}
     end;;
-<span class="c005">class ostring :
+</div><div class="caml-output ok">class ostring :
   string -&gt;
   object ('a)
     val repr : string
@@ -407,25 +557,42 @@ strings:
     method repr : string
     method sub : int -&gt; int -&gt; 'a
   end
-</span></span></span></pre><p>
+</div></pre>
+
+
+</div><p>
+
 Another constructor of the class string can be defined to return a new
 string of a given length:
-</p><pre><span class="c003">#<span class="c002"> class cstring n = ostring (String.make n ' ');;
-<span class="c005">class cstring : int -&gt; ostring
-</span></span></span></pre><p>
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class cstring n = ostring (String.make n ' ');;
+</div><div class="caml-output ok">class cstring : int -&gt; ostring
+</div></pre>
+
+
+</div><p>
+
 Here, exposing the representation of strings is probably harmless. We do
 could also hide the representation of strings as we hid the currency in the
-class <span class="c006">money</span> of section&#XA0;<a href="objectexamples.html#ss%3Afriends">3.17</a>.</p>
-<h4 class="subsubsection" id="sec54">Stacks</h4>
+class <span class="c003">money</span> of section&#XA0;<a href="objectexamples.html#ss%3Afriends">3.17</a>.</p>
+<h4 class="subsubsection" id="sec66">Stacks</h4>
 <p>
 <a id="module:stack"></a></p><p>There is sometimes an alternative between using modules or classes for
 parametric data types.
 Indeed, there are situations when the two approaches are quite similar.
 For instance, a stack can be straightforwardly implemented as a class:
-</p><pre><span class="c003">#</span><span class="c002"> exception Empty;;
-<span class="c005">exception Empty
 
-</span><span class="c003">#</span> class ['a] stack =
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> exception Empty;;
+</div><div class="caml-output ok">exception Empty
+</div></pre>
+
+<pre><div class="caml-input"> class ['a] stack =
     object
       val mutable l = ([] : 'a list)
       method push x = l &lt;- x::l
@@ -433,7 +600,7 @@ For instance, a stack can be straightforwardly implemented as a class:
       method clear = l &lt;- []
       method length = List.length l
     end;;
-</span><span class="c005">class ['a] stack :
+</div><div class="caml-output ok">class ['a] stack :
   object
     val mutable l : 'a list
     method clear : unit
@@ -441,19 +608,27 @@ For instance, a stack can be straightforwardly implemented as a class:
     method pop : 'a
     method push : 'a -&gt; unit
   end
-</span></pre><p>
+</div></pre>
+
+
+</div><p>
+
 However, writing a method for iterating over a stack is more
-problematic. A method <span class="c006">fold</span> would have type
-<span class="c006">('b -&gt; 'a -&gt; 'b) -&gt; 'b -&gt; 'b</span>. Here <span class="c006">'a</span> is the parameter of the stack.
-The parameter <span class="c006">'b</span> is not related to the class <span class="c006">'a stack</span> but to the
-argument that will be passed to the method <span class="c006">fold</span>.
-A naive approach is to make <span class="c006">'b</span> an extra parameter of class <span class="c006">stack</span>:
-</p><pre><span class="c003">#<span class="c002"> class ['a, 'b] stack2 =
+problematic. A method <span class="c003">fold</span> would have type
+<span class="c003">('b -&gt; 'a -&gt; 'b) -&gt; 'b -&gt; 'b</span>. Here <span class="c003">'a</span> is the parameter of the stack.
+The parameter <span class="c003">'b</span> is not related to the class <span class="c003">'a stack</span> but to the
+argument that will be passed to the method <span class="c003">fold</span>.
+A naive approach is to make <span class="c003">'b</span> an extra parameter of class <span class="c003">stack</span>:
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class ['a, 'b] stack2 =
     object
       inherit ['a] stack
       method fold f (x : 'b) = List.fold_left f x l
     end;;
-<span class="c005">class ['a, 'b] stack2 :
+</div><div class="caml-output ok">class ['a, 'b] stack2 :
   object
     val mutable l : 'a list
     method clear : unit
@@ -462,32 +637,50 @@ A naive approach is to make <span class="c006">'b</span> an extra parameter of c
     method pop : 'a
     method push : 'a -&gt; unit
   end
-</span></span></span></pre><p>
-However, the method <span class="c006">fold</span> of a given object can only be
+</div></pre>
+
+
+</div><p>
+
+However, the method <span class="c003">fold</span> of a given object can only be
 applied to functions that all have the same type:
-</p><pre><span class="c003">#</span><span class="c002"> let s = new stack2;;
-<span class="c005">val s : ('_a, '_b) stack2 = &lt;obj&gt;
 
-</span><span class="c003">#</span> s#fold ( + ) 0;;
-<span class="c005">- : int = 0
 
-</span><span class="c003">#</span> s;;
-</span><span class="c005">- : (int, int) stack2 = &lt;obj&gt;
-</span></pre><p>
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> let s = new stack2;;
+</div><div class="caml-output ok">val s : ('_weak1, '_weak2) stack2 = &lt;obj&gt;
+</div></pre>
+
+<pre><div class="caml-input"> s#fold ( + ) 0;;
+</div><div class="caml-output ok">- : int = 0
+</div></pre>
+
+<pre><div class="caml-input"> s;;
+</div><div class="caml-output ok">- : (int, int) stack2 = &lt;obj&gt;
+</div></pre>
+
+
+</div><p>
+
 A better solution is to use polymorphic methods, which were
 introduced in OCaml version 3.05. Polymorphic methods makes
-it possible to treat the type variable <span class="c006">'b</span> in the type of <span class="c006">fold</span> as
-universally quantified, giving <span class="c006">fold</span> the polymorphic type
-<span class="c006">Forall 'b. ('b -&gt; 'a -&gt; 'b) -&gt; 'b -&gt; 'b</span>.
-An explicit type declaration on the method <span class="c006">fold</span> is required, since
+it possible to treat the type variable <span class="c003">'b</span> in the type of <span class="c003">fold</span> as
+universally quantified, giving <span class="c003">fold</span> the polymorphic type
+<span class="c003">Forall 'b. ('b -&gt; 'a -&gt; 'b) -&gt; 'b -&gt; 'b</span>.
+An explicit type declaration on the method <span class="c003">fold</span> is required, since
 the type checker cannot infer the polymorphic type by itself.
-</p><pre><span class="c003">#<span class="c002"> class ['a] stack3 =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class ['a] stack3 =
     object
       inherit ['a] stack
       method fold : 'b. ('b -&gt; 'a -&gt; 'b) -&gt; 'b -&gt; 'b
                   = fun f x -&gt; List.fold_left f x l
     end;;
-<span class="c005">class ['a] stack3 :
+</div><div class="caml-output ok">class ['a] stack3 :
   object
     val mutable l : 'a list
     method clear : unit
@@ -496,32 +689,55 @@ the type checker cannot infer the polymorphic type by itself.
     method pop : 'a
     method push : 'a -&gt; unit
   end
-</span></span></span></pre>
-<h3 class="subsection" id="sec55">5.2.2&#XA0;&#XA0;Hashtbl</h3>
+</div></pre>
+
+
+</div>
+<h3 class="subsection" id="sec67">6.2.2&#XA0;&#XA0;Hashtbl</h3>
 <p>
 <a id="module:hashtbl"></a></p><p>A simplified version of object-oriented hash tables should have the
 following class type.
-</p><pre><span class="c003">#<span class="c002"> class type ['a, 'b] hash_table =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class type ['a, 'b] hash_table =
     object
       method find : 'a -&gt; 'b
       method add : 'a -&gt; 'b -&gt; unit
     end;;
-<span class="c005">class type ['a, 'b] hash_table =
+</div><div class="caml-output ok">class type ['a, 'b] hash_table =
   object method add : 'a -&gt; 'b -&gt; unit method find : 'a -&gt; 'b end
-</span></span></span></pre><p>
+</div></pre>
+
+
+</div><p>
+
 A simple implementation, which is quite reasonable for small hash tables is
 to use an association list:
-</p><pre><span class="c003">#<span class="c002"> class ['a, 'b] small_hashtbl : ['a, 'b] hash_table =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class ['a, 'b] small_hashtbl : ['a, 'b] hash_table =
     object
       val mutable table = []
       method find key = List.assoc key table
       method add key valeur = table &lt;- (key, valeur) :: table
     end;;
-<span class="c005">class ['a, 'b] small_hashtbl : ['a, 'b] hash_table
-</span></span></span></pre><p>
+</div><div class="caml-output ok">class ['a, 'b] small_hashtbl : ['a, 'b] hash_table
+</div></pre>
+
+
+</div><p>
+
 A better implementation, and one that scales up better, is to use a
 true hash table&#X2026; whose elements are small hash tables!
-</p><pre><span class="c003">#<span class="c002"> class ['a, 'b] hashtbl size : ['a, 'b] hash_table =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class ['a, 'b] hashtbl size : ['a, 'b] hash_table =
     object (self)
       val table = Array.init size (fun i -&gt; new small_hashtbl)
       method private hash key =
@@ -529,22 +745,29 @@ true hash table&#X2026; whose elements are small hash tables!
       method find key = table.(self#hash key) # find key
       method add key = table.(self#hash key) # add key
     end;;
-<span class="c005">class ['a, 'b] hashtbl : int -&gt; ['a, 'b] hash_table
-</span></span></span></pre>
-<h3 class="subsection" id="sec56">5.2.3&#XA0;&#XA0;Sets</h3>
+</div><div class="caml-output ok">class ['a, 'b] hashtbl : int -&gt; ['a, 'b] hash_table
+</div></pre>
+
+
+</div>
+<h3 class="subsection" id="sec68">6.2.3&#XA0;&#XA0;Sets</h3>
 <p>
 <a id="module:set"></a></p><p>Implementing sets leads to another difficulty. Indeed, the method
-<span class="c006">union</span> needs to be able to access the internal representation of
+<span class="c003">union</span> needs to be able to access the internal representation of
 another object of the same class.</p><p>This is another instance of friend functions as seen in section
 <a href="objectexamples.html#ss%3Afriends">3.17</a>. Indeed, this is the same mechanism used in the module
-<span class="c006">Set</span> in the absence of objects.</p><p>In the object-oriented version of sets, we only need to add an additional
-method <span class="c006">tag</span> to return the representation of a set. Since sets are
-parametric in the type of elements, the method <span class="c006">tag</span> has a parametric type
-<span class="c006">'a tag</span>, concrete within
+<span class="c003">Set</span> in the absence of objects.</p><p>In the object-oriented version of sets, we only need to add an additional
+method <span class="c003">tag</span> to return the representation of a set. Since sets are
+parametric in the type of elements, the method <span class="c003">tag</span> has a parametric type
+<span class="c003">'a tag</span>, concrete within
 the module definition but abstract in its signature.
-From outside, it will then be guaranteed that two objects with a method <span class="c006">tag</span>
+From outside, it will then be guaranteed that two objects with a method <span class="c003">tag</span>
 of the same type will share the same representation.
-</p><pre><span class="c003">#<span class="c002"> module type SET =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> module type SET =
     sig
       type 'a tag
       class ['a] c :
@@ -557,8 +780,10 @@ of the same type will share the same representation.
           method tag : 'a tag
         end
     end;;
+</div>
+</pre>
 
-  module Set : SET =
+<pre><div class="caml-input"> module Set : SET =
     struct
       let rec merge l1 l2 =
         match l1 with
@@ -582,55 +807,82 @@ of the same type will share the same representation.
           method tag = repr
         end
     end;;
-</span></span></pre>
-<h2 class="section" id="sec57">5.3&#XA0;&#XA0;The subject/observer pattern</h2>
+</div>
+</pre>
+
+
+</div>
+<h2 class="section" id="sec69">6.3&#XA0;&#XA0;The subject/observer pattern</h2>
 <p>
 
 <a id="ss:subject-observer"></a></p><p>The following example, known as the subject/observer pattern, is often
 presented in the literature as a difficult inheritance problem with
 inter-connected classes.
 The general pattern amounts to the definition a pair of two
-classes that recursively interact with one another.</p><p>The class <span class="c006">observer</span> has a distinguished method <span class="c006">notify</span> that requires
+classes that recursively interact with one another.</p><p>The class <span class="c003">observer</span> has a distinguished method <span class="c003">notify</span> that requires
 two arguments, a subject and an event to execute an action.
-</p><pre><span class="c003">#<span class="c002"> class virtual ['subject, 'event] observer =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class virtual ['subject, 'event] observer =
     object
       method virtual notify : 'subject -&gt;  'event -&gt; unit
     end;;
-<span class="c005">class virtual ['subject, 'event] observer :
+</div><div class="caml-output ok">class virtual ['subject, 'event] observer :
   object method virtual notify : 'subject -&gt; 'event -&gt; unit end
-</span></span></span></pre><p>
-The class <span class="c006">subject</span> remembers a list of observers in an instance variable,
-and has a distinguished method <span class="c006">notify_observers</span> to broadcast the message
-<span class="c006">notify</span> to all observers with a particular event <span class="c006">e</span>.
-</p><pre><span class="c003">#<span class="c002"> class ['observer, 'event] subject =
+</div></pre>
+
+
+</div><p>
+
+The class <span class="c003">subject</span> remembers a list of observers in an instance variable,
+and has a distinguished method <span class="c003">notify_observers</span> to broadcast the message
+<span class="c003">notify</span> to all observers with a particular event <span class="c003">e</span>.
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class ['observer, 'event] subject =
     object (self)
       val mutable observers = ([]:'observer list)
       method add_observer obs = observers &lt;- (obs :: observers)
       method notify_observers (e : 'event) =
           List.iter (fun x -&gt; x#notify self e) observers
     end;;
-<span class="c005">class ['a, 'event] subject :
+</div><div class="caml-output ok">class ['a, 'event] subject :
   object ('b)
     constraint 'a = &lt; notify : 'b -&gt; 'event -&gt; unit; .. &gt;
     val mutable observers : 'a list
     method add_observer : 'a -&gt; unit
     method notify_observers : 'event -&gt; unit
   end
-</span></span></span></pre><p>
+</div></pre>
+
+
+</div><p>
+
 The difficulty usually lies in defining instances of the pattern above
 by inheritance. This can be done in a natural and obvious manner in
 OCaml, as shown on the following example manipulating windows.
-</p><pre><span class="c003">#</span><span class="c002"> type event = Raise | Resize | Move;;
-<span class="c005">type event = Raise | Resize | Move
 
-</span><span class="c003">#</span> let string_of_event = function
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> type event = Raise | Resize | Move;;
+</div><div class="caml-output ok">type event = Raise | Resize | Move
+</div></pre>
+
+<pre><div class="caml-input"> let string_of_event = function
       Raise -&gt; "Raise" | Resize -&gt; "Resize" | Move -&gt; "Move";;
-<span class="c005">val string_of_event : event -&gt; string = &lt;fun&gt;
+</div><div class="caml-output ok">val string_of_event : event -&gt; string = &lt;fun&gt;
+</div></pre>
 
-</span><span class="c003">#</span> let count = ref 0;;
-<span class="c005">val count : int ref = {contents = 0}
+<pre><div class="caml-input"> let count = ref 0;;
+</div><div class="caml-output ok">val count : int ref = {contents = 0}
+</div></pre>
 
-</span><span class="c003">#</span> class ['observer] window_subject =
+<pre><div class="caml-input"> class ['observer] window_subject =
     let id = count := succ !count; !count in
     object (self)
       inherit ['observer, event] subject
@@ -639,7 +891,7 @@ OCaml, as shown on the following example manipulating windows.
       method move x = position &lt;- position + x; self#notify_observers Move
       method draw = Printf.printf "{Position = %d}\n"  position;
     end;;
-<span class="c005">class ['a] window_subject :
+</div><div class="caml-output ok">class ['a] window_subject :
   object ('b)
     constraint 'a = &lt; notify : 'b -&gt; event -&gt; unit; .. &gt;
     val mutable observers : 'a list
@@ -650,38 +902,64 @@ OCaml, as shown on the following example manipulating windows.
     method move : int -&gt; unit
     method notify_observers : event -&gt; unit
   end
+</div></pre>
 
-</span><span class="c003">#</span> class ['subject] window_observer =
+<pre><div class="caml-input"> class ['subject] window_observer =
     object
       inherit ['subject, event] observer
       method notify s e = s#draw
     end;;
-</span><span class="c005">class ['a] window_observer :
+</div><div class="caml-output ok">class ['a] window_observer :
   object
     constraint 'a = &lt; draw : unit; .. &gt;
     method notify : 'a -&gt; event -&gt; unit
   end
-</span></pre><p>
-As can be expected, the type of <span class="c006">window</span> is recursive.
-</p><pre><span class="c003">#<span class="c002"> let window = new window_subject;;
-<span class="c005">val window : &lt; notify : 'a -&gt; event -&gt; unit; _.. &gt; window_subject as 'a =
+</div></pre>
+
+
+</div><p>
+
+As can be expected, the type of <span class="c003">window</span> is recursive.
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> let window = new window_subject;;
+</div><div class="caml-output ok">val window : &lt; notify : 'a -&gt; event -&gt; unit; _.. &gt; window_subject as 'a =
   &lt;obj&gt;
-</span></span></span></pre><p>
-However, the two classes of <span class="c006">window_subject</span> and <span class="c006">window_observer</span> are not
+</div></pre>
+
+
+</div><p>
+
+However, the two classes of <span class="c003">window_subject</span> and <span class="c003">window_observer</span> are not
 mutually recursive.
-</p><pre><span class="c003">#</span><span class="c002"> let window_observer = new window_observer;;
-<span class="c005">val window_observer : &lt; draw : unit; _.. &gt; window_observer = &lt;obj&gt;
 
-</span><span class="c003">#</span> window#add_observer window_observer;;
-<span class="c005">- : unit = ()
 
-</span><span class="c003">#</span> window#move 1;;
-</span><span class="c005">{Position = 1}
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> let window_observer = new window_observer;;
+</div><div class="caml-output ok">val window_observer : &lt; draw : unit; _.. &gt; window_observer = &lt;obj&gt;
+</div></pre>
+
+<pre><div class="caml-input"> window#add_observer window_observer;;
+</div><div class="caml-output ok">- : unit = ()
+</div></pre>
+
+<pre><div class="caml-input"> window#move 1;;
+</div><div class="caml-output ok">{Position = 1}
 - : unit = ()
-</span></pre><p>Classes <span class="c006">window_observer</span> and <span class="c006">window_subject</span> can still be extended by
-inheritance. For instance, one may enrich the <span class="c006">subject</span> with new
+</div></pre>
+
+
+</div><p>Classes <span class="c003">window_observer</span> and <span class="c003">window_subject</span> can still be extended by
+inheritance. For instance, one may enrich the <span class="c003">subject</span> with new
 behaviors and refine the behavior of the observer.
-</p><pre><span class="c003">#</span><span class="c002"> class ['observer] richer_window_subject =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class ['observer] richer_window_subject =
     object (self)
       inherit ['observer] window_subject
       val mutable size = 1
@@ -690,7 +968,7 @@ behaviors and refine the behavior of the observer.
       method raise = top &lt;- true; self#notify_observers Raise
       method draw = Printf.printf "{Position = %d; Size = %d}\n"  position size;
     end;;
-<span class="c005">class ['a] richer_window_subject :
+</div><div class="caml-output ok">class ['a] richer_window_subject :
   object ('b)
     constraint 'a = &lt; notify : 'b -&gt; event -&gt; unit; .. &gt;
     val mutable observers : 'a list
@@ -705,45 +983,65 @@ behaviors and refine the behavior of the observer.
     method raise : unit
     method resize : int -&gt; unit
   end
+</div></pre>
 
-</span><span class="c003">#</span> class ['subject] richer_window_observer =
+<pre><div class="caml-input"> class ['subject] richer_window_observer =
     object
       inherit ['subject] window_observer as super
       method notify s e = if e &lt;&gt; Raise then s#raise; super#notify s e
     end;;
-</span><span class="c005">class ['a] richer_window_observer :
+</div><div class="caml-output ok">class ['a] richer_window_observer :
   object
     constraint 'a = &lt; draw : unit; raise : unit; .. &gt;
     method notify : 'a -&gt; event -&gt; unit
   end
-</span></pre><p>
+</div></pre>
+
+
+</div><p>
+
 We can also create a different kind of observer:
-</p><pre><span class="c003">#<span class="c002"> class ['subject] trace_observer =
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> class ['subject] trace_observer =
     object
       inherit ['subject, event] observer
       method notify s e =
         Printf.printf
           "&lt;Window %d &lt;== %s&gt;\n" s#identity (string_of_event e)
     end;;
-<span class="c005">class ['a] trace_observer :
+</div><div class="caml-output ok">class ['a] trace_observer :
   object
     constraint 'a = &lt; identity : int; .. &gt;
     method notify : 'a -&gt; event -&gt; unit
   end
-</span></span></span></pre><p>
+</div></pre>
+
+
+</div><p>
+
 and attach several observers to the same object:
-</p><pre><span class="c003">#</span><span class="c002"> let window = new richer_window_subject;;
-<span class="c005">val window :
+
+
+</p><div class="caml-example toplevel">
+
+<pre><div class="caml-input"> let window = new richer_window_subject;;
+</div><div class="caml-output ok">val window :
   &lt; notify : 'a -&gt; event -&gt; unit; _.. &gt; richer_window_subject as 'a = &lt;obj&gt;
+</div></pre>
 
-</span><span class="c003">#</span> window#add_observer (new richer_window_observer);;
-<span class="c005">- : unit = ()
+<pre><div class="caml-input"> window#add_observer (new richer_window_observer);;
+</div><div class="caml-output ok">- : unit = ()
+</div></pre>
 
-</span><span class="c003">#</span> window#add_observer (new trace_observer);;
-<span class="c005">- : unit = ()
+<pre><div class="caml-input"> window#add_observer (new trace_observer);;
+</div><div class="caml-output ok">- : unit = ()
+</div></pre>
 
-</span><span class="c003">#</span> window#move 1; window#resize 2;;
-</span><span class="c005">&lt;Window 1 &lt;== Move&gt;
+<pre><div class="caml-input"> window#move 1; window#resize 2;;
+</div><div class="caml-output ok">&lt;Window 1 &lt;== Move&gt;
 &lt;Window 1 &lt;== Raise&gt;
 {Position = 1; Size = 1}
 {Position = 1; Size = 1}
@@ -752,10 +1050,13 @@ and attach several observers to the same object:
 {Position = 1; Size = 3}
 {Position = 1; Size = 3}
 - : unit = ()
-</span></pre>
+</div></pre>
+
+
+</div>
 <hr>
-<a href="lablexamples.html"><img src="previous_motif.gif" alt="Previous"></a>
-<a href="index.html"><img src="contents_motif.gif" alt="Up"></a>
-<a href="language.html"><img src="next_motif.gif" alt="Next"></a>
+<a href="polymorphism.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="index.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="language.html"><img src="next_motif.svg" alt="Next"></a>
 </body>
 </html>

@@ -1,0 +1,29 @@
+{0:b0 B0 software construction care}
+
+This package is unstable, do not depend on it.
+
+{1:b0_std B0 std}
+
+A few modules that should be in the stdlib. A few others that
+shouldn't but are useful for B0 based programs.
+
+{!modules: B0_std}
+
+{1:b00 B00}
+
+The core [b0] build library.
+
+{!modules: B00}
+
+{1:b0_care B0 care}
+
+Tools for software construction care.
+
+{!modules:
+B0_github
+B0_machine
+B0_odoc
+B0_trace
+B0_ui
+B0_vcs
+B0_web}

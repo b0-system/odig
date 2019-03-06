@@ -1,7 +1,5 @@
----
-title: ppx_pipebang
-parent: ../README.md
----
+ppx_pipebang
+============
 
 A ppx rewriter that inlines reverse application operators `|>` and `|!`.
 

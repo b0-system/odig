@@ -1,5 +1,5 @@
 #+TITLE: ppx\_ast
-#+PARENT: ../README.md
+#+PARENT: ../../README.md
 
 Ppx\_ast selects a specific version of the OCaml Abstract Syntax Tree
 from the [[https://github.com/let-def/migrate-parsetree][migrate-parsetree]] project that is not necessarily the same

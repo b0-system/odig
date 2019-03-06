@@ -1,10 +1,6 @@
-## v0.9.1
+## v0.11
 
-- Use cookies as well as command line options
-
-## v0.9.0
-
-No changelog available
+Depend on ppxlib instead of (now deprecated) ppx\_core
 
 ## 113.43.00
 

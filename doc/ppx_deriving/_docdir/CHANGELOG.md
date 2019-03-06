@@ -1,15 +1,22 @@
 Changelog
 =========
 
-4.1.5
+4.2.1
 -----
 
-4.1.5 is a maintenance release to include support for OCaml 4.05 and
-OCaml 4.06 in the ppx_deriving 4.1 branch, which does not contain the
-driverization work that has been causing issues for some users.
+  * Add support for OCaml 4.06.0
+    #154, #155, #156, #159
+    (Gabriel Scherer, Fabian, Leonid Rozenberg)
+  * Consider { with_path = false } when printing record fields
+    #157
+    (François Pottier)
 
-  * Add support for OCaml 4.05.0 and 4.06.0 (#154, #155, #156, #159).
-  * Consider { with_path = false } when printing record fields (#157).
+4.2
+---
+
+  * Add support for OCaml 4.05.0.
+  * Use the `ocaml-migrate-parsetree` library to support multiple
+    versions of OCaml.
   * Fix comparison order of fields in records (#136).
   * Silence an `unused rec flag` warning in generated code (#137).
   * Monomorphize comparison function for builtin types (#115)

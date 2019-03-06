@@ -1,7 +1,5 @@
----
-title: ppx_variants_conv
-parent: ../README.md
----
+ppx_variants_conv
+=================
 
 Generation of accessor and iteration functions for ocaml variant types.
 

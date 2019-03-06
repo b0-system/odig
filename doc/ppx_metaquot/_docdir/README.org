@@ -1,5 +1,5 @@
 #+TITLE: ppx_metaquot
-#+PARENT: ../README.md
+#+PARENT: ../../README.md
 
 Ppx\_metaquot is a ppx rewriter allowing you to write values
 representing the OCaml AST in the OCaml syntax.

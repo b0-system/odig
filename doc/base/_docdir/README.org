@@ -1,22 +1,27 @@
 * Base
 
-Base is a standard library for OCaml. It is not an extension but rather
-a wholesale replacement of the standard library distributed with the
+Base is a standard library for OCaml. It provides a standard set of
+general purpose modules that are well-tested, performant, and
+fully-portable across any environment that can run OCaml code. Unlike
+other standard library projects, Base is meant to be used as a
+wholesale replacement of the standard library distributed with the
 OCaml compiler. In particular it makes different choices and doesn't
 re-export features that are not fully portable such as I/O, which are
 left to other libraries.
 
-** Overview
+You also might want to browse the [[https://ocaml.janestreet.com/ocaml-core/latest/doc/base/index.html][API Documentation]].
 
-Base provides a standard set of general purpose modules. Everything
-exposed by Base is fully portable and should work in any environment
-that can run OCaml code: Unix, Windows, Javascript, embedded systems, etc.
+** Installation
 
-Base uses [[https://github.com/janestreet/jbuilder][jbuilder]] to build which
-requires nothing more than the compiler. In particular, you don't need
-=bash= or =make= to build Base.
+Install Base via [[https://opam.ocaml.org][OPAM]]:
 
-Outside of jbuilder, Base has no dependencies and is fast to build.
+#+begin_src
+$ opam install base
+#+end_src
+
+Base has no runtime dependencies and is fast to build. Its sole build
+dependency is [[https://github.com/janestreet/jbuilder][jbuilder]], which
+itself does not requires nothing more than the compiler.
 
 ** Using the OCaml standard library with Base
 
@@ -143,12 +148,12 @@ These rules are:
 - For some modules that are both in the OCaml stdlib and Base, such as
   =String=, we define a module =String0= for common functions that
   cannot be defined directly in =Base.String= to avoid creating a
-  circular dependency.  Expect for =String= itself, other modules
+  circular dependency.  Except for =String= itself, other modules
   are not allowed to use =Caml.String= and must use either =String= or
   =String0= instead.
 - Indentation is exactly the one of =ocp-indent=.
 - A few other coding style rules enforced by
-  [[https://github/janestreet/ppx_js_style][ppx_js_style]].
+  [[https://github.com/janestreet/ppx_js_style][ppx_js_style]].
 
 The Base specific coding rules are checked by =ppx_base_lint=, in the
 =lint= subfolder. The indentation rules are checked by a wrapper around
@@ -165,14 +170,10 @@ Following is the current plan for a stable version 1 of Base.
 
 There are still a few missing modules in Base:
 
-- =Buffer=
 - =Bytes= (and make Base -safe-string compliant)
 - =Format=
 - =Queue=
 - =Ref=
-- =Type_equal=
-- =Uchar=
-- =Unit=
 
 For =Format=, it might be better to simply import the
 [[http://erratique.ch/software/fmt][Fmt module]] that

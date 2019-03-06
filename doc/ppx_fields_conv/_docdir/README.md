@@ -1,7 +1,5 @@
----
-title: ppx_fields_conv
-parent: ../README.md
----
+ppx_fields_conv
+===============
 
 Generation of accessor and iteration functions for ocaml records.
 

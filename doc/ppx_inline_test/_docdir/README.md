@@ -1,7 +1,5 @@
----
-title: ppx_inline_test
-parent: ../README.md
----
+ppx_inline_test
+===============
 
 Syntax extension for writing in-line tests in ocaml code.
 
@@ -26,8 +24,6 @@ etc.).
 
 Tags
 ----
-Tests can be dropped based on their tags (see command line flags `-drop-tag`)
-
 One can tag tests with the following construct:
 
 ```ocaml
@@ -42,6 +38,25 @@ Available tags are:
 *   `js-only` for tests that should only run in Javascript
 *   `32-bits-only` for tests that should only run in 32 bits architectures
 *   `64-bits-only` for tests that should only run in 64 bits architectures
+*   `x-library-inlining-sensitive` for tests that might only pass when compiling
+    with cross library inlining switched on
+
+One can also tag entire test modules similarly:
+
+```ocaml
+let%test_module "name" [@tags "no-js"] = (module struct end)
+```
+
+The flags `-drop-tag` and `-require-tag` can be passed to the test
+runner to restrict which tests are run. We say the tags of a test are
+the union of the tags applied directly to that test using
+`[@tags ...]` and the tags of all enclosing modules. It is to this
+union that the predicates `-drop-tag` and `-require-tag` are applied.
+
+If it is clear, from a test-module's tags, that none of the tests
+within will possibly match the tag predicates imposed by the command
+line flags, then additionally the top-level of that module will not be
+run.
 
 Examples
 --------
@@ -99,7 +114,7 @@ Building and running the tests outside of jane street
 ----------------------------------------
 
 Code using this extension must be compiled and linked using the
-`ppx_inline_test.runtime-lib` library. The `ppx_inline_test` syntax
+`ppx_inline_test.runtime.lib` library. The `ppx_inline_test` syntax
 extension will reject any test if it wasn't passed a `-inline-test-lib
 libname` flag.
 

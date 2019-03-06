@@ -1,130 +1,122 @@
----
-title: ppx_optcomp - Optional compilation for OCaml
-parent: ../README.md
----
+ppx_optcomp - Optional compilation for OCaml
+============================================
 
 ppx\_optcomp stands for Optional Compilation. It is a tool used to
 handle optional compilations of pieces of code depending of the word
 size, the version of the compiler, ...
 
-ppx\_optcomp can be used a a standalone pre-processor, but is also
-integrated in the
-[ppx\_driver](https://github.com/janestreet/ppx_driver).
-
-The syntax is quite similar to cpp:
+The syntax is based on OCaml item extension nodes, with keywords similar to cpp.
 
 ```ocaml
-#if ocaml_version < (4, 02, 0)
+[%%if ocaml_version < (4, 02, 0)]
 let x = 1
-#else
+[%%else]
 let y = 2
-#endif
+[%%endif]
 ```
-
-Note that ppx\_optcomp does not support macros like cpp, we only use
-it for optional compilations.
 
 Syntax
 ------
 
-ppx\_optcomp runs after the OCaml lexer and before the OCaml
-parser. This means that parts of the file that are dropped by
-ppx\_optcomp needs to be lexically correct but not grammatically
-correct.
+ppx\_optcomp is implemented using ppx_driver and operates on ocaml AST.
+This means that whole file needs to be gramatically correct ocaml.
 
-ppx\_optcomp will interpret all lines that start with a `#`. `#` has
-to be the first character, if there are spaces before ppx\_optcomp
-will not try to interpret the line and will pass it as-is to the OCaml
-parser. The syntax is:
+The general syntax is:
 
 ```
-#identifier directive-argument
+[%%keyword expression]
 ```
 
-The argument is everything up to the end of the line. You can use `\`
-at the end of lines to span the argument over multiple line. Optcomp
-will also automatically fetch arguments past the end of line if a set 
-of parentheses is not properly closed.
+Most of the statements are only supported on the toplevel. See
+[grammar description](http://caml.inria.fr/pub/docs/manual-ocaml/extn.html#sec248)
+for detailed information where ```[%% ]``` directives may be placed.
 
-So for instance one can write:
-
+Note in particular that the item extensions cannot be placed inside an
+expression, and this would result in syntax error.
 ```ocaml
-#if ocaml_version < (  4
-                    , 02
-                    ,  0
-                    )
+(* SYNTAX ERROR: let x = [%%if defined(abc) ] 1 [%%else] 2 [%%endif] *)
 ```
 
-Note that since ppx\_optcomp runs after the lexer it won't interpret
-lines starting with `#` if they are inside another token. So for
-instance these won't work:
-
-* `#`-directive inside a string:
-
-    ```ocaml
-    let x = "
-    #if foo
-    "
-    ```
-
-* `#`-directive inside a comment:
-
-    ```ocaml
-    (*
-    #if foo
-    *)
-    ```
+Additional syntax is provided for optional type variant declaration, as in
+```ocaml
+type t =
+| FOO
+| BAR [@if ocaml_version < (4, 02, 0)]
+```
 
 Directives
 ----------
 
 ### Defining variables
 
-- `#let` _pattern_ `=` _expression_
-- `#define` _identifier_ _expression_
+- `[%%define` _identifier_ _expression_`]`
+- `[%%undef` _identifier_`]`
 
-We also allow: `#define` _identifier_. This will define _identifier_
-to `()`.
+We also allow: `[%%define` _identifier_`]`. This will define
+_identifier_ to `()`.  The undefined identifiers are not valid in
+subsequent expressions, but for expression `defined(`_identifier_`)`,
+which evaluates to false.
 
-You can also undefine a variable using `#undef` _identifier_.
+The scope of identifiers follows the same scoping rules as OCaml
+variables. For instance:
+
+```ocaml
+(* [x] is undefined *)
+[%%define x 0]
+(* [x] is bound to [0] *)
+module A = struct
+  (* [x] is bound to [0] *)
+  [%%define x 42]
+  (* [x] is bound to [42] *)
+end
+(* [x] is bound to [0] *)
+```
 
 ### Conditionals
 
 The following directives are available for conditional compilations:
 
-- `#if` _expression_
-- `#elif` _expression_
-- `#else`
-- `#endif`
+- `[%%if` _expression_`]`
+- `[%%elif` _expression_`]`
+- `[%%else]`
+- `[%%endif]`
+- `[@if` _expression_`]`
 
 In all cases _expression_ must be an expression that evaluates to a
 boolean value. Ppx\_optcomp will fail if it is not the case.
 
-For people used to cpp, we also allow these:
+Pseudo-function `defined(`_identifier_`)` may be then used in
+expressions to check whether a given identifier has been defined.
+Note that identifiers that were not defined or undefined beforehand
+are assumed to be a typo, and therefore are rejected, with a notable
+exception of
+```
+[%%ifndef FOO]
+[%%define FOO]
+```
+which is allowed even if `FOO` was not seen before.
 
-- `#ifdef` _identifier_
-- `#ifndef` _identifier_
-- `#elifdef` _identifier_
-- `#elifndef` _identifier_
+The last form may be used only in type-variant definitions and pattern
+matching, following constructors which are to be optional.  If you
+need a few constructors under the same condition, you need to copy the
+directive multiple times, sorry.
+```
+type t =
+| A of int
+| B of int * int [@if ocaml >= 4.04]
+...
 
-Which will test if a variable is defined. Note that ppx\_optcomp will
-only accept to test if a variable is defined if it has seen it before,
-in one of `#let`, `#define` or `#undef`. This allows ppx\_opcompt to
-check for typos.
-
-We do however allow this special case:
-
-```ocaml
-#ifndef VAR
-#define VAR
+match (v: t) with
+| A x -> something x
+| B (y,z) [@if ocaml >= 4.04] -> something' y z
 ```
 
 ### Warnings and errors
 
-`#warning` _expression_ will cause the pre-processor to print a
+`[%%warning _string_]` will cause the pre-processor to print a
 message on stderr.
 
-`#error` _expression_ will cause the pre-processor to fail with the
+`[%%error _string_]` will cause the pre-processor to fail with the
 following error message.
 
 Note that in both cases _expression_ can be an arbitrary expression.
@@ -133,22 +125,37 @@ Note that in both cases _expression_ can be an arbitrary expression.
 
 Ppx\_optcomp allows one to import another file using:
 
-`#import` _filename_
+`[%%import` _filename_`]`
 
 where _filename_ is a string constant. Filenames to import are
 resolved as follow:
 
 - if _filename_ is relative, i.e. doesn't start with `/`, it is
   considered as relative to the directory of the file being parsed
-- if _filename_ is absolute, i.e. starts with `/`, it is used as it
+- if _filename_ is absolute, i.e. starts with `/`, it is used as is
 
-To keep things simple ppx\_optcomp only allows for `#`-directives in
-imported files. The intended use is having this at the beginning of a
-file:
+Only optcomp directives are allowed in the imported files. The
+intended use is including some configuration variables at the
+beginning of a file:
 
 ```ocaml
-#import "config.mlh"
+[%%import "config.mlh"]
 ```
+
+If imported file's extension is `.h`, an alternate C-like syntax is
+expected in the file.  This is to allow importing both from C and
+OCaml single configuration file like:
+```
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#define FOO
+#undef BAR
+#define BAZ 3*3 + 3
+
+#endif
+```
+
 
 Expressions and patterns
 ------------------------
@@ -169,8 +176,5 @@ And it provides the following functions:
 - `min` and `max`
 - `fst` and `snd`
 - conversion functions: `to_int`, `to_string`, `to_char`, `to_bool`
-- `show`: pretty-print a value
-
-It also provides `defined` which is a special function to test if a
-variable is defined. But the same remark as for `#ifdef` applies to
-`defined`.
+- `defined`, `not_defined`: check whether a variable is defined
+- `show`: act as identity, but pretty-print a value to stderr

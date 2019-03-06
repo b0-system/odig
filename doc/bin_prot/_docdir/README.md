@@ -1,7 +1,5 @@
-`Bin_prot` - OCaml Type Converter for Binary Protocols
-======================================================
-
----------------------------------------------------------------------------
+Bin_prot - OCaml Type Converter for Binary Protocols
+====================================================
 
 What is `Bin_prot`?
 -------------------
@@ -57,7 +55,7 @@ Usage
 The API (`.mli`-files) in the `bin_prot` library directory (`lib`)
 is fully documented, and HTML-documentation can be built from it on
 installation.  The documentation for the latest release can also be found
-[online](http://mmottl.bitbucket.org/projects/bin_prot/api/).
+[online](https://ocaml.janestreet.com/ocaml-core/latest/doc/bin_prot/Bin_prot/index.html).
 
 Module `Common` defines some globally used types, functions, exceptions,
 and values.  `Nat0` implements natural numbers including zero.
@@ -360,17 +358,3 @@ The `Utils` module may also come in handy as described in earlier sections,
 e.g. if the value can be converted to and from an intermediate representation
 that does not impose constraints, or if some sort of iteration is supported
 by the data type.
-
----------------------------------------------------------------------------
-
-Contact Information and Contributing
-------------------------------------
-
-In the case of bugs, feature requests, contributions and similar, please
-contact the maintainers:
-
-  * Jane Street Capital, LLC <opensource@janestreet.com>
-
-Up-to-date information should be available at:
-* <https://github.com/janestreet/bin_prot>
-* <https://bitbucket.org/janestreet/bin_prot>

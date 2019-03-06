@@ -1,10 +1,10 @@
 #+TITLE: ppx-traverse
-#+PARENT: ../README.md
+#+PARENT: ../../README.md
 
 Ppx\_traverse is a [[https://github.com/janestreet/ppx_type_conv][ppx_type_conv]] plugin generating open recursion
 classes from type definition. Users can overwrite a specific method of
 the generated classes in order to specialize the recursion on specific
-nodes. Ppx\_traverse is in particular used to generatd the open
+nodes. Ppx\_traverse is in particular used to generate the open
 recursion classes to traverse the OCaml AST in [[https://github.com/janestreet/ppx_core][ppx_core]].
 
 For instance, this is the kind of code generated (the generated code
@@ -15,12 +15,12 @@ type expression =
   | Var   of string
   | Const of int
   | Add   of expression * expression
-  | If conditional * expression * expression
+  | If    of cond * expression * expression
 
 and cond =
   | Cond_var   of string
   | Cond_const of bool
-  | Cond_and   of cond * condit
+  | Cond_and   of cond * cond
 
 [@@deriving_inline traverse_map]
 class map = object(self)

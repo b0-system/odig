@@ -1,7 +1,7 @@
-# v0.9.1
+# git version
 
-- Don't use bash (#1)
+- Switched the AST to 4.05
 
-# v0.9.0
+## v0.10
 
-Initial release
+.

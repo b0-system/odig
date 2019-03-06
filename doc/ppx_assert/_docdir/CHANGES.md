@@ -1,3 +1,8 @@
+## v0.11
+
+Use ppxlib instead of (now deprecated) ppx\_core, ppx\_driver and
+ppx\_type\_conv.
+
 ## 113.43.00
 
 - use the new context-free API

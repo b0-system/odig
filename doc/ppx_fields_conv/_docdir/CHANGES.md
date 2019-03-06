@@ -1,3 +1,8 @@
+## v0.11
+
+- Depend on ppxlib instead of (now deprecated) ppx\_core, ppx\_driver,
+  ppx\_metaquot and ppx\_type\_conv.
+
 ## 113.33.00
 
 - Fix errors in `ppx_fields_conv` documentation

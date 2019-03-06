@@ -1,7 +1,5 @@
----
-title: ppx_here
-parent: ../README.md
----
+ppx_here
+========
 
 A ppx rewriter that defines an extension node whose value is its source position.
 

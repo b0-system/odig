@@ -1,7 +1,5 @@
----
-title: ppx_hash
-parent: ../README.md
----
+ppx_hash
+========
 
 A ppx writer that generates hash functions from type expressions and definitions.
 
@@ -10,7 +8,7 @@ Syntax
 
 Type definitions: `[@@deriving hash]`
 Expressions: `[%hash_fold: TYPE]` and `[%hash: TYPE]`
-Record fields: `[@no_hashing]`
+Record fields: `[@hash.ignore]`
 
 Basic usage
 -----------
@@ -19,7 +17,8 @@ Basic usage
     type t = {
       s : string;
       x : (int * bool) list;
-    } [@@deriving hash]
+    }
+    [@@deriving hash]
 ```
 
 This will generate a function `hash_fold_t : Hash.state -> t -> Hash.state`.
@@ -30,8 +29,8 @@ The generated function follows the structure of the type; allowing user override
 level. This is in contrast to ocaml's builtin polymorphic hashing `Hashtbl.hash` which
 ignores user overrides.
   
-Also generated is a direct hash-function `hash : t -> Hash.hash_value`, as a wrapper
-around the hash-fold function.. (named `hash_<T>` when <T> != "t")
+Also generated is a direct hash-function `hash : t ->
+Hash.hash_value`. This function will be named `hash_<T>` when <T> != "t".
 
 The direct hash function is the one suitable for `Hashable.Make`.
 
@@ -50,15 +49,23 @@ A direct hash function is accessed/created as `[%hash: TYPE]`.
 Special support for record fields
 ---------------------------------
 
-Record fields can be annotated with `[@no_hashing]` so that they are not incorporated into
-the computed hash value. In the case of mutable fields, there must be such an annotation.
+Record fields can be annotated with `[@hash.ignore]` so that they are not
+incorporated into the computed hash value. In the case of mutable fields, there
+must be such an annotation.
 
 ```ocaml
     type t = {
-      mutable s : string; [@no_hashing]
+      mutable s : string [@hash.ignore];
       x : (int * bool) list;
-    } [@@deriving hash]
+    }
+    [@@deriving hash]
 ```
+
+Special support for `ppx_compare`
+---------------
+
+The annotation `[@compare.ignore]` implies `[@no_hashing]`, in order to preserve
+the invariant that `compare x y = 0` implies `hash x = hash y`.
 
 Adapting code to `ppx_hash`
 ---------------------------
@@ -67,21 +74,21 @@ So long as all types in <TYPE-EXP> support hashing, the following common pattern
 
 ```ocaml
     module T = struct
-      type t = <TYPE-EXP> [@@deriving sexp, compare]
+      type t = <TYPE-EXP> [@@deriving compare, sexp]
       let hash = Hashtbl.hash
     end
     include T
-    include Hashable.Make(T)
+    include Hashable.Make (T)
 ```
 
 Can this be written as:
 
 ```ocaml
     module T = struct
-      type t = <TYPE-EXP> [@@deriving sexp, compare, hash]
+      type t = <TYPE-EXP> [@@deriving compare, hash, sexp]
     end
     include T
-    include Hashable.Make(T)
+    include Hashable.Make (T)
 ```
 
 More information

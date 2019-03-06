@@ -1,7 +1,5 @@
----
-title: ppx_sexp_message - Easy construction of s-expressions
-parent: ../README.md
----
+ppx_sexp_message - Easy construction of s-expressions
+=====================================================
 
 Overview
 --------
@@ -99,6 +97,15 @@ syntax `a sexp_option` for some `a`, then:
 
 - when the value is `None`, the tag and expression are omitted
 - when the value is  `Some x`, then the tag and `x` are displayed
+
+If the type annotation has the attribute `[@sexp.omit_nil]`, then when
+the expression is converted into an sexp, if that sexp is `()`, then
+both the tag and the expression are omitted.
+
+One can also use `[%message.omit_nil exprs]`, which is a variation of
+`[%message exprs]` which behaves as if all `option` types were
+`sexp_option` and all other expressions were annotated with
+`[@sexp.omit_nil]`.
 
 #### Special case of the empty string
 

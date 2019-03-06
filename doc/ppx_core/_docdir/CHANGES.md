@@ -1,3 +1,9 @@
+## v0.10
+
+- Added support for rewriting literals.
+
+## v0.9
+
 ## 113.43.00
 
 - We currently reject code which contains attribute on constructor inside

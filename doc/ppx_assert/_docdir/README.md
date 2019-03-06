@@ -1,7 +1,5 @@
----
-title: ppx\_assert
-parent: ../README.md
----
+ppx\_assert
+===========
 
 Assert-like extension nodes that raise useful errors on failure.
 
@@ -35,7 +33,7 @@ have one expected value, and one computed value.
 `[%test_result: typ]` expands to a function of type:
 
 ```ocaml
-?equal:(type -> type -> bool) -> ?here:Lexing.position list -> expect:type -> type -> unit
+?here:Lexing.position list -> ?message:string -> ?equal:(type -> type -> bool) -> expect:typ -> typ -> unit
 ```
 
 `[%test_pred: typ]` in expressions
@@ -44,7 +42,7 @@ have one expected value, and one computed value.
 This one is the least useful. `[%test_pred: typ]` expands to a function of type:
 
 ```ocaml
-?here:Lexing.position list -> (type -> bool) -> type -> unit
+?here:Lexing.position list -> ?message:string -> (type -> bool) -> type -> unit
 ```
 
 It simply applies the given predicate to the given value, and if the predicate returns `false`,

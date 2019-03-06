@@ -1,8 +1,4 @@
 
-
-- `OS.File.read` support for reading character devices and named
-  pipes. Thanks to Rizo Isrof for the patch.
-
 v0.2.0 2017-12-27 La Forclaz (VS)
 ---------------------------------
 

@@ -1,16 +1,19 @@
-## v0.9.2
+## v0.11
 
-- `per_file` --> `per_module` in jbuild files
+- Switched `Sexplib`'s sexp parser to use the `Parsexp` library.
+  See https://github.com/janestreet/parsexp
 
+- Remove the `location` field from the `parse_error` type.
 
-## v0.9.1 (27/03/2017)
+- Dropped dependency on Base.
 
-- Re-import the code split out from Sexplib into Base as
-  sexplib0. Remove the Base dependency
+## v0.10
 
-## v0.9.0
+- Added `val Sexp.is_unit : t -> bool`
 
-no changelog available at this time
+- Enabled `-safe-string`
+
+## v0.9
 
 ## 113.43.00
 

@@ -1,24 +1,3 @@
-===== 3.3.0 (2018-11-26) - Hong Kong =====
- * Features/Changes
- ** Toplevel: [--toplevel] is now taken account when compilig cmo and cma.
- ** Lib: make [Js.Unsafe.any] be [Js.Unsafe.top Js.t]
- ** Lib: Improve generation of dummy stubs (#700)
- ** Lib: Deprecate non namespaced module access
- ** Lib: Upgrade to Tyxml 4.3.0
- ** Misc: switch to dune
- ** Misc: remove camlp4 support
-
- * Bug fixes:
- ** Toplevel: Fix dynlink of precompiled javascript files.
- ** Lib: Fix encoding in Sys.set_channel_flusher (fix #686)
- ** Runtime: fix the type of dataTransfer##.types
- ** Runtime: add dummy implementation for caml_restore_raw_backtrace
-
-===== 3.2.1 (2018-07-26) - Bari =====
- * Bug fixes:
- ** Misc: Fix the dependencies of the Lwt logger
- ** Runtime: fix semantic of bigstring_destroy_stub
-
 ===== 3.2.0 (2018-06-10) - Bergen =====
  * Features/Changes:
  ** Runime: improve stacktraces.
@@ -32,9 +11,10 @@
  ** Runtime: int_of_string accepts leading '+'
  ** Runtime: fix polymorphic & hash compare on custom non-ocaml values.
  ** Runtime: fix string encoding when writing to channels.
- ** Runtime: improve mode js detection wrt filesystem.
+ ** Runtime: improve mode js detection wrt filesystem. 
 
 ===== 3.1.0 (2018-02-15) - Hong Kong =====
+
  * Features/Changes:
  ** Lib: add missing File.blob constructor (fix #630)
  ** Runtime: hash support for custom blocks
@@ -58,6 +38,7 @@
  ** Runtime: fix sys_chdir
  ** Runtime: fix fs support on windows
  ** Ppx: fix ppx_deriving_json for ocaml 4.05
+ 
 
 ===== 3.0.1 (2017-11-04) - London =====
  * Features/Changes:

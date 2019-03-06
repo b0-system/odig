@@ -1,7 +1,5 @@
----
-title: ppx_fail
-parent: ../README.md
----
+ppx_fail
+========
 
 Syntax extension that makes [failwiths] always include a position.
 

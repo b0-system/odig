@@ -1,7 +1,5 @@
----
-title: ppx_driver - driver for AST transformers
-parent: ../README.md
----
+ppx_driver - driver for AST transformers
+========================================
 
 A driver is an executable created from a set of OCaml AST transformers
 linked together with a command line frontend.
@@ -30,9 +28,8 @@ rewriters. Note the `ppx_driver.runner` at the end of the list, it
 will still work if you don't put but some specific features of
 ppx_driver won't be available.
 
-If you are not using jbuilder, you can:
-- use the the ocamlbuild plugin provided with Ppx\_driver
-- build a custom driver yourself using ocamlfind
+If you are not using jbuilder, you can build a custom driver yourself using
+ocamlfind.
 
 These methods are described in the following sections.
 
@@ -57,7 +54,7 @@ If using jbuilder, you can just use the following jbuild file:
    be taken into accound
 2. it instructs jbuilder to produce a special META file that is
    compatible with the various ways of using ppx rewriters, i.e. for
-   people not using jbuilder or the ocamlbuild plugin
+   people not using jbuilder.
 
 ## Building a custom driver using ocamlfind
 
@@ -91,7 +88,6 @@ ppx.exe [extra_args] [<files>]
   --as-pp                     Same as -as-pp
   -o <filename>               Output file (use '-' for stdout)
   -                           Read input from stdin
-  -no-optcomp                 Do not use optcomp (default if the input or output of -pp is a binary AST)
   -dump-ast                   Dump the marshaled ast to the output file instead of pretty-printing it
   --dump-ast                  Same as -dump-ast
   -dparsetree                 Print the parsetree (same as ocamlc -dparsetree)
@@ -129,68 +125,6 @@ OCaml compiler, or as the argument of the `-ppx` option by passing
 $ ocamlc -c -pp "ppx -as-pp" file.ml
 $ ocamlc -c -ppx "ppx -as-ppx" file.ml
 ```
-
-When used with `-pp`, the driver will also interpret `#`-directives
-using [ppx_optcomp](http://github.com/janestreet/ppx_optcomp).
-
-## Using ppx_driver with ocamlbuild
-
-Ppx\_driver provides an ocamlbuild plugin to help building custom
-drivers on demand.
-
-### Setup
-
-To use it you need to first tell ocamlbuild to use the plugin in
-`myocamlbuild.ml`. If you are using oasis, add this to your `_oasis`
-file:
-
-```
-AlphaFeatures:         ocamlbuild_more_args
-XOCamlbuildPluginTags: package(ppx_driver.ocamlbuild)
-```
-
-If you are calling ocamlbuild directly, you need to call it this way:
-
-```
-$ ocamlbuild -plugin-tag "package(ppx_driver.ocamlbuild)" ...
-```
-
-Once you have done that, you need to enable it in myocamlbuild.ml:
-
-```ocaml
-let () =
-  Ocamlbuild_plugin.dispatch (fun hook ->
-    Ppx_driver_ocamlbuild.dispatch hook;
-    <other dispatch functions>
-  )
-```
-
-### Usage
-
-The plugin provides a new parametric tag: `ppx-driver`. The tag tags
-as argument `+` separated list of rewriters (as findlib package names)
-followed by any command line arguments.
-
-For instance to use `ppx_sexp_conv` and `ppx_bin_prot` put this in
-your tags file:
-
-```
-<**/*>: predicate(custom_ppx)
-<src/*.{ml,mli}>: ppx-driver(ppx_sexp_conv+ppx_bin_prot)
-```
-
-The first line is to instruct ocamlfind not to automatically add
-implicit `-ppx` argument. Without this, you might still get individual
-`-ppx` for both `ppx_sexp_conv` and `ppx_bin_prot` in addition to the
-main driver that already contains them both, meaning your code would
-be transformed more than it should...
-
-### Future
-
-For the future, there is an ongoing work to make this even
-simpler. This requires some changes to ocamlbuild, see
-[this pull request](https://github.com/ocaml/ocamlbuild/pull/75) for
-details.
 
 ## ppx_driver rewriters as findlib libraries
 

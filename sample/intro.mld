@@ -1,6 +1,6 @@
 {0:sample OCaml 4.07.1 sample package documentation}
 
-Browse {{:#by-name}by name}, {{:#by-name}by tag},
+Browse {{:#by-name}by name}, {{:#by-tag}by tag},
 the {{:ocaml/Stdlib/index.html#modules}standard library}
 and the {{:ocaml-manual/index.html}OCaml manual}.
 

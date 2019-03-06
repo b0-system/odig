@@ -15,7 +15,7 @@ Homepage: https://erratique.ch/software/odig
 
 odig can be installed with `opam`:
 
-    opam install odoc ocaml-manual odig
+    opam install ocaml-manual odig
 
 If you don't use `opam` consult the [`opam`](opam) file for build
 instructions.
@@ -45,10 +45,7 @@ and its sub-modules is a good example to look at, it has a good mix of
 documentation cases.
 
 The different themes distributed with `odig` can be seen on the sample
-at the following addresses. Note that for technical reasons the OCaml
-manual under these addresses is always themed according to
-`odig.light` but that's not what happens if you use `odig` for
-yourself, it will the manual will render according to your theme.
+at the following addresses.
 
 * https://b0-system.github.io/odig/doc@odig.dark/
 * https://b0-system.github.io/odig/doc@odig.light/
@@ -58,3 +55,7 @@ yourself, it will the manual will render according to your theme.
 * https://b0-system.github.io/odig/doc@odig.solarized.light/
 * https://b0-system.github.io/odig/doc@odoc.default/
 
+Note that for technical reasons the OCaml manual under these addresses
+is always themed according to `odig.light`. This is not what happens
+if you use `odig` for yourself, the manual will render according to
+your theme's color scheme.

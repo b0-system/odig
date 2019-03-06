@@ -38,7 +38,7 @@ v}
 {1:distrib Package distribution documentation}
 
 If the package installed them [odig] provides instant access to the
-the readme, change log and license files of a package via: the
+the readme, change log and license files of a package via:
 
 {v
 odig readme odig    # Show the readme of odig
@@ -103,9 +103,13 @@ v}
 
 The default theme is used and restored whenever a documentation
 generation action occurs either through [odig doc] or [odig odoc]. It
-is defined in order: on the command line via the [--odoc-theme]
-option, in the [ODIG_ODOC_THEME] environment variable or in the
-[~/.config/odig/odoc-theme] file.
+is defined in order:
+
+{ol
+{- On the command line via the [--odoc-theme] option.}
+{- In the [ODIG_ODOC_THEME] environment variable.}
+{- In the [~/.config/odig/odoc-theme] file.}
+{- By [odoc.default]}}
 
 The theme can be set on the current documentation set via the [set]
 action:
@@ -133,31 +137,36 @@ available in:
 $(odig cache path)/html
 v}
 
-The following describes one possible workflow to publish the
-documentation for a set of packages.
+It does however have a few absolute symlinks that point outside the
+hierarchy so if you want to archive or copy the documentation set over
+to another machine make sure you follow the symlinks.
 
-Write an [intro.mld] file that briefly documents the purpose of the
-documentation set, it will be used as a preamble on the package list
-page. Continue with:
+One possible workflow to publish the documentation for a list of
+packages [$PKGS] is the following. Write an [intro.mld] file that briefly
+documents the purpose of the documentation set, it will be used as a
+preamble on the package list page. Continue with:
 
 {v
+export PKGS=...
 opam switch create .
-opam install odig PKG...
-odig odoc-theme set --default $MYTHEME
-odig odoc -v --index-title='My docset' --index-intro=intro.mld \
-  --no-pkg-deps PKG...
+opam install odig $PKGS
+odig odoc -v --odoc-theme=$MYTHEME \
+             --index-title='My docset' --index-intro=intro.mld \
+             --no-pkg-deps $PKGS
 ln -s $(odig cache path)/html /var/www/doc
 v}
 
 The odig package also installs the [gh-pages-amend] tool that helps
-with publishing a documentation set on GitHub for the current git
-repository:
+with publishing a documentation set on GitHub for the git
+repository in your current working directory.
 
 {v
 gh-pages-amend $(odig cache path)/html doc
 v}
 
-by default this fetches the [gh-pages] on the [origin] remote, checks
-it out, replaces the directory [doc] by the contents of [$(odig cache
-path)/html] and pushes it back. See [gh-pages-amend --help] for more
-information.
+by default this fetches the [gh-pages] on the [origin] remote replaces
+the directory [doc] by the contents of [$(odig cache path)/html] by
+amending the last commit and pushes it back; the branch is created if
+it does not exist. Your current working directory is left untouched by
+the procedure. See [gh-pages-amend --help] for more information and
+options.

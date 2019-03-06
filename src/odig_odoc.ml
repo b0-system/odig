@@ -162,7 +162,7 @@ let cobj_deps_to_odoc_deps b deps k =
      object has been found we then return the odoc file for that
      file. Since we need to make sure that this odoc file actually
      gets built its package is added to the set of packages that need
-     to be built. *)
+     to be built; unless [b.pkg_deps] is false. *)
   let candidate_cobjs dep =
     let n = B0_odoc.Compile.Dep.name dep in
     let cobjs = match String.Map.find n b.cobjs_by_modname with

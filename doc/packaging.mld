@@ -14,8 +14,8 @@ information.
 
 All direct subdirectories [LIBDIR/P] define a package name [P] whose
 corresponding documentation directory is assumed to be [DOCDIR/P]. The
-{{!Odig_support.Pkg.path}path} of the [ocaml] package is determined by
-[ocamlc -where].
+library path of the [ocaml] package is determined by [ocamlc -where],
+not by [LIBDIR/ocaml] (for supporting opam system switches).
 
 {1:meta Metadata determination}
 
@@ -65,30 +65,31 @@ Any file in [DOCDIR/P/odoc-assets] is copied over in an [_assets]
 directory at the root of the package's generated API documentation.
 
 Any [.mld] file in [DOCDIR/P/odoc-pages] is compiled with [odoc] to a
-manual page. In particular the file [index.mld] is used to define –
-modulo the chrome added by odig – the content of the package's landing
-page. If [index.mld] has a level 0 heading is stripped.
+manual page. In particular the file [index.mld] is used to define —
+modulo the chrome added by odig — the content of the package's landing
+page. If [index.mld] has a level 0 heading it is stripped.
 
-If no [index.mld] is provided the package's API modules – those
-installed with [cmi] files and without [__] in their name – are
-listed.
+If no [index.mld] is provided the package's API modules — those
+installed with [cmi] files and without [__] in their name — are
+listed on the page.
 
 Finally if the [DOCDIR/ocaml-manual] package exists it is copied over
-to the docset, linked (and possibly {{!theme_install}themed}) from the
-package list page.
+to the documentation set, linked (and possibly
+{{!theme_install}themed}) from the package list page.
 
-{1:theme_install Theme install structure}
+{1:theme_install Odoc theme install structure}
 
 [odig] assumes themes are installed in a [share] directory called
-[SHAREDIR]. The value of this variable is automatically derived
-from the binary's installation path and can be overriden by an
-environment variable, see [odig conf --help] for more information.
+[SHAREDIR]. The value of this variable is automatically derived from
+the binary's installation path and can be overriden by an environment
+variable, see [odig conf --help] for more information.
 
-Each subdirectory [SHAREDIR/P/odoc-theme/T] defines a theme
-identified by [P.T]. This subdirectory is expected to at least
-hold an [odoc.css] file with the theme layout.
+Each subdirectory [SHAREDIR/P/odoc-theme/T] defines a theme identified
+by [P.T]. This subdirectory is expected to at least hold an [odoc.css]
+file with the theme layout for the odoc documentation set.
 
 The theme can also contain a [manual.css] file in which case it is
 used to style the local copy of the OCaml manual held in
-[DOCDIR/ocaml-manual] and linked from the docset package index page.
-(e.g. installed via [opam install ocaml-manual]).
+[DOCDIR/ocaml-manual] (e.g. as installed via [opam install
+ocaml-manual]) and linked from the documentation set package list
+page.

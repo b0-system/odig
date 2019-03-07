@@ -177,7 +177,8 @@ dt.spec > a.anchor { padding-right: 0.5ch; padding-left: 2ch; }
    other problems (e.g. need to indent back the last ] or }.
    A better markup strategy should be found here. */
 dt.spec.type { padding-left: 0; text-indent: 0 }
-dt.spec.type > a.anchor { padding-left: 0; padding-right: 0; }
+dt.spec.type > a.anchor
+{ padding-left: 1ch; padding-right: 1ch; /* values from a.anchor */ }
 
 /* ocamldoc tags we'd like a targeting class and more info here
    https://github.com/ocaml/odoc/issues/329 */

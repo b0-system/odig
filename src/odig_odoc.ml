@@ -73,13 +73,14 @@ type builder =
     index_title : string option;
     index_intro : Fpath.t option;
     pkg_deps : bool;
+    tag_index : bool;
     cobjs_by_modname : Doc_cobj.t list String.Map.t;
     mutable cobjs_by_digest : Doc_cobj.t list Digest.Map.t;
     mutable cobj_deps : (B0_odoc.Compile.Dep.t list Memo.Fut.t) Fpath.Map.t;
     mutable pkgs_todo : Pkg.Set.t;
     mutable pkgs_seen : Pkg.Set.t; }
 
-let builder m conf index_title index_intro pkg_deps pkgs_todo =
+let builder m conf ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
   let cachedir = Conf.cachedir conf in
   let odocdir = Fpath.(cachedir / "odoc") in
   let htmldir = Conf.htmldir conf in
@@ -91,7 +92,7 @@ let builder m conf index_title index_intro pkg_deps pkgs_todo =
   let cobj_deps = Fpath.Map.empty in
   let pkgs_todo = Pkg.Set.of_list pkgs_todo in
   let pkgs_seen = Pkg.Set.empty in
-  { m; conf; odocdir; htmldir; index_title; index_intro; pkg_deps;
+  { m; conf; odocdir; htmldir; index_title; index_intro; pkg_deps; tag_index;
     cobjs_by_modname; cobjs_by_digest; cobj_deps; pkgs_todo; pkgs_seen }
 
 let pkg_htmldir b pkg = Fpath.(b.htmldir / Pkg.name pkg)
@@ -262,7 +263,9 @@ let index_mld_for_pkg b pkg pkg_info pkg_odocs ~user_index_mld =
       Hash.to_bytes (Hashfun.string (String.concat "" data))
     in
     Memo.write b.m ~salt ~reads index_mld @@ fun () ->
-    Ok (Odig_odoc_page.index_mld b.conf pkg pkg_info ~user_index)
+    let with_tag_links = b.tag_index in
+    Ok (Odig_odoc_page.index_mld b.conf pkg pkg_info ~with_tag_links
+          ~user_index)
   in
   begin match user_index_mld with
   | None -> write_index_mld ~user_index:None
@@ -376,7 +379,7 @@ let write_pkgs_index b ~ocaml_manual_uri =
   index_intro_to_html b @@ fun raw_index_intro ->
   Memo.write b.m ~salt:index_salt ~reads index @@ fun () ->
   Ok (Odig_odoc_page.pkg_list b.conf ~index_title ~raw_index_intro
-        ~ocaml_manual_uri)
+        ~tag_index:b.tag_index ~ocaml_manual_uri)
 
 let rec build b = match Pkg.Set.choose b.pkgs_todo with
 | exception Not_found ->
@@ -399,10 +402,12 @@ let rec build b = match Pkg.Set.choose b.pkgs_todo with
 let pp_never ppf fs =
   Fmt.pf ppf "@[<v>Roots never became ready:@, %a" Fpath.Set.dump fs
 
-let gen conf ~force ~index_title ~index_intro ~pkg_deps pkgs_todo =
+let gen conf ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
   try
     Result.bind (Conf.memo conf) @@ fun memo ->
-    let b = builder memo conf index_title index_intro pkg_deps pkgs_todo in
+    let b =
+      builder memo conf ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo
+    in
     build b |> Log.if_error_pp pp_never ~use:();
     find_and_set_theme conf;
     Log.info (fun m -> m ~header:"STATS" "%a" B0_ui.Memo.pp_stats memo);

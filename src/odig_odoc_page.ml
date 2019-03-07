@@ -90,7 +90,7 @@ let pkg_index pkg pkg_info ~user_index =
       let mods = List.sort String.compare mods in
       Fmt.str "{!modules: %s}" (String.concat " " mods)
 
-let pkg_info_section pkg pkg_info =
+let pkg_info_section pkg pkg_info ~with_tag_links =
   let def_values field fname fval i  =match Pkg_info.get field i with
   | [] -> El.txt ""
   | vs ->
@@ -106,8 +106,9 @@ let pkg_info_section pkg pkg_info =
     let pkg_val pkg =
       El.[a ~a:Att.[href (Fmt.str "../%s/index.html" pkg)] El.[txt pkg]]
     in
-    let tag_val t =
-      El.[a ~a:Att.[href (Fmt.str "../index.html#tag-%s" t)] El.[txt t]]
+    let tag_val t = match with_tag_links with
+    | true -> El.[a ~a:Att.[href (Fmt.str "../index.html#tag-%s" t)] [txt t]]
+    | false -> El.[txt t]
     in
     [ def_values `Authors "authors" string_val pkg_info;
       def_values `Changes_files "changes-files" file_val pkg_info;
@@ -127,11 +128,11 @@ let pkg_info_section pkg pkg_info =
   El.to_string ~doc_type:false
     (El.table ~a:Att.[class' "package"; class' "info"] (defs pkg pkg_info))
 
-let index_mld conf pkg pkg_info ~user_index =
+let index_mld conf pkg pkg_info ~user_index ~with_tag_links =
   Fmt.str "%s\n%s\n%s"
     (pkg_title pkg pkg_info)
     (pkg_index pkg pkg_info ~user_index)
-    (pkg_info_section pkg pkg_info)
+    (pkg_info_section pkg pkg_info ~with_tag_links)
 
 (* Package list *)
 
@@ -235,7 +236,7 @@ let stdlib_link conf =
   | false -> old_style_stdlib
   | true -> new_style_stdlib ^ "#modules"
 
-let pkg_list conf ~index_title ~raw_index_intro ~ocaml_manual_uri =
+let pkg_list conf ~index_title ~raw_index_intro ~tag_index ~ocaml_manual_uri =
   (* XXX for now it's easier to do it this way. In the future we should
      rather use the ocamldoc language. Either by using
      https://github.com/ocaml/odoc/issues/94 or `--fragment`. So
@@ -257,22 +258,28 @@ let pkg_list conf ~index_title ~raw_index_intro ~ocaml_manual_uri =
     | Some h -> El.[raw h]
     | None ->
         let stdlib_link = stdlib_link conf in
+        let browse_by_tag = match tag_index with
+        | true -> El.(splice [a ~a:Att.[href "#by-tag"] [txt "by tag"]; comma])
+        | false -> El.splice []
+        in
+        let packages_by_tag_li = match tag_index with
+        | true -> El.li El.[a ~a:Att.[href "#by-tag"] [txt "Packages by tag"]]
+        | false -> El.splice []
+        in
         El.[
           h1 [txt "OCaml package documentation"];
           p [txt "Browse ";
              a ~a:Att.[href "#by-name"] [txt "by name"]; comma;
-             a ~a:Att.[href "#by-tag"] [txt "by tag"]; comma;
-             txt " the ";
-             a ~a:Att.[href stdlib_link] [txt "standard library"];
-             txt " and the "; manual_markup; txt "."];
+             browse_by_tag;
+             txt " the "; a ~a:Att.[href stdlib_link] [txt "standard library"];
+             txt " and the "; manual_markup; txt ".";];
           p [small [txt "Generated for ";
                     code [txt (Fpath.to_string (Conf.libdir conf))]]];
           nav ~a:Att.[class' "toc"] [
-            ul
-              [li [a ~a:Att.[href "#by-name"] [txt "Packages by name"]];
-               li [a ~a:Att.[href "#by-tag"] [txt "Packages by tag"]];
-               li [a ~a:Att.[href stdlib_link] [txt "OCaml standard library"]];
-               li [a ~a:Att.[href manual_href] [txt "OCaml manual"]]]]]
+            ul [li [a ~a:Att.[href "#by-name"] [txt "Packages by name"]];
+                packages_by_tag_li;
+                li [a ~a:Att.[href stdlib_link] [txt "OCaml standard library"]];
+                li [a ~a:Att.[href manual_href] [txt "OCaml manual"]]]]]
     in
     El.header El.[ nav [txt "\xF0\x9F\x90\xAB"]; splice contents ]
   in
@@ -290,7 +297,7 @@ let pkg_list conf ~index_title ~raw_index_intro ~ocaml_manual_uri =
                    class' "content"]
         [ doc_header;
           pkg_list conf pkgs;
-          tag_list conf pkgs]]
+          if tag_index then tag_list conf pkgs else El.splice []]]
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2018 The odig programmers

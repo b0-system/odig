@@ -141,10 +141,10 @@ It does however have a few absolute symlinks that point outside the
 hierarchy so if you want to archive or copy the documentation set over
 to another machine make sure you follow the symlinks.
 
-One possible workflow to publish the documentation for a list of
-packages [$PKGS] is the following. Write an [intro.mld] file that briefly
-documents the purpose of the documentation set, it will be used as a
-preamble on the package list page. Continue with:
+To publish the documentation for a list of packages [$PKGS] write an
+[intro.mld] file that briefly documents the purpose of the
+documentation set, it will be used as a preamble on the package list
+page. Continue with:
 
 {v
 export PKGS=...
@@ -153,20 +153,32 @@ opam install odig $PKGS
 odig odoc -v --odoc-theme=$MYTHEME \
              --index-title='My docset' --index-intro=intro.mld \
              --no-pkg-deps $PKGS
-ln -s $(odig cache path)/html /var/www/doc
 v}
 
-The odig package also installs the [gh-pages-amend] tool that helps
-with publishing a documentation set on GitHub for the git
-repository in your current working directory.
+If the tag index on the package list page is a bit overkill for your
+documentation set, use the [--no-tag-index] option to suppress it.
+
+Provided our webserver follows symlinks, you are now ready to publish
+your documentation set:
+
+{v
+ln -s $(odig cache path)/html /var/www/my-docset
+v}
+
+{2:publish_github Publishing on GitHub}
+
+To publish your documentation set on GitHub you can use the
+[gh-pages-amend] tool distributed with [odig]. In the git repository
+for which you want to publish the documentation set invoke:
 
 {v
 gh-pages-amend $(odig cache path)/html doc
 v}
 
-by default this fetches the [gh-pages] on the [origin] remote replaces
-the directory [doc] by the contents of [$(odig cache path)/html] by
-amending the last commit and pushes it back; the branch is created if
-it does not exist. Your current working directory is left untouched by
-the procedure. See [gh-pages-amend --help] for more information and
-options.
+this fetches the [gh-pages] on the [origin] remote, replaces the
+directory [doc] with the contents of [$(odig cache path)/html] by
+amending the last commit and pushes it back on the remote. The
+[gh-pages] branch is created if it does not exist and your current
+working directory is left untouched by the procedure.
+
+See [gh-pages-amend --help] for more information and options.

@@ -52,11 +52,11 @@ let find_pkgs conf = function
         in
         Error (String.concat "\n" (List.fold_left add_error [] miss))
 
-let odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps pkgs =
+let odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs =
   Log.app begin fun m ->
     m "Updating documentation, this may take some time..."
   end;
-  Odig_odoc.gen conf ~force ~index_title ~index_intro ~pkg_deps pkgs
+  Odig_odoc.gen conf ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs
 
 (* Commands *)
 
@@ -119,9 +119,10 @@ let doc_cmd background browser pkg_names update no_update show_files conf =
       | _ ->
           let pkgs = Conf.pkgs conf in
           let index_title = None and index_intro = None in
-          let force = false and pkg_deps = true in
+          let force = false and pkg_deps = true and tag_index = true in
           Result.bind
-            (odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps pkgs)
+            (odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps
+               ~tag_index pkgs)
             (fun () -> Ok [root_index])
       end
   | pkgs ->
@@ -139,9 +140,10 @@ let doc_cmd background browser pkg_names update no_update show_files conf =
             Fmt.(list Pkg.pp_name) pkgs
       | _ ->
           let index_title = None and index_intro = None in
-          let force = false and pkg_deps = true in
+          let force = false and pkg_deps = true and tag_index = true in
           Result.bind
-            (odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps pkgs)
+            (odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps
+               ~tag_index pkgs)
             (fun () -> Ok files)
   in
   Log.if_error ~use:err_some @@
@@ -165,12 +167,14 @@ let doc_cmd background browser pkg_names update no_update show_files conf =
         (Fmt.list Fpath.pp) fs
 
 let odoc_cmd
-    odoc pkg_names index_title index_intro force trace no_pkg_deps conf
+    odoc pkg_names index_title index_intro force trace no_pkg_deps no_tag_index
+    conf
   =
   let pkg_deps = not no_pkg_deps in
+  let tag_index = not no_tag_index in
   handle_name_error (find_pkgs conf pkg_names) @@ fun pkgs ->
   handle_some_error
-    (odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps pkgs)
+    (odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs)
   @@ fun () ->
   match trace with
   | None -> 0
@@ -546,8 +550,12 @@ let odoc_cmd =
     in
     Arg.(value & flag & info ["no-pkg-deps"] ~doc)
   in
+  let no_tag_index =
+    let doc = "Do not generate the tag index on the package list page." in
+    Arg.(value & flag & info ["no-tag-index"] ~doc)
+  in
   let cmd = Term.(const odoc_cmd $ odoc $ pkgs_pos $ index_title $ index_intro $
-                  force $ trace $ no_pkg_deps)
+                  force $ trace $ no_pkg_deps $ no_tag_index)
   in
   Term.(wrap_cmd $ cmd), Term.info "odoc" ~doc ~sdocs ~exits ~man ~man_xrefs
 

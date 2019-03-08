@@ -24,7 +24,7 @@ v0.0.4 2019-03-08 La Forclaz (VS)
   `rresult`, `asetmap`, `fpath`, `logs`, `mtime`, `bos`, `webbrowser` and
   `opam-format`.
 
-## Removals
+### Removals
 
 - The best-effort `ocamldoc` support and corresponding command are dropped.
 - The `metagen` and `linkable` experimental tools are gone.

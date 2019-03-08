@@ -167,7 +167,7 @@ let doc_cmd background browser pkg_names update no_update show_files conf =
         (Fmt.list Fpath.pp) fs
 
 let odoc_cmd
-    odoc pkg_names index_title index_intro force trace no_pkg_deps no_tag_index
+    _odoc pkg_names index_title index_intro force trace no_pkg_deps no_tag_index
     conf
   =
   let pkg_deps = not no_pkg_deps in
@@ -513,10 +513,10 @@ let odoc_cmd =
     `P "See the packaging conventions in $(mname) $(b,doc) $(mname) for
         generation details."; ]
   in
-  let odoc =
-    let doc = "The odoc command to use FIXME unused." in
+  let odoc = Term.const "odoc"
+(* let doc = "The odoc command to use." in
     let env = Arg.env_var "ODIG_ODOC" in
-    Arg.(value & opt string "odoc" & info ["odoc"] ~env ~docv:"CMD" ~doc)
+    Arg.(value & opt string "odoc" & info ["odoc"] ~env ~docv:"CMD" ~doc) *)
   in
   let trace =
     let doc = "Output build trace in Trace Event format to $(docv)." in
@@ -524,11 +524,9 @@ let odoc_cmd =
     let some_path = Arg.some B0_ui.Cli.Arg.path in
     Arg.(value & opt some_path None & info ["trace"] ~env ~docv:"FILE" ~doc)
   in
-  let force =
-    let doc = "Force generation even if files are up-to-date. FIXME not
-               implemented"
-    in
-    Arg.(value & flag & info ["f"; "force"] ~doc)
+  let force = Term.const false
+    (* let doc = "Force generation even if files are up-to-date." in
+    Arg.(value & flag & info ["f"; "force"] ~doc) *)
   in
   let index_title =
     let doc = "$(docv) is the title of the package list page." in

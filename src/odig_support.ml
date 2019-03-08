@@ -532,7 +532,7 @@ module Conf = struct
       sharedir : Fpath.t;
       htmldir : Fpath.t;
       odoc_theme : string;
-      memo : (Memo.t, string) result Lazy.t; (* TODO remove, or not *)
+      memo : (Memo.t, string) result Lazy.t;
       pkgs : Pkg.t list Lazy.t;
       pkg_infos : Pkg_info.t Pkg.Map.t Lazy.t; }
 

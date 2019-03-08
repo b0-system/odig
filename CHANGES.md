@@ -1,4 +1,5 @@
-
+v0.0.4 2019-03-08 La Forclaz (VS)
+---------------------------------
 
 - Support for odoc manuals (`.mld` files) and package page customization
   (`index.mld` file) (#31, #18). See the packaging conventions; if you are
@@ -15,7 +16,7 @@
 - Add `gh-pages-amend` a tool to easily push documentation sets on
   GitHub pages (see the odig manual and `--help` for details).
 - The `opam` metadata support needs an `opam` v2 binary in your `PATH`.
-- The odoc API documentation generation support needs an `odoc` v1.3.3
+- The odoc API documentation generation support needs an `odoc` v1.4.0
   binary in your `PATH`.
 - `odig doc` exit with non-zero on unknown package (#34).
 - `odig doc` add `-u` option to guarantee docset freshness (#4).

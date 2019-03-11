@@ -1,3 +1,9 @@
+
+
+
+- `gh-pages-amend` tool, add a `--cname-file` option to set
+  the `CNAME` file in gh-pages.
+
 v0.0.4 2019-03-08 La Forclaz (VS)
 ---------------------------------
 

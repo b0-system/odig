@@ -6,25 +6,33 @@
 
 open B0_std
 
-let publish ~amend ~msg ~remote ~branch preserve_symlinks src dst =
+let publish ~amend ~msg ~remote ~branch preserve_symlinks cname_file src dst =
   let follow_symlinks = not preserve_symlinks in
   let update = B0_github.Pages.update ~follow_symlinks ~src:(Some src) dst in
   let updates = [ update; B0_github.Pages.nojekyll ] in
+  let updates = match cname_file with
+  | None -> updates
+  | Some f -> B0_github.Pages.update ~src:(Some f) (Fpath.v "CNAME") :: updates
+  in
   Result.bind (B0_vcs.get ()) @@ fun repo ->
-  B0_github.Pages.commit_updates
-    repo ~amend ~force:true ~remote ~branch ~msg updates
+  let force = true in
+  B0_github.Pages.commit_updates repo ~amend ~force ~remote ~branch ~msg updates
 
 let pp_updated ppf = function
 | false -> Fmt.string ppf "No update to publish on"
 | true -> Fmt.string ppf "Published docs on"
 
-let publish_cmd () new_commit remote branch msg preserve_symlinks src dst =
+let publish_cmd
+    () new_commit remote branch msg preserve_symlinks cname_file src dst
+  =
   let msg = match msg with
   | Some m -> m
   | None -> Fmt.str "Update %a\n\nWith contents of %a" Fpath.pp dst Fpath.pp src
   in
   let amend = not new_commit in
-  let pub = publish ~amend ~msg ~remote ~branch preserve_symlinks src dst in
+  let pub =
+    publish ~amend ~msg ~remote ~branch preserve_symlinks cname_file src dst
+  in
   let ret = Result.bind pub @@ fun updated ->
     Log.app begin fun m ->
       m "[%a] %a %a"
@@ -74,6 +82,12 @@ let main () =
       in
       Arg.(required & pos 1 some_path None & info [] ~doc ~docv:"DST")
     in
+    let cname_file =
+      let doc = "If specified the contents of $(docv) is copied over to the \
+                 path $(i,CNAME) at the root of the branch."
+      in
+      Arg.(value & opt some_path None & info ["cname-file"] ~doc ~docv:"FILE")
+    in
     let doc = "Publish directories on GitHub pages" in
     let man = [
       `S Manpage.s_description;
@@ -87,7 +101,7 @@ let main () =
       `P "Report them, see $(i,%%PKG_HOMEPAGE%%) for contact information." ];
     in
     Term.(const publish_cmd $ B0_ui.Cli.B0_std.setup () $ new_commit $ remote $
-          branch $ msg $ preserve_symlinks $ src $ dst),
+          branch $ msg $ preserve_symlinks $ cname_file $ src $ dst),
     Term.info "gh-pages-amend" ~version:"%%VERSION%%" ~doc ~man
   in
   Term.exit_status @@ Term.eval cmd

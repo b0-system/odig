@@ -46,7 +46,7 @@ let publish_cmd
 
 let main () =
   let open Cmdliner in
-  let some_path = Arg.some B0_ui.Cli.Arg.path in
+  let some_path = Arg.some B0_ui.Cli.Arg.fpath in
   let cmd =
     let preserve_symlinks =
       let doc = "Do not follow symlinks in $(i,SRC), preserve them." in

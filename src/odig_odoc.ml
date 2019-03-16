@@ -8,7 +8,7 @@ open Odig_support
 open B0_std
 open B00
 
-let index_salt = "%%VERSION%%"
+let index_stamp = "%%VERSION%%"
 
 let link_if_exists src dst = match src with
 | None -> ()
@@ -104,14 +104,9 @@ let require_pkg b pkg =
    b.pkgs_todo <- Pkg.Set.add pkg b.pkgs_todo)
 
 let odoc_file_for_cobj b cobj =
-  let chop_libdir_prefix pkg cobj = (* assert [cobj] in libdir of [pkg] *)
-    let libdir = Pkg.path pkg in
-    let libdir = Fpath.(to_string @@ to_dir_path @@ libdir) in
-    let cobj = Fpath.to_string cobj in
-    Fpath.v (String.with_index_range ~first:(String.length libdir) cobj)
-  in
   let pkg = Doc_cobj.pkg cobj in
-  let cobj = chop_libdir_prefix pkg (Doc_cobj.path cobj) in
+  let cobj = Doc_cobj.path cobj in
+  let cobj = Option.get (Fpath.rem_prefix (Pkg.path pkg) cobj) in
   Fpath.(pkg_odocdir b pkg // cobj -+ ".odoc")
 
 let odoc_file_for_mld b pkg mld = (* assume mld names are flat *)
@@ -136,7 +131,7 @@ let require_cobj_deps b cobj = (* Also used to find the digest of cobj *)
       begin
         Memo.file_ready b.m (Doc_cobj.path cobj);
         (* FIXME should redirections in memo create dirs ? *)
-        Memo.mkdir b.m (Fpath.parent odoc_file) @@ fun () ->
+        Memo.mkdir b.m (Fpath.parent odoc_file) @@ fun _ ->
         B0_odoc.Compile.Dep.write b.m (Doc_cobj.path cobj) ~o:deps_file;
         B0_odoc.Compile.Dep.read b.m deps_file @@ fun deps ->
         let rec loop acc = function
@@ -252,17 +247,16 @@ let index_mld_for_pkg b pkg pkg_info pkg_odocs ~user_index_mld =
     | None -> reads
     | Some file -> Memo.file_ready b.m file; file :: reads
     in
-    let salt =
+    let stamp =
       (* Influences the index content *)
       let readmes = Docdir.readme_files (Pkg_info.docdir pkg_info) in
       let changes = Docdir.changes_files (Pkg_info.docdir pkg_info) in
       let licenses = Docdir.license_files (Pkg_info.docdir pkg_info) in
       let files = List.(rev_append readmes (rev_append changes licenses)) in
-      let data = index_salt :: List.rev_map Fpath.to_string files in
-      let module Hashfun = (val (Memo.hash_fun b.m)) in
-      Hash.to_bytes (Hashfun.string (String.concat "" data))
+      let data = index_stamp :: List.rev_map Fpath.to_string files in
+      Hash.to_bytes (Memo.hash_string b.m (String.concat "" data))
     in
-    Memo.write b.m ~salt ~reads index_mld @@ fun () ->
+    Memo.write b.m ~stamp ~reads index_mld @@ fun () ->
     let with_tag_links = b.tag_index in
     Ok (Odig_odoc_page.index_mld b.conf pkg pkg_info ~with_tag_links
           ~user_index)
@@ -377,7 +371,7 @@ let write_pkgs_index b ~ocaml_manual_uri =
   let reads = Pkg.Set.fold (fun p acc -> pkg_index p :: acc) b.pkgs_seen [] in
   let reads = match b.index_intro with None -> reads | Some f -> f :: reads in
   index_intro_to_html b @@ fun raw_index_intro ->
-  Memo.write b.m ~salt:index_salt ~reads index @@ fun () ->
+  Memo.write b.m ~stamp:index_stamp ~reads index @@ fun () ->
   Ok (Odig_odoc_page.pkg_list b.conf ~index_title ~raw_index_intro
         ~tag_index:b.tag_index ~ocaml_manual_uri)
 

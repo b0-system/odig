@@ -313,7 +313,7 @@ let b0_std_setup =
   B0_ui.Cli.B0_std.setup ~color_env ~verbosity_env ()
 
 let conf =
-  let path = B0_ui.Cli.Arg.path in
+  let path = B0_ui.Cli.Arg.fpath in
   let docs = Manpage.s_common_options in
   let docv = "PATH" in
   let doc dirname dir =
@@ -418,8 +418,8 @@ let browse_cmd =
     let action = Arg.enum field in
     Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"FIELD")
   in
-  let cmd = Term.(const browse_cmd $ B0_ui.Browser.background $
-                  B0_ui.Browser.browser $ field $ pkgs_pos1_nonempty)
+  let cmd = Term.(const browse_cmd $ B0_ui.Browser.background () $
+                  B0_ui.Browser.browser () $ field $ pkgs_pos1_nonempty)
   in
   Term.(wrap_cmd $ cmd),
   Term.info "browse" ~doc ~sdocs ~exits ~man ~man_xrefs
@@ -495,8 +495,8 @@ let doc_cmd =
                trying to open them in a broken way." in
     Arg.(value & flag & info ["f"; "show-files"] ~doc)
     in
-  let cmd = Term.(const doc_cmd $ B0_ui.Browser.background $
-                  B0_ui.Browser.browser $ pkgs_pos $ update $ no_update $
+  let cmd = Term.(const doc_cmd $ B0_ui.Browser.background () $
+                  B0_ui.Browser.browser () $ pkgs_pos $ update $ no_update $
                   show_files)
   in
   Term.(wrap_cmd $ cmd), Term.info "doc" ~doc ~sdocs ~exits ~man ~man_xrefs
@@ -521,7 +521,7 @@ let odoc_cmd =
   let trace =
     let doc = "Output build trace in Trace Event format to $(docv)." in
     let env = Arg.env_var "ODIG_ODOC_TRACE" in
-    let some_path = Arg.some B0_ui.Cli.Arg.path in
+    let some_path = Arg.some B0_ui.Cli.Arg.fpath in
     Arg.(value & opt some_path None & info ["trace"] ~env ~docv:"FILE" ~doc)
   in
   let force = Term.const false
@@ -537,7 +537,7 @@ let odoc_cmd =
     let doc = "$(docv) is the .mld file to use to define the introduction
                text on the package list page."
     in
-    let some_path = Arg.some B0_ui.Cli.Arg.path in
+    let some_path = Arg.some B0_ui.Cli.Arg.fpath in
     Arg.(value & opt some_path None & info ["index-intro"] ~docv:"MLDFILE" ~doc)
   in
   let no_pkg_deps =

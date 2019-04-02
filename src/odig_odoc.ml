@@ -8,7 +8,7 @@ open Odig_support
 open B0_std
 open B00
 
-let index_stamp = "%%VERSION%%"
+let odig_version = "%%VERSION%%"
 
 let link_if_exists src dst = match src with
 | None -> ()
@@ -248,12 +248,10 @@ let index_mld_for_pkg b pkg pkg_info pkg_odocs ~user_index_mld =
     | Some file -> Memo.file_ready b.m file; file :: reads
     in
     let stamp =
-      (* Influences the index content *)
-      let readmes = Docdir.readme_files (Pkg_info.docdir pkg_info) in
-      let changes = Docdir.changes_files (Pkg_info.docdir pkg_info) in
-      let licenses = Docdir.license_files (Pkg_info.docdir pkg_info) in
-      let files = List.(rev_append readmes (rev_append changes licenses)) in
-      let data = index_stamp :: List.rev_map Fpath.to_string files in
+      (* Influences the index content; we could relativize file paths *)
+      let fields = List.rev_map snd Pkg_info.field_names in
+      let data = List.rev_map (fun f -> Pkg_info.get f pkg_info) fields in
+      let data = odig_version :: (Pkg.name pkg) :: List.concat data in
       Hash.to_bytes (Memo.hash_string b.m (String.concat "" data))
     in
     Memo.write b.m ~stamp ~reads index_mld @@ fun () ->
@@ -368,10 +366,21 @@ let write_pkgs_index b ~ocaml_manual_uri =
   let index = Fpath.(b.htmldir / "index.html") in
   let index_title = b.index_title in
   let pkg_index p = Fpath.(b.htmldir / Pkg.name p / "index.html") in
-  let reads = Pkg.Set.fold (fun p acc -> pkg_index p :: acc) b.pkgs_seen [] in
+  let add_page_data p acc =
+    (* FIXME. Coarse grained and wrong. First we could lookup tags and
+       synopses and use the stamp.  Second pkg_index seems rather to
+       be a sync matter if we keep the wait file operation rather use
+       that. Third it takes only pkgs_seen into account rather than
+       Odig_odoc_page.pkgs_with_htmldoc. The API should likely be changed
+       a bit to first get the info about which packages will be in the index.*)
+    match Opam.file p with
+    | None -> pkg_index p :: acc
+    | Some o -> o :: pkg_index p :: acc
+  in
+  let reads = Pkg.Set.fold add_page_data b.pkgs_seen [] in
   let reads = match b.index_intro with None -> reads | Some f -> f :: reads in
   index_intro_to_html b @@ fun raw_index_intro ->
-  Memo.write b.m ~stamp:index_stamp ~reads index @@ fun () ->
+  Memo.write b.m ~stamp:odig_version ~reads index @@ fun () ->
   Ok (Odig_odoc_page.pkg_list b.conf ~index_title ~raw_index_intro
         ~tag_index:b.tag_index ~ocaml_manual_uri)
 

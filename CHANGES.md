@@ -1,6 +1,7 @@
 
 
-
+- Package pages: fix cache invalidation. In particular opam metadata
+  changes did not invalidate.
 - `gh-pages-amend` tool, add a `--cname-file` option to set
   the `CNAME` file in gh-pages.
 

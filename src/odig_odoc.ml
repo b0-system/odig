@@ -65,6 +65,12 @@ let find_and_set_theme conf =
 
 (* Builder *)
 
+type resolver =
+  { mutable cobjs_by_digest : Doc_cobj.t list Digest.Map.t;
+    mutable cobj_deps : (B0_odoc.Compile.Dep.t list Memo.Fut.t) Fpath.Map.t;
+    mutable pkgs_todo : Pkg.Set.t;
+    mutable pkgs_seen : Pkg.Set.t; }
+
 type builder =
   { m : Memo.t;
     conf : Conf.t;
@@ -75,10 +81,7 @@ type builder =
     pkg_deps : bool;
     tag_index : bool;
     cobjs_by_modname : Doc_cobj.t list String.Map.t;
-    mutable cobjs_by_digest : Doc_cobj.t list Digest.Map.t;
-    mutable cobj_deps : (B0_odoc.Compile.Dep.t list Memo.Fut.t) Fpath.Map.t;
-    mutable pkgs_todo : Pkg.Set.t;
-    mutable pkgs_seen : Pkg.Set.t; }
+    r : resolver; }
 
 let builder m conf ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
   let cachedir = Conf.cachedir conf in
@@ -93,15 +96,15 @@ let builder m conf ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
   let pkgs_todo = Pkg.Set.of_list pkgs_todo in
   let pkgs_seen = Pkg.Set.empty in
   { m; conf; odocdir; htmldir; index_title; index_intro; pkg_deps; tag_index;
-    cobjs_by_modname; cobjs_by_digest; cobj_deps; pkgs_todo; pkgs_seen }
+    cobjs_by_modname; r = { cobjs_by_digest; cobj_deps; pkgs_todo; pkgs_seen } }
 
 let pkg_htmldir b pkg = Fpath.(b.htmldir / Pkg.name pkg)
 let pkg_odocdir b pkg = Fpath.(b.odocdir / Pkg.name pkg)
 
 let require_pkg b pkg =
-  if Pkg.Set.mem pkg b.pkgs_seen || Pkg.Set.mem pkg b.pkgs_todo then () else
+  if Pkg.Set.mem pkg b.r.pkgs_seen || Pkg.Set.mem pkg b.r.pkgs_todo then () else
   (Log.debug (fun m -> m "Package request %a" Pkg.pp pkg);
-   b.pkgs_todo <- Pkg.Set.add pkg b.pkgs_todo)
+   b.r.pkgs_todo <- Pkg.Set.add pkg b.r.pkgs_todo)
 
 let odoc_file_for_cobj b cobj =
   let pkg = Doc_cobj.pkg cobj in
@@ -115,25 +118,28 @@ let odoc_file_for_mld b pkg mld = (* assume mld names are flat *)
 
 let require_cobj_deps b cobj = (* Also used to find the digest of cobj *)
   let add_cobj_by_digest b cobj d =
-    let cobjs = try Digest.Map.find d b.cobjs_by_digest with Not_found -> [] in
-    b.cobjs_by_digest <- Digest.Map.add d (cobj :: cobjs) b.cobjs_by_digest
+    let cobjs = try Digest.Map.find d b.r.cobjs_by_digest with
+    | Not_found -> []
+    in
+    b.r.cobjs_by_digest <- Digest.Map.add d (cobj :: cobjs) b.r.cobjs_by_digest
   in
   let set_cobj_deps b cobj dep =
-    b.cobj_deps <- Fpath.Map.add (Doc_cobj.path cobj) dep b.cobj_deps
+    b.r.cobj_deps <- Fpath.Map.add (Doc_cobj.path cobj) dep b.r.cobj_deps
   in
-  match Fpath.Map.find (Doc_cobj.path cobj) b.cobj_deps with
+  match Fpath.Map.find (Doc_cobj.path cobj) b.r.cobj_deps with
   | deps -> deps
   | exception Not_found ->
-      let fut_deps, set_deps = Memo.Fut.create b.m in
+      let m = Memo.with_group b.m (Pkg.name (Doc_cobj.pkg cobj)) in
+      let fut_deps, set_deps = Memo.Fut.create m in
       let odoc_file = odoc_file_for_cobj b cobj in
       let deps_file = Fpath.(odoc_file + ".deps") in
       set_cobj_deps b cobj fut_deps;
       begin
-        Memo.file_ready b.m (Doc_cobj.path cobj);
+        Memo.file_ready m (Doc_cobj.path cobj);
         (* FIXME should redirections in memo create dirs ? *)
-        Memo.mkdir b.m (Fpath.parent odoc_file) @@ fun _ ->
-        B0_odoc.Compile.Dep.write b.m (Doc_cobj.path cobj) ~o:deps_file;
-        B0_odoc.Compile.Dep.read b.m deps_file @@ fun deps ->
+        Memo.mkdir m (Fpath.parent odoc_file) @@ fun _ ->
+        B0_odoc.Compile.Dep.write m (Doc_cobj.path cobj) ~o:deps_file;
+        B0_odoc.Compile.Dep.read m deps_file @@ fun deps ->
         let rec loop acc = function
         | [] -> Memo.Fut.set set_deps acc
         | d :: ds ->
@@ -179,7 +185,7 @@ let cobj_deps_to_odoc_deps b deps k =
     | (cobj, deps) :: cs ->
         Memo.Fut.wait deps begin fun _ ->
           let digest = B0_odoc.Compile.Dep.digest dep in
-          match Digest.Map.find digest b.cobjs_by_digest with
+          match Digest.Map.find digest b.r.cobjs_by_digest with
           | exception Not_found -> loop cs
           | cobj :: _ (* FIXME Log on debug. *) ->
               begin match b.pkg_deps with
@@ -188,7 +194,8 @@ let cobj_deps_to_odoc_deps b deps k =
                   k (odoc_file_for_cobj b cobj :: acc)
               | false ->
                   let pkg = Doc_cobj.pkg cobj in
-                  if Pkg.Set.mem pkg b.pkgs_todo || Pkg.Set.mem pkg b.pkgs_seen
+                  if Pkg.Set.mem pkg b.r.pkgs_todo ||
+                     Pkg.Set.mem pkg b.r.pkgs_seen
                   then k (odoc_file_for_cobj b cobj :: acc)
                   else loop cs
               end
@@ -314,6 +321,7 @@ let link_odoc_docdir b pkg pkg_info =
   link_if_exists src dst
 
 let pkg_to_html b pkg =
+  let b = { b with m = Memo.with_group b.m (Pkg.name pkg) } in
   let pkg_info = try Pkg.Map.find pkg (Conf.pkg_infos b.conf) with
   | Not_found -> assert false
   in
@@ -385,17 +393,17 @@ let write_pkgs_index b ~ocaml_manual_uri =
     | None -> pkg_index p :: acc
     | Some o -> o :: pkg_index p :: acc
   in
-  let reads = Pkg.Set.fold add_page_data b.pkgs_seen [] in
+  let reads = Pkg.Set.fold add_page_data b.r.pkgs_seen [] in
   let reads = match b.index_intro with None -> reads | Some f -> f :: reads in
   index_intro_to_html b @@ fun raw_index_intro ->
   Memo.write b.m ~stamp:odig_version ~reads index @@ fun () ->
   Ok (Odig_odoc_page.pkg_list b.conf ~index_title ~raw_index_intro
         ~tag_index:b.tag_index ~ocaml_manual_uri)
 
-let rec build b = match Pkg.Set.choose b.pkgs_todo with
+let rec build b = match Pkg.Set.choose b.r.pkgs_todo with
 | exception Not_found ->
     Memo.stir ~block:true b.m;
-    begin match Pkg.Set.is_empty b.pkgs_todo with
+    begin match Pkg.Set.is_empty b.r.pkgs_todo with
     | false -> build b
     | true ->
         write_support_files b;
@@ -404,10 +412,10 @@ let rec build b = match Pkg.Set.choose b.pkgs_todo with
         Memo.finish b.m
     end
 | pkg ->
-    b.pkgs_todo <- Pkg.Set.remove pkg b.pkgs_todo;
-    b.pkgs_seen <- Pkg.Set.add pkg b.pkgs_seen;
+    b.r.pkgs_todo <- Pkg.Set.remove pkg b.r.pkgs_todo;
+    b.r.pkgs_seen <- Pkg.Set.add pkg b.r.pkgs_seen;
     let gens = pkg_to_html b pkg in
-    if not gens then (b.pkgs_seen <- Pkg.Set.remove pkg b.pkgs_seen);
+    if not gens then (b.r.pkgs_seen <- Pkg.Set.remove pkg b.r.pkgs_seen);
     build b
 
 let pp_never ppf fs =

@@ -1,5 +1,6 @@
 
 
+- mld only packages: work around `odoc html-deps` bug (#50).
 - Package pages: fix cache invalidation. In particular opam metadata
   changes did not invalidate.
 - `gh-pages-amend` tool, add a `--cname-file` option to set

@@ -291,6 +291,14 @@ let html_deps_resolve b deps k =
 let odoc_to_html b ~odoc_deps odoc =
   let theme_uri = theme_dir in
   let writes = Fpath.(odoc -+ ".html.writes") in
+  let odoc_deps = match odoc_deps with
+  | [] ->
+      (* Hack to work around https://github.com/ocaml/odoc/issues/290.
+         If we have only mld's html-deps returns nothing. This
+         will at least include the package directory. *)
+      [odoc]
+  | deps -> deps
+  in
   B0_odoc.Html.Writes.write b.m ~odoc_deps odoc ~to_dir:b.htmldir ~o:writes;
   B0_odoc.Html.Writes.read b.m writes @@ fun writes ->
   B0_odoc.Html.cmd b.m ~theme_uri ~odoc_deps ~writes odoc ~to_dir:b.htmldir

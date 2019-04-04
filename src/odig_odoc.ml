@@ -136,8 +136,6 @@ let require_cobj_deps b cobj = (* Also used to find the digest of cobj *)
       set_cobj_deps b cobj fut_deps;
       begin
         Memo.file_ready m (Doc_cobj.path cobj);
-        (* FIXME should redirections in memo create dirs ? *)
-        Memo.mkdir m (Fpath.parent odoc_file) @@ fun _ ->
         B0_odoc.Compile.Dep.write m (Doc_cobj.path cobj) ~o:deps_file;
         B0_odoc.Compile.Dep.read m deps_file @@ fun deps ->
         let rec loop acc = function

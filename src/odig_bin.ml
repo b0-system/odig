@@ -82,7 +82,7 @@ let browse_cmd background browser field pkg_names conf =
 let conf_cmd conf = Fmt.pr "%a@." Conf.pp conf; 0
 
 let cache_cmd cmd conf = match cmd with
-| `Path -> Fmt.pr "%a@." Fpath.pp (Conf.cachedir conf); 0
+| `Path -> Fmt.pr "%a@." Fpath.pp_unquoted (Conf.cachedir conf); 0
 | `Clear ->
     let dir = Conf.cachedir conf in
     Log.app begin fun m ->
@@ -92,13 +92,13 @@ let cache_cmd cmd conf = match cmd with
     let del = Os.Path.delete ~recurse:true dir in
     Log.if_error ~use:err_some (Result.bind del @@ fun _ -> Ok 0)
 | `Trim ->
-    let memodir = Conf.memodir conf in
+    let file_cache_dir = Conf.file_cache_dir conf in
     Log.if_error ~use:err_some @@
-    Result.bind (Os.Dir.exists memodir) @@ function
+    Result.bind (Os.Dir.exists file_cache_dir) @@ function
     | false -> Ok 0
     | true ->
         let pct = 50 and max_byte_size = max_int in
-        Result.bind (B00.File_cache.create memodir) @@ fun c ->
+        Result.bind (B00.File_cache.create file_cache_dir) @@ fun c ->
         Result.bind (B00.File_cache.trim_size c ~max_byte_size ~pct) @@
         fun () -> Ok 0
 
@@ -155,7 +155,7 @@ let doc_cmd background browser pkg_names update no_update show_files conf =
       let rec loop exit = function
       | [] -> Ok exit
       | f :: fs ->
-          let file_uri p = Fmt.str "file://%a" Fpath.pp p in
+          let file_uri p = Fmt.str "file://%a" Fpath.pp_unquoted p in
           let u = file_uri f in
           match B0_ui.Browser.show ~background ~prefix:false browser u with
           | Error e -> Log.err (fun m -> m "%s" e); loop err_uri fs
@@ -182,7 +182,7 @@ let odoc_cmd
       Log.time (fun _ m -> m "Generating trace") @@ fun () ->
       let memo = Result.get_ok (Conf.memo conf) in
       let ops = B00.Memo.ops memo in
-      let t = B0_web.Jsong.to_string (B0_trace.Trace_event.of_ops ops) in
+      let t = B0_json.Jsong.to_string (B0_trace.Trace_event.of_ops ops) in
       handle_some_error (Os.File.write ~force:true ~make_path:true file t) @@
       fun () -> 0
 
@@ -224,7 +224,7 @@ let odoc_theme_cmd out_fmt action theme set_default conf =
     let theme = match theme with None -> Conf.odoc_theme conf | Some t -> t in
     match Odoc_theme.find theme ts with
     | Error e -> Log.err (fun m -> m "%s" e); err_name
-    | Ok t -> Fmt.pr "%a@." Fpath.pp (Odoc_theme.path t); 0
+    | Ok t -> Fmt.pr "%a@." Fpath.pp_unquoted (Odoc_theme.path t); 0
   in
   match action with
   | `List -> list_themes conf out_fmt

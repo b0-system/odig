@@ -512,9 +512,11 @@ module Conf = struct
       | Some t -> t
       | None -> Odoc_theme.get_user_preference () |> Result.to_failure
 
-  let memodir cachedir = Fpath.(cachedir / "memo")
-  let memo cachedir ~max_spawn =
-    let cachedir = memodir cachedir in
+  let file_cache_dir cache_dir = Fpath.(cache_dir / "memo")
+  let trash_dir cache_dir = Fpath.(cache_dir / "trash")
+  let memo cdir ~max_spawn =
+    let cache_dir = file_cache_dir cdir in
+    let trash_dir = trash_dir cdir in
     lazy begin
       let max_spawn = B0_ui.Memo.max_spawn ~jobs:max_spawn () in
       let feedback =
@@ -522,7 +524,7 @@ module Conf = struct
         let show_success = Log.Debug in
         B0_ui.Memo.log_feedback ~show_spawn_ui ~show_success Fmt.stderr
       in
-      Memo.memo ~max_spawn ~feedback ~cachedir ()
+      Memo.memo ~max_spawn ~feedback ~cache_dir ~trash_dir ()
     end
 
   type t =
@@ -572,7 +574,7 @@ module Conf = struct
     Fmt.pf ppf "@]"
 
   let memo c = Lazy.force c.memo
-  let memodir c = memodir c.cachedir
+  let file_cache_dir c = file_cache_dir c.cachedir
   let pkgs c = Lazy.force c.pkgs
   let pkg_infos c = Lazy.force c.pkg_infos
 end

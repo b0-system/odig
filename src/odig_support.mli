@@ -394,8 +394,8 @@ module Conf : sig
   val memo : t -> (Memo.t, string) result
   (** [memo conf] is a memoizer for configuration [conf]. *)
 
-  val memodir : t -> Fpath.t
-  (** [memodir c] is [c]'s memoizer cache directory. *)
+  val file_cache_dir : t -> Fpath.t
+  (** [file_cache_dir c] is [c]'s memoizer file cache directory. *)
 
   val pkgs : t -> Pkg.t list
   (** [pkgs conf] are the packages of configuration [conf]. *)

@@ -188,43 +188,43 @@ let odoc_cmd
 
 let odoc_theme_cmd out_fmt action theme set_default conf =
   let list_themes conf out_fmt =
-    match Odoc_theme.of_dir (Conf.sharedir conf) with
+    match B0_odoc.Theme.of_dir (Conf.sharedir conf) with
     | [] -> 0
     | ts ->
         let pp_theme = function
-        | `Short -> Odoc_theme.pp_name
-        | `Normal | `Long -> Odoc_theme.pp
+        | `Short -> B0_odoc.Theme.pp_name
+        | `Normal | `Long -> B0_odoc.Theme.pp
         in
         Fmt.pr "@[<v>%a@]@." (Fmt.list (pp_theme out_fmt)) ts; 0
   in
   let default conf =
-    let ts = Odoc_theme.of_dir (Conf.sharedir conf) in
+    let ts = B0_odoc.Theme.of_dir (Conf.sharedir conf) in
     let theme = Conf.odoc_theme conf in
     Fmt.pr "%s@." theme;
-    match Odoc_theme.find theme ts with
+    match B0_odoc.Theme.find theme ts with
     | Error e -> Log.warn (fun m -> m "%s" e); err_name
     | Ok _ -> 0
   in
   let set_theme conf theme set_default =
-    let ts = Odoc_theme.of_dir (Conf.sharedir conf) in
+    let ts = B0_odoc.Theme.of_dir (Conf.sharedir conf) in
     let theme = match theme with None -> Conf.odoc_theme conf | Some t -> t in
-    match Odoc_theme.find theme ts with
+    match B0_odoc.Theme.find theme ts with
     | Error e -> Log.err (fun m -> m "%s" e); err_name
     | Ok t ->
         handle_some_error (Odig_odoc.set_theme conf t) @@ fun () ->
         match set_default with
         | false -> 0
         | true ->
-            let name = Odoc_theme.name t in
-            handle_some_error (Odoc_theme.set_user_preference name) @@
+            let name = B0_odoc.Theme.name t in
+            handle_some_error (B0_odoc.Theme.set_user_preference name) @@
             fun () -> 0
   in
   let path conf theme =
-    let ts = Odoc_theme.of_dir (Conf.sharedir conf) in
+    let ts = B0_odoc.Theme.of_dir (Conf.sharedir conf) in
     let theme = match theme with None -> Conf.odoc_theme conf | Some t -> t in
-    match Odoc_theme.find theme ts with
+    match B0_odoc.Theme.find theme ts with
     | Error e -> Log.err (fun m -> m "%s" e); err_name
-    | Ok t -> Fmt.pr "%a@." Fpath.pp_unquoted (Odoc_theme.path t); 0
+    | Ok t -> Fmt.pr "%a@." Fpath.pp_unquoted (B0_odoc.Theme.path t); 0
   in
   match action with
   | `List -> list_themes conf out_fmt

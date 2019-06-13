@@ -276,59 +276,6 @@ module Pkg_info : sig
       {!Doc_cobj.of_pkg}, {!Opam.query} and {!Docdir.of_pkg}. *)
 end
 
-(** Odoc theme support. *)
-module Odoc_theme : sig
-
-  (** {1:names Themes names} *)
-
-  type name = string
-  (** The type for theme names. *)
-
-  val default : name
-  (** [default] is the default odoc theme (["odoc.default"]). *)
-
-  (** {2:user User preference} *)
-
-  val config_file : Fpath.t
-  (** [config_file] is the file relative to the user's
-      {!Os.Dir.config} directory for specifying the odoc theme. *)
-
-  val get_user_preference : unit -> (name, string) result
-  (** [get_user_preference ()] is the user prefered theme name or
-      {!default} if the user has no preference. *)
-
-  val set_user_preference : name -> (unit, string) result
-  (** [set_user_preference t] sets the user prefered theme to [t]. *)
-
-  (** {1:themes Themes} *)
-
-  type t
-  (** The type for themes. *)
-
-  val name : t -> name
-  (** [name t] is the theme name. *)
-
-  val path : t -> Fpath.t
-  (** [path t] is the path to the theme directory. *)
-
-  val pp_name : t Fmt.t
-  (** [pp_name] formats a theme's name. *)
-
-  val pp : t Fmt.t
-  (** [pp] formats a theme. *)
-
-  (** {1:queries Queries} *)
-
-  val of_dir : Fpath.t -> t list
-  (** [of_dir sharedir] are the themes found in [sharedir]. These are
-      formed by looking up in [sharedir] for directory paths of the
-      form [PKG/odoc-theme/ID/] in [sharedir] which yields a theme
-      named by [PKG.ID]. *)
-
-  val find : name -> t list -> (t, string) result
-  (** [find n themes] finds the theme named [n] in [themes]. *)
-end
-
 (** Odig configuration. *)
 module Conf : sig
 
@@ -339,8 +286,8 @@ module Conf : sig
 
   val v :
     ?cachedir:Fpath.t -> ?libdir:Fpath.t -> ?docdir:Fpath.t ->
-    ?sharedir:Fpath.t -> ?odoc_theme:Odoc_theme.name -> max_spawn:int option ->
-    unit -> (t, string) result
+    ?sharedir:Fpath.t -> ?odoc_theme:B0_odoc.Theme.name ->
+    max_spawn:int option -> unit -> (t, string) result
   (** [v ~cachedir ~libdir ~docdir ~sharedir ~odoc_theme ~max_spawn ()] is a
       configuration with given attributes. If unspecified they are
       discovered. *)

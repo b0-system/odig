@@ -22,7 +22,7 @@ let theme_dir = "_odoc-theme"
 
 let set_theme conf t = (* Not symlinking because of file: and FF. *)
   Log.time (fun _ m -> m "setting theme") @@ fun () ->
-  let src = Odoc_theme.path t in
+  let src = B0_odoc.Theme.path t in
   let dst = Fpath.(Conf.htmldir conf / theme_dir) in
   let replace src dst =
     let allow_hardlinks = true and make_path = true and recurse = true in
@@ -51,15 +51,15 @@ let set_theme conf t = (* Not symlinking because of file: and FF. *)
 
 let find_and_set_theme conf =
   let set t = set_theme conf t |> Log.if_error ~level:Log.Warning ~use:() in
-  let ts = Odoc_theme.of_dir (Conf.sharedir conf) in
+  let ts = B0_odoc.Theme.of_dir (Conf.sharedir conf) in
   let theme = Conf.odoc_theme conf in
-  match Odoc_theme.find theme ts with
+  match B0_odoc.Theme.find theme ts with
   | Ok t -> set t
   | Error e ->
       Log.warn begin fun m ->
-        m "@[<v>%s@,Using default theme %s@]" e Odoc_theme.default
+        m "@[<v>%s@,Using default theme %s@]" e B0_odoc.Theme.default
       end;
-      match Odoc_theme.find Odoc_theme.default ts with
+      match B0_odoc.Theme.find B0_odoc.Theme.default ts with
       | Error e -> Log.warn (fun m -> m "Can't find default theme %s" e)
       | Ok t -> set t
 

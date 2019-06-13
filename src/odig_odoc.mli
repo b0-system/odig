@@ -12,7 +12,7 @@
 
 open Odig_support
 
-val set_theme : Conf.t -> Odoc_theme.t -> (unit, string) result
+val set_theme : Conf.t -> B0_odoc.Theme.t -> (unit, string) result
 (** [set_theme t] sets theme [odoc_theme] in configuration [conf]. *)
 
 val gen :

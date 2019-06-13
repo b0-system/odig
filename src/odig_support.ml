@@ -420,66 +420,6 @@ module Pkg_info = struct
     loop [] (Opam.query pkgs)
 end
 
-module Odoc_theme = struct
-
-  (* Theme names *)
-
-  type name = string
-  let default = "odoc.default"
-
-  (* User preference *)
-
-  let config_file = Fpath.v "odig/odoc-theme"
-  let set_user_preference name =
-    try
-      let config = Os.Dir.config () |> Result.to_failure in
-      let config_file = Fpath.(config // config_file) in
-      Os.File.write ~force:true ~make_path:true config_file name
-    with Failure e -> Error e
-
-  let get_user_preference () =
-    try
-      let config = Os.Dir.config () |> Result.to_failure in
-      let file = Fpath.(config // config_file) in
-      match Os.File.exists file |> Result.to_failure with
-      | false -> Ok default
-      | true -> Ok (String.trim (Os.File.read file |> Result.to_failure))
-    with Failure e -> Error e
-
-  (* Theme *)
-
-  type t = name * Fpath.t
-  let name (n, _) = n
-  let path (_, p) = p
-  let pp ppf (n, p) = Fmt.pf ppf "@[<h>%s %a@]" n (Fmt.tty [`Faint] Fpath.pp) p
-  let pp_name ppf (n, _) = Fmt.string ppf n
-  let of_dir dir =
-    Log.time (fun _ m -> m "theme list of %a" Fpath.pp dir) @@ fun () ->
-    try
-      let add_themes _ pkg dir acc =
-        let tdir = Fpath.(dir / "odoc-theme") in
-        match Os.Dir.exists tdir |> Result.to_failure with
-        | false -> acc
-        | true ->
-            let name pkg name = Fmt.str "%s.%s" pkg name in
-            let add_theme _ sub dir acc = (name pkg sub, dir) :: acc in
-            Result.to_failure @@
-            Os.Dir.fold_dirs ~recurse:false add_theme tdir acc
-      in
-      let ts = Os.Dir.fold_dirs ~recurse:false add_themes dir [] in
-      let compare (n0, _) (n1, _) =
-        compare (String.Ascii.lowercase n0) (String.Ascii.lowercase n1)
-      in
-      List.sort compare (Result.to_failure ts)
-    with Failure e -> Log.err (fun m -> m "theme list: %s" e); []
-
-  let find n ts = match List.find (fun t -> name t = n) ts with
-  | t -> Ok t
-  | exception Not_found ->
-      let ss = String.suggest (List.rev_map name ts) n in
-      Fmt.error "%a" (Fmt.did_you_mean ~kind:"theme" Fmt.string) (n, ss)
-end
-
 module Conf = struct
   let in_prefix_path dir =
     let exec = Fpath.of_string Sys.executable_name |> Result.to_failure in
@@ -510,7 +450,7 @@ module Conf = struct
   | None ->
       match Os.Env.find ~empty_to_none:true odoc_theme_env with
       | Some t -> t
-      | None -> Odoc_theme.get_user_preference () |> Result.to_failure
+      | None -> B0_odoc.Theme.get_user_preference () |> Result.to_failure
 
   let file_cache_dir cache_dir = Fpath.(cache_dir / "memo")
   let trash_dir cache_dir = Fpath.(cache_dir / "trash")

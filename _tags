@@ -9,3 +9,4 @@ true : package(b0.std), package(b0.b00), package(b0.care)
 <test> : include
 <sample/_opam> : -traverse
 <_opam> : -traverse
+<_b0> : -traverse

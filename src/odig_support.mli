@@ -75,8 +75,8 @@ module Pkg : sig
   (** {1:query Queries} *)
 
   val of_dir : Fpath.t -> t list
-  (** [of_dir libdir] are the packages found in [libdir]. This is
-      simply all the directory names inside [libdir] and an [ocaml]
+  (** [of_dir lib_dir] are the packages found in [lib_dir]. This is
+      simply all the directory names inside [lib_dir] and an [ocaml]
       package which points to [ocamlc -where]. *)
 
   val by_names : ?init:t String.Map.t -> t list -> t String.Map.t
@@ -195,9 +195,9 @@ module Opam : sig
 end
 
 (** Lookup package documentation directory. *)
-module Docdir : sig
+module Doc_dir : sig
 
-  (** {1:docdir Package documentation directory} *)
+  (** {1:doc_dir Package documentation directory} *)
 
   type t
   (** The type for documentation directory information. *)
@@ -225,8 +225,8 @@ module Docdir : sig
 
   (** {1:query Queries} *)
 
-  val of_pkg : docdir:Fpath.t -> Pkg.t -> t
-  (** [query ~docdir pkg] queries the documentation directory [docdir]
+  val of_pkg : doc_dir:Fpath.t -> Pkg.t -> t
+  (** [query ~doc_dir pkg] queries the documentation directory [doc_dir]
       for documentation about [pkg]. *)
 end
 
@@ -244,8 +244,8 @@ module Pkg_info : sig
   val doc_cobjs : t -> Doc_cobj.t list
   (** [doc_cobjs i] are the documentation compilation objects of [i]. *)
 
-  val docdir : t -> Docdir.t
-  (** [docdir i] is the docdir information of [i]. *)
+  val doc_dir : t -> Doc_dir.t
+  (** [doc_dir i] is the doc dir information of [i]. *)
 
   val opam : t -> Opam.t
   (** [opam i] is the opam information of [i]. *)
@@ -271,9 +271,9 @@ module Pkg_info : sig
 
   (** {1:query Queries} *)
 
-  val query : docdir:Fpath.t -> Pkg.t list -> (Pkg.t * t) list
-  (** [query ~docdir pkgs] combines the result of
-      {!Doc_cobj.of_pkg}, {!Opam.query} and {!Docdir.of_pkg}. *)
+  val query : doc_dir:Fpath.t -> Pkg.t list -> (Pkg.t * t) list
+  (** [query ~doc_dir pkgs] combines the result of
+      {!Doc_cobj.of_pkg}, {!Opam.query} and {!Doc_dir.of_pkg}. *)
 end
 
 (** Odig configuration. *)
@@ -285,28 +285,28 @@ module Conf : sig
   (** The type for configuration. *)
 
   val v :
-    ?cachedir:Fpath.t -> ?libdir:Fpath.t -> ?docdir:Fpath.t ->
-    ?sharedir:Fpath.t -> ?odoc_theme:B0_odoc.Theme.name ->
+    ?cache_dir:Fpath.t -> ?lib_dir:Fpath.t -> ?doc_dir:Fpath.t ->
+    ?share_dir:Fpath.t -> ?odoc_theme:B0_odoc.Theme.name ->
     max_spawn:int option -> unit -> (t, string) result
-  (** [v ~cachedir ~libdir ~docdir ~sharedir ~odoc_theme ~max_spawn ()] is a
+  (** [v ~cache_dir ~lib_dir ~doc_dir ~share_dir ~odoc_theme ~max_spawn ()] is a
       configuration with given attributes. If unspecified they are
       discovered. *)
 
-  val cachedir : t -> Fpath.t
-  (** [cachedir c] is [c]'s cache directory. *)
+  val cache_dir : t -> Fpath.t
+  (** [cache_dir c] is [c]'s cache directory. *)
 
-  val libdir : t -> Fpath.t
-  (** [libdir c] is [c]'s library directory. *)
+  val lib_dir : t -> Fpath.t
+  (** [lib_dir c] is [c]'s library directory. *)
 
-  val docdir : t -> Fpath.t
-  (** [docdir c] is [c]'s documentation directory. *)
+  val doc_dir : t -> Fpath.t
+  (** [doc_dir c] is [c]'s documentation directory. *)
 
-  val sharedir : t -> Fpath.t
-  (** [sharedir c] is [c]'s share directory. *)
+  val share_dir : t -> Fpath.t
+  (** [share_dir c] is [c]'s share directory. *)
 
-  val htmldir : t -> Fpath.t
-  (** [htmldir c] is [c]'s HTML directory, where the API docs
-      are generated (derived from {!cachedir}). *)
+  val html_dir : t -> Fpath.t
+  (** [html_dir c] is [c]'s HTML directory, where the API docs
+      are generated (derived from {!cache_dir}). *)
 
   val odoc_theme : t -> string
   (** [odoc_theme c] is [c]'s odoc theme to use. *)
@@ -316,21 +316,21 @@ module Conf : sig
 
   (** {1:env Environment variables} *)
 
-  val cachedir_env : string
-  (** [cachedir_env] is the environment variable that can be used to
+  val cache_dir_env : string
+  (** [cache_dir_env] is the environment variable that can be used to
       define the odig cache directory. *)
 
-  val libdir_env : string
-  (** [libdir_env] is the environment variable that can be used to
-      define a libdir. *)
+  val lib_dir_env : string
+  (** [lib_dir_env] is the environment variable that can be used to
+      define a lib dir. *)
 
-  val docdir_env : string
-  (** [docdir_env] is the environment variable that can be used to
-      define a docdir. *)
+  val doc_dir_env : string
+  (** [doc_dir_env] is the environment variable that can be used to
+      define a doc dir. *)
 
-  val sharedir_env : string
-  (** [sharedir_env] is the environment variable that can be used to
-      define a sharedir. *)
+  val share_dir_env : string
+  (** [share_dir_env] is the environment variable that can be used to
+      define a share dir. *)
 
   val odoc_theme_env : string
   (** [odoc_theme_env] is the environment variable that can be used

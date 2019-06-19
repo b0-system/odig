@@ -82,9 +82,9 @@ let browse_cmd background browser field pkg_names conf =
 let conf_cmd conf = Fmt.pr "%a@." Conf.pp conf; 0
 
 let cache_cmd cmd conf = match cmd with
-| `Path -> Fmt.pr "%a@." Fpath.pp_unquoted (Conf.cachedir conf); 0
+| `Path -> Fmt.pr "%a@." Fpath.pp_unquoted (Conf.cache_dir conf); 0
 | `Clear ->
-    let dir = Conf.cachedir conf in
+    let dir = Conf.cache_dir conf in
     Log.app begin fun m ->
       m "Deleting %a, this may take some time..."
         (Fmt.tty [`Fg `Green] Fpath.pp) dir
@@ -112,7 +112,7 @@ let doc_cmd background browser pkg_names update no_update show_files conf =
   handle_name_error pkgs @@ fun pkgs ->
   let prepare_files = match pkgs with
   | [] ->
-      let root_index = Fpath.(Conf.htmldir conf / "index.html") in
+      let root_index = Fpath.(Conf.html_dir conf / "index.html") in
       begin match exists root_index with
       | true when not update || no_update -> Ok [root_index]
       | false when no_update -> Error "No doc found. Try with 'odig doc -u'."
@@ -127,7 +127,7 @@ let doc_cmd background browser pkg_names update no_update show_files conf =
       end
   | pkgs ->
       let index conf pkg =
-        Fpath.(Conf.htmldir conf / Pkg.name pkg / "index.html")
+        Fpath.(Conf.html_dir conf / Pkg.name pkg / "index.html")
       in
       let files = List.rev (List.rev_map (index conf) pkgs) in
       let does_not_exist = List.find_all (fun f -> not (exists f)) files in
@@ -188,7 +188,7 @@ let odoc_cmd
 
 let odoc_theme_cmd out_fmt action theme set_default conf =
   let list_themes conf out_fmt =
-    match B0_odoc.Theme.of_dir (Conf.sharedir conf) with
+    match B0_odoc.Theme.of_dir (Conf.share_dir conf) with
     | [] -> 0
     | ts ->
         let pp_theme = function
@@ -198,7 +198,7 @@ let odoc_theme_cmd out_fmt action theme set_default conf =
         Fmt.pr "@[<v>%a@]@." (Fmt.list (pp_theme out_fmt)) ts; 0
   in
   let default conf =
-    let ts = B0_odoc.Theme.of_dir (Conf.sharedir conf) in
+    let ts = B0_odoc.Theme.of_dir (Conf.share_dir conf) in
     let theme = Conf.odoc_theme conf in
     Fmt.pr "%s@." theme;
     match B0_odoc.Theme.find theme ts with
@@ -206,7 +206,7 @@ let odoc_theme_cmd out_fmt action theme set_default conf =
     | Ok _ -> 0
   in
   let set_theme conf theme set_default =
-    let ts = B0_odoc.Theme.of_dir (Conf.sharedir conf) in
+    let ts = B0_odoc.Theme.of_dir (Conf.share_dir conf) in
     let theme = match theme with None -> Conf.odoc_theme conf | Some t -> t in
     match B0_odoc.Theme.find theme ts with
     | Error e -> Log.err (fun m -> m "%s" e); err_name
@@ -220,7 +220,7 @@ let odoc_theme_cmd out_fmt action theme set_default conf =
             fun () -> 0
   in
   let path conf theme =
-    let ts = B0_odoc.Theme.of_dir (Conf.sharedir conf) in
+    let ts = B0_odoc.Theme.of_dir (Conf.share_dir conf) in
     let theme = match theme with None -> Conf.odoc_theme conf | Some t -> t in
     match B0_odoc.Theme.find theme ts with
     | Error e -> Log.err (fun m -> m "%s" e); err_name
@@ -249,7 +249,7 @@ let pkg_cmd no_pager out_fmt pkg_names conf =
       let pp_pkg ppf (pkg, i) =
         Fmt.pf ppf "@[<v>%a@,%a@]" Pkg.pp pkg Pkg_info.pp i
       in
-      let pkgs = Pkg_info.query ~docdir:(Conf.docdir conf) pkgs in
+      let pkgs = Pkg_info.query ~doc_dir:(Conf.doc_dir conf) pkgs in
       (fun ppf () -> (Fmt.list pp_pkg) ppf pkgs)
   in
   Fmt.pr "@[<v>%a@]@." pp_pkgs (); 0
@@ -270,7 +270,7 @@ let show_cmd no_pager out_fmt show_empty field pkg_names conf =
             let pp_val ppf v = Fmt.pf ppf "@[<h>%a %s@]" Pkg.pp_name p v in
             Fmt.pf ppf "%a@," Fmt.(list pp_val) vs)
   in
-  let infos = Pkg_info.query ~docdir:(Conf.docdir conf) pkgs in
+  let infos = Pkg_info.query ~doc_dir:(Conf.doc_dir conf) pkgs in
   let pp_field = pp_field field out_fmt show_empty in
   Fmt.pr "@[<v>%a@]@?" Fmt.(list ~sep:Fmt.nop pp_field) infos;
   0
@@ -278,9 +278,9 @@ let show_cmd no_pager out_fmt show_empty field pkg_names conf =
 let show_files_cmd no_pager pkg_names get_files conf =
   handle_name_error (find_pkgs conf pkg_names) @@ fun pkgs ->
   handle_pager no_pager @@ fun pager ->
-  let docdir = Conf.docdir conf in
-  let docdirs = List.map (fun p -> p, (Docdir.of_pkg ~docdir p)) pkgs in
-  let files = List.concat (List.map (fun (p, i) -> get_files i) docdirs) in
+  let doc_dir = Conf.doc_dir conf in
+  let doc_dirs = List.map (fun p -> p, (Doc_dir.of_pkg ~doc_dir p)) pkgs in
+  let files = List.concat (List.map (fun (p, i) -> get_files i) doc_dirs) in
   handle_error err_some (B0_ui.Pager.page_files pager files) @@ fun () -> 0
 
 (* Command line interface *)
@@ -321,25 +321,27 @@ let conf =
     "%s directory. If unspecified, $(b,\\$PREFIX)/%s with $(b,\\$PREFIX) \
      the parent directory of $(mname)'s install directory." dirname dir
   in
-  let cachedir =
+  let cache_dir =
     let doc = doc "Cache" "var/cache/odig" in
-    let env = Arg.env_var Conf.cachedir_env in
-    Arg.(value & opt (some path) None & info ["cachedir"] ~doc ~docs ~env ~docv)
+    let env = Arg.env_var Conf.cache_dir_env in
+    Arg.(value & opt (some path) None & info ["cache-dir"] ~doc ~docs ~env
+           ~docv)
   in
-  let libdir =
+  let lib_dir =
     let doc = doc "Library" "lib" in
-    let env = Arg.env_var Conf.libdir_env in
-    Arg.(value & opt (some path) None & info ["libdir"] ~doc ~docs ~env ~docv)
+    let env = Arg.env_var Conf.lib_dir_env in
+    Arg.(value & opt (some path) None & info ["lib-dir"] ~doc ~docs ~env ~docv)
   in
-  let docdir =
+  let doc_dir =
     let doc = doc "Documentation" "doc" in
-    let env = Arg.env_var Conf.docdir_env in
-    Arg.(value & opt (some path) None & info ["docdir"] ~doc ~docs ~env ~docv)
+    let env = Arg.env_var Conf.doc_dir_env in
+    Arg.(value & opt (some path) None & info ["doc-dir"] ~doc ~docs ~env ~docv)
   in
-  let sharedir =
+  let share_dir =
     let doc = doc "Share" "share" in
-    let env = Arg.env_var Conf.sharedir_env in
-    Arg.(value & opt (some path) None & info ["sharedir"] ~doc ~docs ~env ~docv)
+    let env = Arg.env_var Conf.share_dir_env in
+    Arg.(value & opt (some path) None & info ["share-dir"] ~doc ~docs ~env
+           ~docv)
   in
   let odoc_theme =
     let doc = "Theme to use for odoc documentation. If unspecified, the theme \
@@ -354,15 +356,15 @@ let conf =
     let env = Arg.env_var "ODIG_JOBS" in
     B0_ui.Memo.jobs ~docs ~env ()
   in
-  let conf cachedir libdir docdir sharedir odoc_theme max_spawn =
+  let conf cache_dir lib_dir doc_dir share_dir odoc_theme max_spawn =
     match
-      Conf.v ?libdir ?cachedir ?docdir ?sharedir ?odoc_theme ~max_spawn ()
+      Conf.v ?lib_dir ?cache_dir ?doc_dir ?share_dir ?odoc_theme ~max_spawn ()
     with
     | Ok v -> `Ok v
     | Error e -> `Error (false, e)
   in
   Term.(ret @@
-        (const conf $ cachedir $ libdir $ docdir $ sharedir $ odoc_theme $
+        (const conf $ cache_dir $ lib_dir $ doc_dir $ share_dir $ odoc_theme $
          max_spawn))
 
 let pkgs_pos1_nonempty, pkgs_pos, pkgs_pos1, pkgs_opt =
@@ -451,7 +453,7 @@ let cache_cmd =
   Term.info "cache" ~doc ~sdocs ~exits ~man ~man_xrefs
 
 let changes_cmd =
-  show_files_cmd ~cmd:"changes" ~kind:"change log" Docdir.changes_files
+  show_files_cmd ~cmd:"changes" ~kind:"change log" Doc_dir.changes_files
 
 let conf_cmd =
   let doc = "Show odig configuration" in
@@ -464,8 +466,8 @@ let conf_cmd =
         directory and the path to the odig cache.";
     `P "Each can be specified on the command line or via an environment
         variable. If none of this is done they are determined relative
-        to the binary's install directory. See the options $(b,--libdir),
-        $(b,--docdir), $(b,--sharedir) and $(b,--cachedir) for details."; ]
+        to the binary's install directory. See the options $(b,--lib-dir),
+        $(b,--doc-dir), $(b,--share-dir) and $(b,--cache-dir) for details."; ]
   in
   Term.(wrap_cmd $ const conf_cmd),
   Term.info "conf" ~doc ~sdocs ~exits ~man ~man_xrefs
@@ -502,7 +504,7 @@ let doc_cmd =
   Term.(wrap_cmd $ cmd), Term.info "doc" ~doc ~sdocs ~exits ~man ~man_xrefs
 
 let license_cmd =
-  show_files_cmd ~kind:"license" Docdir.license_files
+  show_files_cmd ~kind:"license" Doc_dir.license_files
 
 let odoc_cmd =
   let doc = "Generate odoc API documentation and manuals" in
@@ -623,8 +625,7 @@ let pkg_cmd =
   Term.(wrap_cmd $ cmd),
   Term.info "pkg" ~doc ~sdocs ~envs ~exits ~man ~man_xrefs
 
-let readme_cmd =
-  show_files_cmd ~kind:"readme" Docdir.readme_files
+let readme_cmd = show_files_cmd ~kind:"readme" Doc_dir.readme_files
 
 let show_cmd =
   let doc = "Show package metadata" in

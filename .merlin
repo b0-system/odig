@@ -3,4 +3,5 @@ PKG compiler-libs.common
 PKG cmdliner b0.std b0.b00 b0.care
 S src
 S test
+B _b0/**
 B _build/src/**

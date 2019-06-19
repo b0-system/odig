@@ -13,10 +13,10 @@ let anchor_a aid = El.a ~a:Att.[anchor_href aid; class' "anchor"] []
 let a_to_utf_8_txt ~href:h txt =
   El.a ~a:Att.[type' "text/plain; charset=UTF-8"; href h] [El.txt txt]
 
-let docdir_link ?txt f =
+let doc_dir_link ?txt f =
   let fname = Fpath.basename (Fpath.v f) in
   let txt = match txt with None -> fname | Some txt -> txt in
-  a_to_utf_8_txt ~href:(Fmt.str "_docdir/%s" fname) txt
+  a_to_utf_8_txt ~href:(Fmt.str "_doc-dir/%s" fname) txt
 
 (* Package index.mld file *)
 
@@ -29,7 +29,7 @@ let pkg_title pkg pkg_info =
       El.span ~a:Att.[class' "version"] El.[txt version]
     in
     let changes_link = get_first `Changes_files @@ fun c ->
-      docdir_link ~txt:"changes" c
+      doc_dir_link ~txt:"changes" c
     in
     let issues_link = get_first `Issues @@ fun issues ->
       El.a ~a:Att.[href issues] El.[txt "issues"]
@@ -102,7 +102,7 @@ let pkg_info_section pkg pkg_info ~with_tag_links =
   let defs pkg pkg_info =
     let string_val str = El.[txt str] in
     let uri_val uri = El.[a ~a:Att.[href uri] El.[txt uri]] in
-    let file_val f = [docdir_link f] in
+    let file_val f = [doc_dir_link f] in
     let pkg_val pkg =
       El.[a ~a:Att.[href (Fmt.str "../%s/index.html" pkg)] El.[txt pkg]]
     in
@@ -215,7 +215,7 @@ let pkgs_with_htmldoc conf =
     | exception Not_found -> acc
     | pkg -> pkg :: acc
   in
-  let pkgs = Os.Dir.fold_dirs ~recurse:false add_pkg (Conf.htmldir conf) [] in
+  let pkgs = Os.Dir.fold_dirs ~recurse:false add_pkg (Conf.html_dir conf) [] in
   let pkgs = pkgs |> Log.warn_if_error ~use:[] in
   List.sort Pkg.compare pkgs
 
@@ -228,7 +228,7 @@ let manual_reference conf ~ocaml_manual_uri =
   El.splice @@ El.[a ~a:Att.[href uri] [txt "OCaml manual"]; suff], uri
 
 let stdlib_link conf =
-  let htmldir = Conf.htmldir conf in
+  let htmldir = Conf.html_dir conf in
   let new_style_stdlib = "ocaml/Stdlib/index.html" in
   let old_style_stdlib = "ocaml/index.html#stdlib" in
   let stdlib = Fpath.(htmldir // v new_style_stdlib) in
@@ -274,7 +274,7 @@ let pkg_list conf ~index_title ~raw_index_intro ~tag_index ~ocaml_manual_uri =
              txt " the "; a ~a:Att.[href stdlib_link] [txt "standard library"];
              txt " and the "; manual_markup; txt ".";];
           p [small [txt "Generated for ";
-                    code [txt (Fpath.to_string (Conf.libdir conf))]]];
+                    code [txt (Fpath.to_string (Conf.lib_dir conf))]]];
           nav ~a:Att.[class' "toc"] [
             ul [li [a ~a:Att.[href "#by-name"] [txt "Packages by name"]];
                 packages_by_tag_li;
@@ -286,7 +286,7 @@ let pkg_list conf ~index_title ~raw_index_intro ~tag_index ~ocaml_manual_uri =
   let pkgs = pkgs_with_htmldoc conf in
   let style_href = "_odoc-theme/odoc.css" in
   let page_title = match index_title with
-  | None -> Fpath.(basename @@ parent (Conf.libdir conf))
+  | None -> Fpath.(basename @@ parent (Conf.lib_dir conf))
   | Some t -> t
   in
   El.to_string ~doc_type:true @@

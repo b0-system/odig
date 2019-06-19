@@ -5,9 +5,9 @@
 
 P=$(opam var prefix)
 
-export ODIG_CACHEDIR=/tmp/odig-cache
-export ODIG_LIBDIR=$P/lib
-export ODIG_DOCDIR=$P/doc
-export ODIG_SHAREDIR=$P/share
+export ODIG_CACHE_DIR=/tmp/odig-cache
+export ODIG_LIB_DIR=$P/lib
+export ODIG_DOC_DIR=$P/doc
+export ODIG_SHARE_DIR=$P/share
 export ODIG_ODOC_TRACE=/tmp/odig-cache/trace.json
 export ODIG_VERBOSITY=info

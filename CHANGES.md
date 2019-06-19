@@ -1,5 +1,9 @@
 
 
+- For consistency with other tools options `--{cache,doc,lib,share}dir` 
+  are renamed to `--{cache,doc,lib,share}--dir` and corresponding 
+  environment variable from `ODIG_{CACHE,DOC,LIB,SHARE}DIR` to
+  `ODIG_{CACHE,DOC,LIB,SHARE}_DIR`.
 - mld only packages: work around `odoc html-deps` bug (#50).
 - Package pages: fix cache invalidation. In particular opam metadata
   changes did not invalidate.

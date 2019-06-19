@@ -267,9 +267,9 @@ module Opam = struct
             | Not_found -> assert false
 end
 
-module Docdir = struct
+module Doc_dir = struct
 
-  (* Docdir info *)
+  (* Doc dir info *)
 
   type files =
     { changes_files : Fpath.t list;
@@ -283,10 +283,10 @@ module Docdir = struct
       odoc_assets_dir : Fpath.t option Lazy.t;
       odoc_assets : Fpath.t list Lazy.t; }
 
-  let docdir_files pkg_docdir =
-    let cs, ls, rs = match pkg_docdir with
+  let doc_dir_files pkg_doc_dir =
+    let cs, ls, rs = match pkg_doc_dir with
     | None -> [], [], []
-    | Some docdir ->
+    | Some doc_dir ->
         let add_file _ base file (cs, ls, rs as acc) =
           let base = String.uppercase_ascii base in
           let is_pre pre = String.is_prefix pre base in
@@ -296,7 +296,7 @@ module Docdir = struct
           if is_pre "README" then cs, ls, (file :: rs) else
           acc
         in
-        Os.Dir.fold_files ~recurse:false add_file docdir ([], [], [])
+        Os.Dir.fold_files ~recurse:false add_file doc_dir ([], [], [])
         |> Log.if_error ~use:([], [], [])
     in
     let changes_files = List.sort Fpath.compare cs in
@@ -304,10 +304,10 @@ module Docdir = struct
     let readme_files = List.sort Fpath.compare rs in
     { changes_files; license_files; readme_files }
 
-  let docdir_subdir_files pkg_docdir sub ~sat = match pkg_docdir with
+  let doc_dir_subdir_files pkg_doc_dir sub ~sat = match pkg_doc_dir with
   | None -> []
-  | Some pkg_docdir ->
-      let dir = Fpath.(pkg_docdir / sub) in
+  | Some pkg_doc_dir ->
+      let dir = Fpath.(pkg_doc_dir / sub) in
       match Os.Dir.exists dir with
       | Ok false | Error _  -> []
       | Ok true ->
@@ -319,27 +319,27 @@ module Docdir = struct
           Os.Dir.fold_files ~recurse:true add_file dir []
           |> Log.if_error ~use:[]
 
-  let docdir_odoc_pages pkg_docdir =
+  let doc_dir_odoc_pages pkg_doc_dir =
     let is_mld = Some (Fpath.has_ext ".mld") in
-    docdir_subdir_files pkg_docdir "odoc-pages" ~sat:is_mld
+    doc_dir_subdir_files pkg_doc_dir "odoc-pages" ~sat:is_mld
 
-  let docdir_odoc_assets pkg_docdir  =
-    docdir_subdir_files pkg_docdir "odoc-assets" ~sat:None
+  let doc_dir_odoc_assets pkg_doc_dir  =
+    doc_dir_subdir_files pkg_doc_dir "odoc-assets" ~sat:None
 
-  let docdir_odoc_assets_dir pkg_docdir = match pkg_docdir with
+  let doc_dir_odoc_assets_dir pkg_doc_dir = match pkg_doc_dir with
   | None -> None
-  | Some pkg_docdir ->
-      let dir = Fpath.(pkg_docdir / "odoc-assets") in
+  | Some pkg_doc_dir ->
+      let dir = Fpath.(pkg_doc_dir / "odoc-assets") in
       match Os.Dir.exists dir |> Log.if_error ~use:false with
       | false -> None
       | true -> Some dir
 
-  let v pkg_docdir =
-    let files = lazy (docdir_files pkg_docdir) in
-    let odoc_pages = lazy (docdir_odoc_pages pkg_docdir) in
-    let odoc_assets_dir = lazy (docdir_odoc_assets_dir pkg_docdir) in
-    let odoc_assets = lazy (docdir_odoc_assets pkg_docdir) in
-    { dir = pkg_docdir; files; odoc_pages; odoc_assets_dir; odoc_assets }
+  let v pkg_doc_dir =
+    let files = lazy (doc_dir_files pkg_doc_dir) in
+    let odoc_pages = lazy (doc_dir_odoc_pages pkg_doc_dir) in
+    let odoc_assets_dir = lazy (doc_dir_odoc_assets_dir pkg_doc_dir) in
+    let odoc_assets = lazy (doc_dir_odoc_assets pkg_doc_dir) in
+    { dir = pkg_doc_dir; files; odoc_pages; odoc_assets_dir; odoc_assets }
 
   let dir i = i.dir
   let changes_files i = (Lazy.force i.files).changes_files
@@ -348,10 +348,10 @@ module Docdir = struct
   let odoc_assets_dir i = Lazy.force i.odoc_assets_dir
   let odoc_assets i = Lazy.force i.odoc_assets
   let readme_files i = (Lazy.force i.files).readme_files
-  let of_pkg ~docdir pkg =
-    let docdir = Fpath.(docdir / Pkg.name pkg) in
-    match Os.Dir.exists docdir |> Log.if_error ~use:false with
-    | true -> v (Some docdir)
+  let of_pkg ~doc_dir pkg =
+    let doc_dir = Fpath.(doc_dir / Pkg.name pkg) in
+    match Os.Dir.exists doc_dir |> Log.if_error ~use:false with
+    | true -> v (Some doc_dir)
     | false -> v None
 end
 
@@ -359,11 +359,11 @@ module Pkg_info = struct
   type t =
     { doc_cobjs : Doc_cobj.t list Lazy.t;
       opam : Opam.t;
-      docdir : Docdir.t Lazy.t }
+      doc_dir : Doc_dir.t Lazy.t }
 
   let doc_cobjs i = Lazy.force i.doc_cobjs
   let opam i = i.opam
-  let docdir i = Lazy.force i.docdir
+  let doc_dir i = Lazy.force i.doc_dir
 
   type field =
   [ `Authors | `Changes_files | `Doc_cobjs | `Depends | `Homepage | `Issues
@@ -384,18 +384,18 @@ module Pkg_info = struct
     let paths ps = List.map Fpath.to_string ps in
     match field with
     | `Authors -> Opam.authors (opam i)
-    | `Changes_files -> paths @@ Docdir.changes_files (docdir i)
+    | `Changes_files -> paths @@ Doc_dir.changes_files (doc_dir i)
     | `Depends -> Opam.depends (opam i)
     | `Doc_cobjs -> paths @@ List.map Doc_cobj.path (doc_cobjs i)
     | `Homepage -> Opam.homepage (opam i)
     | `Issues -> Opam.bug_reports (opam i)
     | `License -> Opam.license (opam i)
-    | `License_files -> paths @@ Docdir.license_files (docdir i)
+    | `License_files -> paths @@ Doc_dir.license_files (doc_dir i)
     | `Maintainers -> Opam.maintainer (opam i)
-    | `Odoc_assets -> paths @@ Docdir.odoc_assets (docdir i)
-    | `Odoc_pages -> paths @@ Docdir.odoc_pages (docdir i)
+    | `Odoc_assets -> paths @@ Doc_dir.odoc_assets (doc_dir i)
+    | `Odoc_pages -> paths @@ Doc_dir.odoc_pages (doc_dir i)
     | `Online_doc -> Opam.doc (opam i)
-    | `Readme_files -> paths @@ Docdir.readme_files (docdir i)
+    | `Readme_files -> paths @@ Doc_dir.readme_files (doc_dir i)
     | `Repo -> Opam.dev_repo (opam i)
     | `Synopsis -> (match Opam.synopsis (opam i) with "" -> [] | s -> [s])
     | `Tags -> Opam.tags (opam i)
@@ -409,13 +409,13 @@ module Pkg_info = struct
 
   (* Queries *)
 
-  let query ~docdir pkgs =
+  let query ~doc_dir pkgs =
     let rec loop acc = function
     | [] -> List.rev acc
     | (p, opam) :: ps ->
         let doc_cobjs = lazy (Doc_cobj.of_pkg p) in
-        let docdir = lazy (Docdir.of_pkg ~docdir p) in
-        loop ((p, {doc_cobjs; opam; docdir}) :: acc) ps
+        let doc_dir = lazy (Doc_dir.of_pkg ~doc_dir p) in
+        loop ((p, {doc_cobjs; opam; doc_dir}) :: acc) ps
     in
     loop [] (Opam.query pkgs)
 end
@@ -432,17 +432,17 @@ module Conf = struct
       | Some l -> Fpath.of_string l |> Result.to_failure
       | None -> in_prefix_path default_dir
 
-  let cachedir_env = "ODIG_CACHEDIR"
-  let get_cachedir dir = get_dir Fpath.(v "var/cache/odig") cachedir_env dir
+  let cache_dir_env = "ODIG_CACHE_DIR"
+  let get_cache_dir dir = get_dir Fpath.(v "var/cache/odig") cache_dir_env dir
 
-  let libdir_env = "ODIG_LIBDIR"
-  let get_libdir dir = get_dir (Fpath.v "lib") libdir_env dir
+  let lib_dir_env = "ODIG_LIB_DIR"
+  let get_lib_dir dir = get_dir (Fpath.v "lib") lib_dir_env dir
 
-  let docdir_env = "ODIG_DOCDIR"
-  let get_docdir dir = get_dir (Fpath.v "doc") docdir_env dir
+  let doc_dir_env = "ODIG_DOC_DIR"
+  let get_doc_dir dir = get_dir (Fpath.v "doc") doc_dir_env dir
 
-  let sharedir_env = "ODIG_SHAREDIR"
-  let get_sharedir dir = get_dir (Fpath.v "share") sharedir_env dir
+  let share_dir_env = "ODIG_SHARE_DIR"
+  let get_share_dir dir = get_dir (Fpath.v "share") share_dir_env dir
 
   let odoc_theme_env = "ODIG_ODOC_THEME"
   let get_odoc_theme = function
@@ -468,53 +468,53 @@ module Conf = struct
     end
 
   type t =
-    { cachedir : Fpath.t;
-      libdir : Fpath.t;
-      docdir : Fpath.t;
-      sharedir : Fpath.t;
-      htmldir : Fpath.t;
+    { cache_dir : Fpath.t;
+      lib_dir : Fpath.t;
+      doc_dir : Fpath.t;
+      share_dir : Fpath.t;
+      html_dir : Fpath.t;
       odoc_theme : string;
       memo : (Memo.t, string) result Lazy.t;
       pkgs : Pkg.t list Lazy.t;
       pkg_infos : Pkg_info.t Pkg.Map.t Lazy.t; }
 
-  let v ?cachedir ?libdir ?docdir ?sharedir ?odoc_theme ~max_spawn () =
+  let v ?cache_dir ?lib_dir ?doc_dir ?share_dir ?odoc_theme ~max_spawn () =
     try
-      let cachedir = get_cachedir cachedir in
-      let libdir = get_libdir libdir in
-      let docdir = get_docdir docdir in
-      let sharedir = get_sharedir sharedir in
-      let htmldir = Fpath.(cachedir / "html") in
+      let cache_dir = get_cache_dir cache_dir in
+      let lib_dir = get_lib_dir lib_dir in
+      let doc_dir = get_doc_dir doc_dir in
+      let share_dir = get_share_dir share_dir in
+      let html_dir = Fpath.(cache_dir / "html") in
       let odoc_theme = get_odoc_theme odoc_theme in
-      let memo = memo cachedir ~max_spawn in
-      let pkgs = lazy (Pkg.of_dir libdir) in
+      let memo = memo cache_dir ~max_spawn in
+      let pkgs = lazy (Pkg.of_dir lib_dir) in
       let pkg_infos = Lazy.from_fun @@ fun () ->
         let add acc (p, i) = Pkg.Map.add p i acc in
-        let pkg_infos = Pkg_info.query docdir (Lazy.force pkgs) in
+        let pkg_infos = Pkg_info.query doc_dir (Lazy.force pkgs) in
         List.fold_left add Pkg.Map.empty pkg_infos
       in
-      Ok { cachedir; libdir; docdir; sharedir; htmldir; odoc_theme; memo; pkgs;
-           pkg_infos }
+      Ok { cache_dir; lib_dir; doc_dir; share_dir; html_dir; odoc_theme; memo;
+           pkgs; pkg_infos }
     with
     | Failure e -> Fmt.error "conf: %s" e
 
-  let cachedir c = c.cachedir
-  let libdir c = c.libdir
-  let docdir c = c.docdir
-  let sharedir c = c.sharedir
-  let htmldir c = c.htmldir
+  let cache_dir c = c.cache_dir
+  let lib_dir c = c.lib_dir
+  let doc_dir c = c.doc_dir
+  let share_dir c = c.share_dir
+  let html_dir c = c.html_dir
   let odoc_theme c = c.odoc_theme
   let pp ppf c =
     Fmt.pf ppf "@[<v>";
-    Fmt.field "cachedir" Fpath.pp ppf c.cachedir; Fmt.cut ppf ();
-    Fmt.field "docdir" Fpath.pp ppf c.docdir; Fmt.cut ppf ();
-    Fmt.field "libdir" Fpath.pp ppf c.libdir; Fmt.cut ppf ();
+    Fmt.field "cache-dir" Fpath.pp ppf c.cache_dir; Fmt.cut ppf ();
+    Fmt.field "doc-dir" Fpath.pp ppf c.doc_dir; Fmt.cut ppf ();
+    Fmt.field "lib-dir" Fpath.pp ppf c.lib_dir; Fmt.cut ppf ();
     Fmt.field "odoc-theme" Fmt.string ppf c.odoc_theme; Fmt.cut ppf ();
-    Fmt.field "sharedir" Fpath.pp ppf c.sharedir;
+    Fmt.field "share-dir" Fpath.pp ppf c.share_dir;
     Fmt.pf ppf "@]"
 
   let memo c = Lazy.force c.memo
-  let file_cache_dir c = file_cache_dir c.cachedir
+  let file_cache_dir c = file_cache_dir c.cache_dir
   let pkgs c = Lazy.force c.pkgs
   let pkg_infos c = Lazy.force c.pkg_infos
 end

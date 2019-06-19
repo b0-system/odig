@@ -23,14 +23,14 @@ let theme_dir = "_odoc-theme"
 let set_theme conf t = (* Not symlinking because of file: and FF. *)
   Log.time (fun _ m -> m "setting theme") @@ fun () ->
   let src = B0_odoc.Theme.path t in
-  let dst = Fpath.(Conf.htmldir conf / theme_dir) in
+  let dst = Fpath.(Conf.html_dir conf / theme_dir) in
   let replace src dst =
     let allow_hardlinks = true and make_path = true and recurse = true in
     Result.bind (Os.Path.delete ~recurse:true dst) @@ fun _ ->
     Os.Dir.copy ~allow_hardlinks ~make_path ~recurse ~src dst
   in
   Result.bind (replace src dst) @@ fun () ->
-  let manual_dir = Fpath.(Conf.htmldir conf / ocaml_manual_pkg) in
+  let manual_dir = Fpath.(Conf.html_dir conf / ocaml_manual_pkg) in
   match Os.Dir.exists manual_dir |> Log.if_error ~use:false with
   | false -> Ok ()
   | true ->
@@ -38,7 +38,7 @@ let set_theme conf t = (* Not symlinking because of file: and FF. *)
       let manual_css = Fpath.(manual_dir / "manual.css") in
       match Os.File.exists theme_man_css |> Log.if_error ~use:false with
       | false ->
-          let css = Fpath.(Conf.docdir conf / ocaml_manual_pkg / "manual.css")
+          let css = Fpath.(Conf.doc_dir conf / ocaml_manual_pkg / "manual.css")
           in
           Os.File.copy ~force:true ~make_path:true ~src:css manual_css
       | true ->
@@ -51,7 +51,7 @@ let set_theme conf t = (* Not symlinking because of file: and FF. *)
 
 let find_and_set_theme conf =
   let set t = set_theme conf t |> Log.if_error ~level:Log.Warning ~use:() in
-  let ts = B0_odoc.Theme.of_dir (Conf.sharedir conf) in
+  let ts = B0_odoc.Theme.of_dir (Conf.share_dir conf) in
   let theme = Conf.odoc_theme conf in
   match B0_odoc.Theme.find theme ts with
   | Ok t -> set t
@@ -74,8 +74,8 @@ type resolver =
 type builder =
   { m : Memo.t;
     conf : Conf.t;
-    odocdir : Fpath.t;
-    htmldir : Fpath.t;
+    odoc_dir : Fpath.t;
+    html_dir : Fpath.t;
     index_title : string option;
     index_intro : Fpath.t option;
     pkg_deps : bool;
@@ -84,9 +84,9 @@ type builder =
     r : resolver; }
 
 let builder m conf ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
-  let cachedir = Conf.cachedir conf in
-  let odocdir = Fpath.(cachedir / "odoc") in
-  let htmldir = Conf.htmldir conf in
+  let cache_dir = Conf.cache_dir conf in
+  let odoc_dir = Fpath.(cache_dir / "odoc") in
+  let html_dir = Conf.html_dir conf in
   let cobjs_by_modname =
     let add p i acc = Doc_cobj.by_modname ~init:acc (Pkg_info.doc_cobjs i) in
     Pkg.Map.fold add (Conf.pkg_infos conf) String.Map.empty
@@ -95,11 +95,11 @@ let builder m conf ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
   let cobj_deps = Fpath.Map.empty in
   let pkgs_todo = Pkg.Set.of_list pkgs_todo in
   let pkgs_seen = Pkg.Set.empty in
-  { m; conf; odocdir; htmldir; index_title; index_intro; pkg_deps; tag_index;
+  { m; conf; odoc_dir; html_dir; index_title; index_intro; pkg_deps; tag_index;
     cobjs_by_modname; r = { cobjs_by_digest; cobj_deps; pkgs_todo; pkgs_seen } }
 
-let pkg_htmldir b pkg = Fpath.(b.htmldir / Pkg.name pkg)
-let pkg_odocdir b pkg = Fpath.(b.odocdir / Pkg.name pkg)
+let pkg_html_dir b pkg = Fpath.(b.html_dir / Pkg.name pkg)
+let pkg_odoc_dir b pkg = Fpath.(b.odoc_dir / Pkg.name pkg)
 
 let require_pkg b pkg =
   if Pkg.Set.mem pkg b.r.pkgs_seen || Pkg.Set.mem pkg b.r.pkgs_todo then () else
@@ -110,11 +110,11 @@ let odoc_file_for_cobj b cobj =
   let pkg = Doc_cobj.pkg cobj in
   let cobj = Doc_cobj.path cobj in
   let cobj = Option.get (Fpath.rem_prefix (Pkg.path pkg) cobj) in
-  Fpath.(pkg_odocdir b pkg // cobj -+ ".odoc")
+  Fpath.(pkg_odoc_dir b pkg // cobj -+ ".odoc")
 
 let odoc_file_for_mld b pkg mld = (* assume mld names are flat *)
   let page = Fmt.str "page-%s" (Fpath.basename mld) in
-  Fpath.(pkg_odocdir b pkg / page -+ ".odoc")
+  Fpath.(pkg_odoc_dir b pkg / page -+ ".odoc")
 
 let require_cobj_deps b cobj = (* Also used to find the digest of cobj *)
   let add_cobj_by_digest b cobj d =
@@ -245,7 +245,7 @@ let mld_to_odoc b pkg pkg_odocs mld =
   odoc
 
 let index_mld_for_pkg b pkg pkg_info pkg_odocs ~user_index_mld =
-  let index_mld = Fpath.(pkg_odocdir b pkg / "index.mld") in
+  let index_mld = Fpath.(pkg_odoc_dir b pkg / "index.mld") in
   let write_index_mld ~user_index =
     let reads = Option.to_list user_index_mld in
     let reads = match Opam.file pkg with
@@ -304,18 +304,18 @@ let odoc_to_html b ~odoc_deps odoc =
       [odoc]
   | deps -> deps
   in
-  B0_odoc.Html.Writes.write b.m ~odoc_deps odoc ~to_dir:b.htmldir ~o:writes;
+  B0_odoc.Html.Writes.write b.m ~odoc_deps odoc ~to_dir:b.html_dir ~o:writes;
   B0_odoc.Html.Writes.read b.m writes @@ fun writes ->
-  B0_odoc.Html.cmd b.m ~theme_uri ~odoc_deps ~writes odoc ~to_dir:b.htmldir
+  B0_odoc.Html.cmd b.m ~theme_uri ~odoc_deps ~writes odoc ~to_dir:b.html_dir
 
 let link_odoc_assets b pkg pkg_info =
-  let src = Docdir.odoc_assets_dir (Pkg_info.docdir pkg_info) in
-  let dst = Fpath.(pkg_htmldir b pkg / "_assets") in
+  let src = Doc_dir.odoc_assets_dir (Pkg_info.doc_dir pkg_info) in
+  let dst = Fpath.(pkg_html_dir b pkg / "_assets") in
   link_if_exists src dst
 
-let link_odoc_docdir b pkg pkg_info =
-  let src = Docdir.dir (Pkg_info.docdir pkg_info) in
-  let dst = Fpath.(pkg_htmldir b pkg / "_docdir") in
+let link_odoc_doc_dir b pkg pkg_info =
+  let src = Doc_dir.dir (Pkg_info.doc_dir pkg_info) in
+  let dst = Fpath.(pkg_html_dir b pkg / "_doc-dir") in
   link_if_exists src dst
 
 let pkg_to_html b pkg =
@@ -324,27 +324,27 @@ let pkg_to_html b pkg =
   | Not_found -> assert false
   in
   let cobjs = Pkg_info.doc_cobjs pkg_info in
-  let mlds = Docdir.odoc_pages (Pkg_info.docdir pkg_info) in
+  let mlds = Doc_dir.odoc_pages (Pkg_info.doc_dir pkg_info) in
   match cobjs = [] && mlds = [] with
   | true -> false
   | false ->
       let odocs = List.map (cobj_to_odoc b) cobjs in
       let mld_odocs = mlds_to_odoc b pkg pkg_info odocs mlds in
       let odoc_files = List.rev_append odocs mld_odocs in
-      let pkg_odoc_dir = pkg_odocdir b pkg in
+      let pkg_odoc_dir = pkg_odoc_dir b pkg in
       let deps_file = Fpath.(pkg_odoc_dir / Pkg.name pkg + ".html.deps") in
       B0_odoc.Html.Dep.write b.m ~odoc_files pkg_odoc_dir ~o:deps_file;
       B0_odoc.Html.Dep.read b.m deps_file begin fun deps ->
         html_deps_resolve b deps @@ fun odoc_deps ->
         List.iter (odoc_to_html b ~odoc_deps) odoc_files;
         link_odoc_assets b pkg pkg_info;
-        link_odoc_docdir b pkg pkg_info;
+        link_odoc_doc_dir b pkg pkg_info;
       end;
       true
 
 let write_support_files b =
-  let to_dir = b.htmldir in
-  let o = Fpath.(b.odocdir / "support-files.writes") in
+  let to_dir = b.html_dir in
+  let o = Fpath.(b.odoc_dir / "support-files.writes") in
   let without_theme = true in
   B0_odoc.Support_files.Writes.write b.m ~without_theme ~to_dir ~o;
   B0_odoc.Support_files.Writes.read b.m o @@ fun writes ->
@@ -353,10 +353,10 @@ let write_support_files b =
 let write_ocaml_manual b =
   (* Not symlinking because of file: and FF *)
   (* FIXME this is out of b0 we should make a decision about copy files & co *)
-  let manual_pkg_dir = Fpath.(Conf.docdir b.conf / ocaml_manual_pkg) in
+  let manual_pkg_dir = Fpath.(Conf.doc_dir b.conf / ocaml_manual_pkg) in
   let manual_index = Fpath.(manual_pkg_dir / "index.html") in
   let src = manual_pkg_dir in
-  let dst = Fpath.(Conf.htmldir b.conf / ocaml_manual_pkg) in
+  let dst = Fpath.(Conf.html_dir b.conf / ocaml_manual_pkg) in
   match Os.File.exists manual_index |> Log.if_error ~use:false with
   | false -> Ok None
   | true ->
@@ -369,17 +369,17 @@ let index_intro_to_html b k = match b.index_intro with
 | None -> k None
 | Some mld ->
     let is_odoc _ _ f acc = if Fpath.has_ext ".odoc" f then f :: acc else acc in
-    let odoc_deps = Os.Dir.fold_files ~recurse:true is_odoc b.odocdir [] in
+    let odoc_deps = Os.Dir.fold_files ~recurse:true is_odoc b.odoc_dir [] in
     let odoc_deps = Memo.fail_error odoc_deps in
-    let o = Fpath.(b.odocdir / "index-header.html") in
+    let o = Fpath.(b.odoc_dir / "index-header.html") in
     Memo.file_ready b.m mld;
     B0_odoc.Html_fragment.cmd b.m ~odoc_deps mld ~o;
     Memo.read b.m o @@ fun index_header -> k (Some index_header)
 
 let write_pkgs_index b ~ocaml_manual_uri =
-  let index = Fpath.(b.htmldir / "index.html") in
+  let index = Fpath.(b.html_dir / "index.html") in
   let index_title = b.index_title in
-  let pkg_index p = Fpath.(b.htmldir / Pkg.name p / "index.html") in
+  let pkg_index p = Fpath.(b.html_dir / Pkg.name p / "index.html") in
   let add_page_data p acc =
     (* FIXME. Coarse grained and wrong. First we could lookup tags and
        synopses and use the stamp.  Second pkg_index seems rather to

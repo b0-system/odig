@@ -101,7 +101,7 @@ let main () =
       `S Manpage.s_bugs;
       `P "Report them, see $(i,%%PKG_HOMEPAGE%%) for contact information." ];
     in
-    Term.(const publish_cmd $ B0_ui.Cli.B0_std.setup () $ new_commit $ remote $
+    Term.(const publish_cmd $ B0_ui.B0_std.cli_setup () $ new_commit $ remote $
           branch $ msg $ preserve_symlinks $ cname_file $ src $ dst),
     Term.info "gh-pages-amend" ~version:"%%VERSION%%" ~doc ~man
   in

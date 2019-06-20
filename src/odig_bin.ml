@@ -295,22 +295,12 @@ let exits =
   Term.exit_info err_some ~doc:"indiscriminate error reported on stderr." ::
   Term.default_exits
 
-type out_fmt = [ `Normal | `Short | `Long ]
-let out_fmt =
-  let short =
-    let doc = "Short output. Line based output with only relevant data." in
-    Arg.info ["s"; "short"] ~doc
-  in
-  let long =
-    let doc = "Long output. Outputs as much information as possible." in
-    Arg.info ["l"; "long"] ~doc
-  in
-  Arg.(value & vflag `Normal [`Short, short; `Long, long])
+let out_fmt = B0_ui.Cli.out_fmt ()
 
 let b0_std_setup =
   let color_env = Arg.env_var "ODIG_COLOR" in
   let verbosity_env = Arg.env_var "ODIG_VERBOSITY" in
-  B0_ui.Cli.B0_std.setup ~color_env ~verbosity_env ()
+  B0_ui.B0_std.cli_setup ~color_env ~verbosity_env ()
 
 let conf =
   let path = B0_ui.Cli.Arg.fpath in

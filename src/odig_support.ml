@@ -403,7 +403,7 @@ module Pkg_info = struct
 
   let pp ppf i =
     let pp_value = Fmt.(hvbox @@ list ~sep:sp string) in
-    let pp_field ppf (n, f) = Fmt.field n pp_value ppf (get f i) in
+    let pp_field ppf (n, f) = Fmt.field n (get f) pp_value ppf i in
     let pp_field ppf spec = Fmt.pf ppf "| %a" pp_field spec in
     Fmt.pf ppf "@[<v>%a@]" (Fmt.list pp_field) field_names
 
@@ -504,14 +504,13 @@ module Conf = struct
   let share_dir c = c.share_dir
   let html_dir c = c.html_dir
   let odoc_theme c = c.odoc_theme
-  let pp ppf c =
-    Fmt.pf ppf "@[<v>";
-    Fmt.field "cache-dir" Fpath.pp ppf c.cache_dir; Fmt.cut ppf ();
-    Fmt.field "doc-dir" Fpath.pp ppf c.doc_dir; Fmt.cut ppf ();
-    Fmt.field "lib-dir" Fpath.pp ppf c.lib_dir; Fmt.cut ppf ();
-    Fmt.field "odoc-theme" Fmt.string ppf c.odoc_theme; Fmt.cut ppf ();
-    Fmt.field "share-dir" Fpath.pp ppf c.share_dir;
-    Fmt.pf ppf "@]"
+  let pp =
+    Fmt.record @@
+    [ Fmt.field "cache-dir" cache_dir Fpath.pp;
+      Fmt.field "doc-dir" doc_dir Fpath.pp;
+      Fmt.field "lib-dir" lib_dir Fpath.pp;
+      Fmt.field "odoc-theme" odoc_theme Fmt.string;
+      Fmt.field "share-dir" share_dir Fpath.pp; ]
 
   let memo c = Lazy.force c.memo
   let file_cache_dir c = file_cache_dir c.cache_dir

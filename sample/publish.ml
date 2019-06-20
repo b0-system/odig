@@ -98,7 +98,7 @@ let main () =
       Arg.(value & opt string default & info ["b"; "branch"] ~doc ~docv)
     in
     let doc = "Updates odig's sample output on GitHub pages" in
-    Term.(const publish $ B0_ui.Cli.B0_std.setup () $ new_commit $
+    Term.(const publish $ B0_ui.B0_std.cli_setup () $ new_commit $
           remote $ branch),
     Term.info "publish" ~version:"%%VERSION%%" ~doc
   in

@@ -6,9 +6,10 @@ and the {{:ocaml-manual/index.html}OCaml manual}.
 
 {%html:<p><small>Best-effort install sample.</small></p>
 <nav class="toc"><ul>
-<li><a href="#by-name">Packages by name</a>
-</li><li><a href="#by-tag">Packages by tag</a>
-</li><li><a href="ocaml/Stdlib/index.html#modules">OCaml standard library</a>
-</li><li><a href="ocaml-manual/index.html">OCaml manual</a></li></ul>
+<li><a href="ocaml/Stdlib/index.html#modules">OCaml standard library</a></li>
+<li><a href="ocaml-manual/index.html">OCaml manual</a></li>
+<li><a href="#by-name">Packages by name</a></li>
+<li><a href="#by-tag">Packages by tag</a></li>
+</ul>
 </nav>
 %}

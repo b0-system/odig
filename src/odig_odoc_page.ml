@@ -276,10 +276,11 @@ let pkg_list conf ~index_title ~raw_index_intro ~tag_index ~ocaml_manual_uri =
           p [small [txt "Generated for ";
                     code [txt (Fpath.to_string (Conf.lib_dir conf))]]];
           nav ~a:Att.[class' "toc"] [
-            ul [li [a ~a:Att.[href "#by-name"] [txt "Packages by name"]];
-                packages_by_tag_li;
-                li [a ~a:Att.[href stdlib_link] [txt "OCaml standard library"]];
-                li [a ~a:Att.[href manual_href] [txt "OCaml manual"]]]]]
+            ul [
+              li [a ~a:Att.[href stdlib_link] [txt "OCaml standard library"]];
+              li [a ~a:Att.[href manual_href] [txt "OCaml manual"]];
+              li [a ~a:Att.[href "#by-name"] [txt "Packages by name"]];
+              packages_by_tag_li; ]]]
     in
     El.header El.[ nav [txt "\xF0\x9F\x90\xAB"]; splice contents ]
   in

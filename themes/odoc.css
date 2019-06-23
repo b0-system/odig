@@ -148,11 +148,14 @@ a.anchor
           margin-top: var(--size-line);
           list-style-type: none; }
 
+.toc ul ul { font-family: var(--font-body); text-transform: none;
+             margin-top:0; }
+.toc ul ul ul { margin-left:1.5ch }
+
 .toc li { margin-left: 0; padding-left: 1ch; text-indent: -1ch; }
-.toc ul ul { font-family: var(--font-body);
-             text-transform: none;
-             margin-top:0;
-             margin-left: 1ch; }
+.toc > ul > li { margin-top: calc(0.25 * var(--size-half-line)) }
+.toc > ul > li > ul > li:last-child { margin-bottom: var(--size-half-line) }
+.toc ul ul li { margin-left: 0; padding-left: 0; }
 
 /* Module structure items */
 

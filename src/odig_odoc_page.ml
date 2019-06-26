@@ -6,7 +6,7 @@
 
 open Odig_support
 open B0_std
-open B0_web.Htmlg
+open B0_htmlg
 
 let anchor_href aid = Att.href (Fmt.str "#%s" aid)
 let anchor_a aid = El.a ~a:Att.[anchor_href aid; class' "anchor"] []

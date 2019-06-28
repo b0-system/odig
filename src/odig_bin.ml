@@ -87,7 +87,7 @@ let cache_cmd cmd conf = match cmd with
     let dir = Conf.cache_dir conf in
     Log.app begin fun m ->
       m "Deleting %a, this may take some time..."
-        (Fmt.tty [`Fg `Green] Fpath.pp) dir
+        (Fmt.tty [`Fg `Green] Fpath.pp_quoted) dir
     end;
     let del = Os.Path.delete ~recurse:true dir in
     Log.if_error ~use:err_some (Result.bind del @@ fun _ -> Ok 0)
@@ -136,7 +136,7 @@ let doc_cmd background browser pkg_names update no_update show_files conf =
       | files when no_update ->
           Fmt.error
             "@[<v>No doc found for:@, %a@,@[Try with 'odig doc -u %a'@]@]"
-            Fmt.(list Fpath.pp) files
+            Fmt.(list Fpath.pp_quoted) files
             Fmt.(list Pkg.pp_name) pkgs
       | _ ->
           let index_title = None and index_intro = None in
@@ -150,7 +150,8 @@ let doc_cmd background browser pkg_names update no_update show_files conf =
   Result.bind prepare_files @@ fun files ->
   let does_not_exist = List.find_all (fun f -> not (exists f)) files in
   match does_not_exist with
-  | [] when show_files -> Fmt.pr "@[<v>%a@]@." (Fmt.list Fpath.pp) files; Ok 0
+  | [] when show_files ->
+      Fmt.pr "@[<v>%a@]@." (Fmt.list Fpath.pp_quoted) files; Ok 0
   | [] ->
       let rec loop exit = function
       | [] -> Ok exit
@@ -164,7 +165,7 @@ let doc_cmd background browser pkg_names update no_update show_files conf =
       loop 0 files
   | fs ->
       Fmt.error "@[<v>No doc could be generated for:@,%a@]"
-        (Fmt.list Fpath.pp) fs
+        (Fmt.list Fpath.pp_quoted) fs
 
 let odoc_cmd
     _odoc pkg_names index_title index_intro force trace no_pkg_deps no_tag_index
@@ -241,7 +242,7 @@ let pkg_cmd no_pager out_fmt pkg_names conf =
       let pp_pkg ppf (pkg, o) =
         Fmt.pf ppf "@[<h>%a %a %a@]"
           Pkg.pp_name pkg Pkg.pp_version (Opam.version o)
-          (Fmt.tty [`Faint] Fpath.pp) (Pkg.path pkg)
+          (Fmt.tty [`Faint] Fpath.pp_quoted) (Pkg.path pkg)
       in
       let pkgs = Opam.query pkgs in
       (fun ppf () -> (Fmt.list pp_pkg) ppf pkgs)

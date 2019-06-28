@@ -403,7 +403,7 @@ let gen conf ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
     in
     build b |> Log.if_error_pp pp_never ~use:();
     find_and_set_theme conf;
-    Log.info (fun m -> m ~header:"STATS" "%a" B0_ui.Memo.pp_stats memo);
+    Log.info (fun m -> m ~header:"STATS" "%a" B00_conv.Memo.pp_stats memo);
     Ok ()
   with Failure e -> Error e
 

@@ -28,7 +28,9 @@ let publish_cmd
   =
   let msg = match msg with
   | Some m -> m
-  | None -> Fmt.str "Update %a\n\nWith contents of %a" Fpath.pp dst Fpath.pp src
+  | None ->
+      Fmt.str "Update %a\n\nWith contents of %a"
+        Fpath.pp_quoted dst Fpath.pp_quoted src
   in
   let amend = not new_commit in
   let pub =

@@ -59,7 +59,8 @@ let publish () new_commit remote branch =
   Log.if_error ~use:1 @@
   Result.bind (versions ()) @@ fun versions ->
   Result.bind (odig_html ()) @@ fun (htmldir, htmldir_contents) ->
-  Log.app (fun m -> m "Publishing %a" (Fmt.tty [`Fg `Green] Fpath.pp) htmldir);
+  Log.app (fun m ->
+      m "Publishing %a" (Fmt.tty [`Fg `Green] Fpath.pp_quoted) htmldir);
   Result.bind (odig_theme_list ()) @@ fun themes ->
   Result.join @@
   Os.Dir.with_tmp @@ fun dir ->

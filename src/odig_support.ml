@@ -23,7 +23,7 @@ module Pkg = struct
   type t = name * Fpath.t
   let name = fst
   let path = snd
-  let pp ppf (n, p) = Fmt.pf ppf "%s %a" n (Fmt.tty [`Faint] Fpath.pp) p
+  let pp ppf (n, p) = Fmt.pf ppf "%s %a" n (Fmt.tty [`Faint] Fpath.pp_quoted) p
   let pp_name ppf (n, p) = Fmt.string ppf n
   let pp_version ppf v =
     let v = if v = "" then "?" else v in
@@ -40,7 +40,8 @@ module Pkg = struct
   module Map = Map.Make (T)
 
   let of_dir dir =
-    Log.time (fun _ m -> m "package list of %a" Fpath.pp dir) @@ fun () ->
+    Log.time (fun _ m -> m "package list of %a" Fpath.pp_quoted dir) @@
+    fun () ->
     let ocaml_pkg () =
       let ocaml_where = Cmd.(arg "ocamlc" % "-where") in
       let p = Os.Cmd.run_out ocaml_where |> Result.to_failure in
@@ -201,7 +202,7 @@ module Opam = struct
     | Some (maj, _)  when
         maj <> "" && Char.code maj.[0] - 0x30 >= 2 -> Ok opam
     | Some _ | None ->
-        Fmt.error "%a: unsupported version %s" Fpath.pp opam v
+        Fmt.error "%a: unsupported version %s" Fpath.pp_quoted opam v
   end
 
   let fields =
@@ -455,15 +456,20 @@ module Conf = struct
   let file_cache_dir cache_dir = Fpath.(cache_dir / "memo")
   let trash_dir cache_dir = Fpath.(cache_dir / "trash")
   let memo cdir ~max_spawn =
-    let cache_dir = file_cache_dir cdir in
-    let trash_dir = trash_dir cdir in
     lazy begin
+      let cache_dir = file_cache_dir cdir in
+      let trash_dir = trash_dir cdir in
       let max_spawn = B0_ui.Memo.max_spawn ~jobs:max_spawn () in
-      let feedback =
-        let show_spawn_ui = Log.Info in
-        let show_success = Log.Debug in
-        B0_ui.Memo.log_feedback ~show_spawn_ui ~show_success Fmt.stderr
+      let pp_feedback =
+        let op_howto ppf o =
+          Fmt.pf ppf "(details: odig op --id %d)" (B00.Op.id o)
+        in
+        let show_op_ui = Log.Info in
+        let show_op = Log.Debug in
+        let level = Log.level () in
+        B00_conv.Memo.pp_leveled_feedback ~op_howto ~show_op_ui ~show_op ~level
       in
+      let feedback f = Fmt.pf Fmt.stderr "%a@." pp_feedback f in
       Memo.memo ~max_spawn ~feedback ~cache_dir ~trash_dir ()
     end
 
@@ -506,11 +512,11 @@ module Conf = struct
   let odoc_theme c = c.odoc_theme
   let pp =
     Fmt.record @@
-    [ Fmt.field "cache-dir" cache_dir Fpath.pp;
-      Fmt.field "doc-dir" doc_dir Fpath.pp;
-      Fmt.field "lib-dir" lib_dir Fpath.pp;
+    [ Fmt.field "cache-dir" cache_dir Fpath.pp_quoted;
+      Fmt.field "doc-dir" doc_dir Fpath.pp_quoted;
+      Fmt.field "lib-dir" lib_dir Fpath.pp_quoted;
       Fmt.field "odoc-theme" odoc_theme Fmt.string;
-      Fmt.field "share-dir" share_dir Fpath.pp; ]
+      Fmt.field "share-dir" share_dir Fpath.pp_quoted; ]
 
   let memo c = Lazy.force c.memo
   let file_cache_dir c = file_cache_dir c.cache_dir

@@ -167,25 +167,41 @@ let doc_cmd background browser pkg_names update no_update show_files conf =
       Fmt.error "@[<v>No doc could be generated for:@,%a@]"
         (Fmt.list Fpath.pp_quoted) fs
 
+let log_cmd no_pager (out_fmt, log_output) log_filter conf =
+  let file = Fpath.(Conf.cache_dir conf / "log") in
+  Log.if_error ~use:err_some @@
+  let don't = no_pager || out_fmt = `Trace_event in
+  Result.bind (B0_ui.Pager.find ~don't ()) @@ fun pager ->
+  Result.bind (B0_ui.Pager.page_stdout pager) @@ fun () ->
+  Result.bind (Os.File.read file) @@ fun data ->
+  Result.bind (B00_conv.Op.of_string ~file data) @@ fun ops ->
+  log_output (log_filter ops);
+  Ok 0
+
 let odoc_cmd
-    _odoc pkg_names index_title index_intro force trace no_pkg_deps no_tag_index
+    _odoc pkg_names index_title index_intro force log no_pkg_deps no_tag_index
     conf
   =
+  let write_log conf log memo =
+    let file = match log with
+    | None -> Fpath.(Conf.cache_dir conf / ".log")
+    | Some file -> file
+    in
+    let d =
+      Log.time (fun _ m -> m "serializing ops") @@ fun () ->
+      B00_conv.Op.to_string (B00.Memo.ops memo)
+    in
+    Log.time (fun _ m -> m "writing log") @@ fun () ->
+    Log.if_error ~use:() (Os.File.write ~force:true ~make_path:true file d)
+  in
   let pkg_deps = not no_pkg_deps in
   let tag_index = not no_tag_index in
   handle_name_error (find_pkgs conf pkg_names) @@ fun pkgs ->
   handle_some_error
     (odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs)
   @@ fun () ->
-  match trace with
-  | None -> 0
-  | Some file ->
-      Log.time (fun _ m -> m "Generating trace") @@ fun () ->
-      let memo = Result.get_ok (Conf.memo conf) in
-      let ops = B00.Memo.ops memo in
-      let t = B0_json.Jsong.to_string (B0_trace.Trace_event.of_ops ops) in
-      handle_some_error (Os.File.write ~force:true ~make_path:true file t) @@
-      fun () -> 0
+  write_log conf log (Result.get_ok (Conf.memo conf));
+  0
 
 let odoc_theme_cmd out_fmt action theme set_default conf =
   let list_themes conf out_fmt =
@@ -394,9 +410,11 @@ let show_files_cmd ?cmd ~kind get_files =
 
 (* Commands *)
 
+let sdocs = Manpage.s_common_options
+
 let browse_cmd =
   let doc = "Open package metadata URIs in your browser" in
-  let sdocs = Manpage.s_common_options and man_xrefs = [ `Main ] in
+  let man_xrefs = [ `Main ] in
   let man = [
     `S Manpage.s_description;
     `P "$(tname) command opens or reloads metadata URI fields of packages
@@ -418,8 +436,7 @@ let browse_cmd =
   Term.info "browse" ~doc ~sdocs ~exits ~man ~man_xrefs
 
 let cache_cmd =
-  let doc = "Operate on the odig cache" in
-  let sdocs = Manpage.s_common_options and man_xrefs = [ `Main ] in
+  let doc = "Operate on the odig cache" and man_xrefs = [ `Main ] in
   let man = [
     `S Manpage.s_synopsis;
     `P "$(mname) $(tname) $(i,ACTION) [$(i,OPTION)]...";
@@ -447,8 +464,7 @@ let changes_cmd =
   show_files_cmd ~cmd:"changes" ~kind:"change log" Doc_dir.changes_files
 
 let conf_cmd =
-  let doc = "Show odig configuration" in
-  let sdocs = Manpage.s_common_options and man_xrefs = [ `Main ] in
+  let doc = "Show odig configuration" and man_xrefs = [ `Main ] in
   let man = [
     `S Manpage.s_description;
     `P "$(tname) outputs the odig configuration.";
@@ -465,7 +481,7 @@ let conf_cmd =
 
 let doc_cmd =
   let doc = "Show odoc API documentation and manuals" in
-  let sdocs = Manpage.s_common_options and man_xrefs = [ `Main; `Cmd "odoc" ] in
+  let man_xrefs = [ `Main; `Cmd "odoc" ] in
   let man = [
     `S Manpage.s_description;
     `P "$(tname) shows API documentation and manuals as generated
@@ -499,7 +515,7 @@ let license_cmd =
 
 let odoc_cmd =
   let doc = "Generate odoc API documentation and manuals" in
-  let sdocs = Manpage.s_common_options and man_xrefs = [ `Main ] in
+  let man_xrefs = [ `Main ] in
   let man = [
     `S Manpage.s_description;
     `P "$(tname) generates the odoc API documentation and manual of packages.";
@@ -511,11 +527,10 @@ let odoc_cmd =
     let env = Arg.env_var "ODIG_ODOC" in
     Arg.(value & opt string "odoc" & info ["odoc"] ~env ~docv:"CMD" ~doc) *)
   in
-  let trace =
-    let doc = "Output build trace in Trace Event format to $(docv)." in
-    let env = Arg.env_var "ODIG_ODOC_TRACE" in
-    let some_path = Arg.some B0_ui.Cli.Arg.fpath in
-    Arg.(value & opt some_path None & info ["trace"] ~env ~docv:"FILE" ~doc)
+  let log =
+    let env = Arg.env_var "ODIG_LOG" in
+    let none = ".log file in cache dir" in
+    B0_ui.Op.log_file_cli ~none ~env ()
   in
   let force = Term.const false
     (* let doc = "Force generation even if files are up-to-date." in
@@ -546,13 +561,13 @@ let odoc_cmd =
     Arg.(value & flag & info ["no-tag-index"] ~doc)
   in
   let cmd = Term.(const odoc_cmd $ odoc $ pkgs_pos $ index_title $ index_intro $
-                  force $ trace $ no_pkg_deps $ no_tag_index)
+                  force $ log $ no_pkg_deps $ no_tag_index)
   in
   Term.(wrap_cmd $ cmd), Term.info "odoc" ~doc ~sdocs ~exits ~man ~man_xrefs
 
 let odoc_theme_cmd =
   let doc = "Manage themes for odoc API and manual documentation." in
-  let sdocs = Manpage.s_common_options and man_xrefs = [ `Main ] in
+  let man_xrefs = [ `Main ] in
   let man = [
     `S Manpage.s_synopsis;
     `P "$(mname) $(tname) $(i,ACTION) [$(i,OPTION)]...";
@@ -601,9 +616,31 @@ let odoc_theme_cmd =
   Term.(wrap_cmd $ cmd),
   Term.info "odoc-theme" ~doc ~sdocs ~exits ~man ~man_xrefs
 
+let log_cmd =
+  let doc = "Show odoc build log" and man_xrefs = [ `Main ] in
+  let docs_out_fmt = "OUTPUT FORMATS" in
+  let envs = B0_ui.Pager.envs in
+  let man = [
+    `S Manpage.s_description;
+    `P "The $(tname) command shows odoc build operations. If no specific \
+        selection \
+        is specified all of them are shown. The various selection \
+        options are implicitely $(b,or)-ed and can be eventually filtered by \
+        $(b,--executed) or $(b,--revived).";
+    `P "Operations are sorted by operation execution start time, this can
+        be changed via the $(b,--order-by) option." ]
+  in
+  let no_pager = B0_ui.Pager.don't () in
+  let cmd = Term.(const log_cmd $ no_pager $
+                  B0_ui.Op.log_out_fmt_cli ~docs:docs_out_fmt () $
+                  B0_ui.Op.log_filter_cli)
+  in
+  Term.(wrap_cmd $ cmd),
+  Term.info "log" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
+
 let pkg_cmd =
   let doc = "Show packages (default command)" in
-  let sdocs = Manpage.s_common_options and man_xrefs = [ `Main ] in
+  let man_xrefs = [ `Main ] in
   let envs = B0_ui.Pager.envs in
   let man = [
     `S Manpage.s_description;
@@ -619,8 +656,7 @@ let pkg_cmd =
 let readme_cmd = show_files_cmd ~kind:"readme" Doc_dir.readme_files
 
 let show_cmd =
-  let doc = "Show package metadata" in
-  let sdocs = Manpage.s_common_options and man_xrefs = [ `Main ] in
+  let doc = "Show package metadata" and man_xrefs = [ `Main ] in
   let envs = B0_ui.Pager.envs in
   let man = [
     `S Manpage.s_description;
@@ -651,7 +687,6 @@ let show_cmd =
 
 let odig =
   let doc = "Lookup documentation of installed OCaml packages" in
-  let sdocs = Manpage.s_common_options in
   let man = [
     `S Manpage.s_description;
     `P "$(mname) looks up documentation of installed OCaml packages. It shows \
@@ -672,7 +707,7 @@ let odig =
 let () =
   let cmds =
     [ browse_cmd; cache_cmd; changes_cmd; conf_cmd; doc_cmd; license_cmd;
-      odoc_cmd; odoc_theme_cmd; pkg_cmd; readme_cmd; show_cmd; ]
+      log_cmd; odoc_cmd; odoc_theme_cmd; pkg_cmd; readme_cmd; show_cmd; ]
   in
   Term.(exit_status @@ eval_choice odig cmds)
 

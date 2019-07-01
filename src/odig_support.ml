@@ -460,7 +460,7 @@ module Conf = struct
       let cache_dir = file_cache_dir cdir in
       let trash_dir = trash_dir cdir in
       let max_spawn = B0_ui.Memo.max_spawn ~jobs:max_spawn () in
-      let pp_feedback =
+      let feedback =
         let op_howto ppf o =
           Fmt.pf ppf "(details: odig op --id %d)" (B00.Op.id o)
         in
@@ -468,8 +468,8 @@ module Conf = struct
         let show_op = Log.Debug in
         let level = Log.level () in
         B00_conv.Memo.pp_leveled_feedback ~op_howto ~show_op_ui ~show_op ~level
+          Fmt.stderr
       in
-      let feedback f = Fmt.pf Fmt.stderr "%a@." pp_feedback f in
       Memo.memo ~max_spawn ~feedback ~cache_dir ~trash_dir ()
     end
 

@@ -286,10 +286,9 @@ module Conf : sig
 
   val v :
     b0_cache_dir:Fpath.t option -> b0_log_file:Fpath.t option ->
-    cache_dir:Fpath.t option -> doc_dir:Fpath.t option ->
-    lib_dir:Fpath.t option -> max_spawn:int option ->
-    odoc_theme:B0_odoc.Theme.name option -> share_dir:Fpath.t option ->
-    unit -> (t, string) result
+    cache_dir:Fpath.t option -> doc_dir:Fpath.t option -> jobs:int option ->
+    lib_dir:Fpath.t option -> odoc_theme:B0_odoc.Theme.name option ->
+    share_dir:Fpath.t option -> unit -> (t, string) result
   (** [v] consructs a configuration with given attributes. If unspecified
       they are discovered in various ways. *)
 
@@ -315,8 +314,8 @@ module Conf : sig
   val odoc_theme : t -> string
   (** [odoc_theme c] is [c]'s odoc theme to use. *)
 
-  val max_spawn : t -> int
-  (** [max_spawn c] maximum number of spawns. *)
+  val jobs : t -> int
+  (** [jobs c] is the maximum number of spawns. *)
 
   val memo : t -> (Memo.t, string) result
   (** [memo conf] is a memoizer for configuration [conf]. *)

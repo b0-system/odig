@@ -333,10 +333,7 @@ let conf =
     let env = Arg.env_var Conf.lib_dir_env in
     Arg.(value & opt (some path) None & info ["lib-dir"] ~doc ~docs ~env ~docv)
   in
-  let max_spawn =
-    let env = Arg.env_var "ODIG_JOBS" in
-    B0_ui.Memo.jobs ~docs ~env ()
-  in
+  let jobs = B0_ui.Memo.jobs ~docs ~env:(Arg.env_var "ODIG_JOBS") () in
   let odoc_theme =
     let doc =
       "Theme to use for odoc documentation. If unspecified, the theme can be \
@@ -354,16 +351,16 @@ let conf =
            ~docv)
   in
   let conf
-    () b0_cache_dir b0_log_file cache_dir doc_dir lib_dir max_spawn
-    odoc_theme share_dir
+      () b0_cache_dir b0_log_file cache_dir doc_dir jobs lib_dir odoc_theme
+      share_dir
     =
     Result.map_error (fun s -> `Msg s) @@
-    Conf.v ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~lib_dir ~max_spawn
+    Conf.v ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~jobs ~lib_dir
       ~odoc_theme ~share_dir ()
   in
   Term.term_result @@
   Term.(const conf $ b0_std_setup $ b0_cache_dir $ b0_log_file $ cache_dir $
-        doc_dir $ lib_dir $ max_spawn $ odoc_theme $ share_dir)
+        doc_dir $ jobs $ lib_dir $ odoc_theme $ share_dir)
 
 let pkgs_pos1_nonempty, pkgs_pos, pkgs_pos1, pkgs_opt =
   let doc = "Package to consider (repeatable)." in

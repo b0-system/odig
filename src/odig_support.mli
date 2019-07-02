@@ -285,24 +285,28 @@ module Conf : sig
   (** The type for configuration. *)
 
   val v :
-    ?cache_dir:Fpath.t -> ?lib_dir:Fpath.t -> ?doc_dir:Fpath.t ->
-    ?share_dir:Fpath.t -> ?odoc_theme:B0_odoc.Theme.name ->
-    max_spawn:int option -> unit -> (t, string) result
-  (** [v ~cache_dir ~lib_dir ~doc_dir ~share_dir ~odoc_theme ~max_spawn ()] is a
-      configuration with given attributes. If unspecified they are
-      discovered. *)
+    b0_cache_dir:Fpath.t option -> b0_log_file:Fpath.t option ->
+    cache_dir:Fpath.t option -> doc_dir:Fpath.t option ->
+    lib_dir:Fpath.t option -> max_spawn:int option ->
+    odoc_theme:B0_odoc.Theme.name option -> share_dir:Fpath.t option ->
+    unit -> (t, string) result
+  (** [v] consructs a configuration with given attributes. If unspecified
+      they are discovered in various ways. *)
+
+  val b0_cache_dir : t -> Fpath.t
+  (** [b0_cache_dir c] is [c]'s b0 cache directory. *)
+
+  val b0_log_file : t -> Fpath.t
+  (** [b0_log_file c] is [c]'s b0 log file. *)
 
   val cache_dir : t -> Fpath.t
   (** [cache_dir c] is [c]'s cache directory. *)
 
-  val lib_dir : t -> Fpath.t
-  (** [lib_dir c] is [c]'s library directory. *)
-
   val doc_dir : t -> Fpath.t
   (** [doc_dir c] is [c]'s documentation directory. *)
 
-  val share_dir : t -> Fpath.t
-  (** [share_dir c] is [c]'s share directory. *)
+  val lib_dir : t -> Fpath.t
+  (** [lib_dir c] is [c]'s library directory. *)
 
   val html_dir : t -> Fpath.t
   (** [html_dir c] is [c]'s HTML directory, where the API docs
@@ -310,6 +314,21 @@ module Conf : sig
 
   val odoc_theme : t -> string
   (** [odoc_theme c] is [c]'s odoc theme to use. *)
+
+  val max_spawn : t -> int
+  (** [max_spawn c] maximum number of spawns. *)
+
+  val memo : t -> (Memo.t, string) result
+  (** [memo conf] is a memoizer for configuration [conf]. *)
+
+  val pkgs : t -> Pkg.t list
+  (** [pkgs conf] are the packages of configuration [conf]. *)
+
+  val pkg_infos : t -> Pkg_info.t Pkg.Map.t
+  (** [pkg_infos conf] are the package information of {!pkgs}. *)
+
+  val share_dir : t -> Fpath.t
+  (** [share_dir c] is [c]'s share directory. *)
 
   val pp : t Fmt.t
   (** [pp] formats configurations. *)
@@ -335,20 +354,6 @@ module Conf : sig
   val odoc_theme_env : string
   (** [odoc_theme_env] is the environment variable that can be used
       to define the default odoc theme. *)
-
-  (** {1:props Properties} *)
-
-  val memo : t -> (Memo.t, string) result
-  (** [memo conf] is a memoizer for configuration [conf]. *)
-
-  val file_cache_dir : t -> Fpath.t
-  (** [file_cache_dir c] is [c]'s memoizer file cache directory. *)
-
-  val pkgs : t -> Pkg.t list
-  (** [pkgs conf] are the packages of configuration [conf]. *)
-
-  val pkg_infos : t -> Pkg_info.t Pkg.Map.t
-  (** [pkg_infos conf] are the package information of {!pkgs}. *)
 end
 
 (*---------------------------------------------------------------------------

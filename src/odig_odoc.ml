@@ -114,7 +114,6 @@ let odoc_file_for_cobj b cobj =
   let cobj = Doc_cobj.path cobj in
   Fpath.(reroot ~root ~dst cobj -+ ".odoc")
 
-
 let odoc_file_for_mld b pkg mld = (* assume mld names are flat *)
   let page = Fmt.str "page-%s" (Fpath.basename mld) in
   Fpath.(pkg_odoc_dir b pkg / page -+ ".odoc")
@@ -382,8 +381,7 @@ let rec build b = match Pkg.Set.choose b.r.pkgs_todo with
         let html_dir = b.html_dir and build_dir = b.odoc_dir in
         B0_odoc.Support_files.write b.m ~without_theme ~html_dir ~build_dir;
         let ocaml_manual_uri = write_ocaml_manual b |> Log.if_error ~use:None in
-        write_pkgs_index b ~ocaml_manual_uri ;
-        Memo.finish b.m
+        write_pkgs_index b ~ocaml_manual_uri
     end
 | pkg ->
     b.r.pkgs_todo <- Pkg.Set.remove pkg b.r.pkgs_todo;
@@ -392,20 +390,24 @@ let rec build b = match Pkg.Set.choose b.r.pkgs_todo with
     if not gens then (b.r.pkgs_seen <- Pkg.Set.remove pkg b.r.pkgs_seen);
     build b
 
-let pp_never ppf fs =
-  Fmt.pf ppf "@[<v>Roots never became ready:@, %a" Fpath.Set.dump fs
-
-let gen conf ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
-  try
-    Result.bind (Conf.memo conf) @@ fun memo ->
-    let b =
-      builder memo conf ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo
-    in
-    build b |> Log.if_error_pp pp_never ~use:();
-    find_and_set_theme conf;
-    Log.info (fun m -> m ~header:"STATS" "%a" B00_conv.Memo.pp_stats memo);
-    Ok ()
-  with Failure e -> Error e
+let gen c ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
+  Result.bind (Conf.memo c) @@ fun memo ->
+  let b =
+    builder memo c ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo
+  in
+  build b;
+  let ret = Memo.finish b.m in
+  let ret = match ret with
+  | Ok () as v  -> v
+  | Error fs ->
+      let op_howto = Fmt.tty [`Faint] (Fmt.any "odig log -r") in
+      B00_conv.Memo.pp_never_ready ~op_howto Fmt.stderr fs;
+      Error "Documentation might be incomplete."
+  in
+  find_and_set_theme c;
+  Log.info (fun m -> m ~header:"STATS" "%a" B00_conv.Memo.pp_stats memo);
+  Log.if_error ~use:() @@ B0_ui.Memo.Log.write_file (Conf.b0_log_file c) memo;
+  ret
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2018 The odig programmers

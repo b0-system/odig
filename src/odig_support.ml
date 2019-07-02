@@ -422,7 +422,14 @@ module Pkg_info = struct
 end
 
 module Conf = struct
+  let cache_dir_env = "ODIG_CACHE_DIR"
+  let doc_dir_env = "ODIG_DOC_DIR"
+  let lib_dir_env = "ODIG_LIB_DIR"
+  let odoc_theme_env = "ODIG_ODOC_THEME"
+  let share_dir_env = "ODIG_SHARE_DIR"
+
   let in_prefix_path dir =
+    (* relocation hack find directory relative to executable path *)
     let exec = Fpath.of_string Sys.executable_name |> Result.to_failure in
     Fpath.((parent @@ parent @@ exec) // dir)
 
@@ -433,19 +440,10 @@ module Conf = struct
       | Some l -> Fpath.of_string l |> Result.to_failure
       | None -> in_prefix_path default_dir
 
-  let cache_dir_env = "ODIG_CACHE_DIR"
   let get_cache_dir dir = get_dir Fpath.(v "var/cache/odig") cache_dir_env dir
-
-  let lib_dir_env = "ODIG_LIB_DIR"
   let get_lib_dir dir = get_dir (Fpath.v "lib") lib_dir_env dir
-
-  let doc_dir_env = "ODIG_DOC_DIR"
   let get_doc_dir dir = get_dir (Fpath.v "doc") doc_dir_env dir
-
-  let share_dir_env = "ODIG_SHARE_DIR"
   let get_share_dir dir = get_dir (Fpath.v "share") share_dir_env dir
-
-  let odoc_theme_env = "ODIG_ODOC_THEME"
   let get_odoc_theme = function
   | Some v -> v
   | None ->
@@ -453,19 +451,14 @@ module Conf = struct
       | Some t -> t
       | None -> B0_odoc.Theme.get_user_preference () |> Result.to_failure
 
-  let file_cache_dir cache_dir = Fpath.(cache_dir / "memo")
-  let trash_dir cache_dir = Fpath.(cache_dir / "trash")
-  let memo cdir ~max_spawn =
+  let memo cache_dir (* b0 not odig *) trash_dir ~max_spawn =
     lazy begin
-      let cache_dir = file_cache_dir cdir in
-      let trash_dir = trash_dir cdir in
-      let max_spawn = B0_ui.Memo.max_spawn ~jobs:max_spawn () in
+      let max_spawn = Lazy.force max_spawn in
       let feedback =
         let op_howto ppf o =
-          Fmt.pf ppf "(details: odig op --id %d)" (B00.Op.id o)
+          Fmt.pf ppf "(details: odig log --id %d)" (B00.Op.id o)
         in
-        let show_op_ui = Log.Info in
-        let show_op = Log.Debug in
+        let show_op_ui = Log.Info and show_op = Log.Debug in
         let level = Log.level () in
         B00_conv.Memo.pp_leveled_feedback ~op_howto ~show_op_ui ~show_op ~level
           Fmt.stderr
@@ -474,54 +467,79 @@ module Conf = struct
     end
 
   type t =
-    { cache_dir : Fpath.t;
-      lib_dir : Fpath.t;
+    { b0_cache_dir : Fpath.t;
+      b0_log_file : Fpath.t;
+      cache_dir : Fpath.t;
       doc_dir : Fpath.t;
-      share_dir : Fpath.t;
       html_dir : Fpath.t;
-      odoc_theme : string;
+      lib_dir : Fpath.t;
+      max_spawn : int Lazy.t;
       memo : (Memo.t, string) result Lazy.t;
+      odoc_theme : string;
+      pkg_infos : Pkg_info.t Pkg.Map.t Lazy.t;
       pkgs : Pkg.t list Lazy.t;
-      pkg_infos : Pkg_info.t Pkg.Map.t Lazy.t; }
+      share_dir : Fpath.t; }
 
-  let v ?cache_dir ?lib_dir ?doc_dir ?share_dir ?odoc_theme ~max_spawn () =
+  let v
+      ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~lib_dir ~max_spawn
+      ~odoc_theme ~share_dir ()
+    =
     try
+      let cwd = Os.Dir.cwd () |> Result.to_failure in
       let cache_dir = get_cache_dir cache_dir in
       let lib_dir = get_lib_dir lib_dir in
       let doc_dir = get_doc_dir doc_dir in
       let share_dir = get_share_dir share_dir in
       let html_dir = Fpath.(cache_dir / "html") in
       let odoc_theme = get_odoc_theme odoc_theme in
-      let memo = memo cache_dir ~max_spawn in
+      let b0_cache_dir =
+        let b0_dir = cache_dir and cache_dir = b0_cache_dir in
+        B0_ui.Memo.get_cache_dir ~cwd ~b0_dir ~cache_dir
+      in
+      let b0_log_file =
+        let b0_dir = cache_dir and log_file = b0_log_file in
+        B0_ui.Memo.get_log_file ~cwd ~b0_dir ~log_file
+      in
+      let b0_trash_dir =
+        let b0_dir = cache_dir and trash_dir = None in
+        B0_ui.Memo.get_trash_dir ~cwd ~b0_dir ~trash_dir
+      in
+      let max_spawn = lazy (B0_ui.Memo.max_spawn ~jobs:max_spawn ()) in
+      let memo = memo b0_cache_dir b0_trash_dir ~max_spawn in
       let pkgs = lazy (Pkg.of_dir lib_dir) in
       let pkg_infos = Lazy.from_fun @@ fun () ->
         let add acc (p, i) = Pkg.Map.add p i acc in
         let pkg_infos = Pkg_info.query doc_dir (Lazy.force pkgs) in
         List.fold_left add Pkg.Map.empty pkg_infos
       in
-      Ok { cache_dir; lib_dir; doc_dir; share_dir; html_dir; odoc_theme; memo;
-           pkgs; pkg_infos }
+      Ok { b0_cache_dir; b0_log_file;
+           cache_dir; lib_dir; doc_dir; share_dir; html_dir; odoc_theme;
+           max_spawn; memo; pkgs; pkg_infos }
     with
     | Failure e -> Fmt.error "conf: %s" e
 
+  let b0_cache_dir c = c.b0_cache_dir
+  let b0_log_file c = c.b0_log_file
   let cache_dir c = c.cache_dir
-  let lib_dir c = c.lib_dir
   let doc_dir c = c.doc_dir
-  let share_dir c = c.share_dir
   let html_dir c = c.html_dir
+  let lib_dir c = c.lib_dir
+  let max_spawn c = Lazy.force c.max_spawn
+  let memo c = Lazy.force c.memo
   let odoc_theme c = c.odoc_theme
+  let pkg_infos c = Lazy.force c.pkg_infos
+  let pkgs c = Lazy.force c.pkgs
+  let share_dir c = c.share_dir
   let pp =
     Fmt.record @@
-    [ Fmt.field "cache-dir" cache_dir Fpath.pp_quoted;
+    [ Fmt.field "b0-cache-dir" b0_cache_dir Fpath.pp_quoted;
+      Fmt.field "b0-log-file" b0_log_file Fpath.pp_quoted;
+      Fmt.field "cache-dir" cache_dir Fpath.pp_quoted;
       Fmt.field "doc-dir" doc_dir Fpath.pp_quoted;
       Fmt.field "lib-dir" lib_dir Fpath.pp_quoted;
+      Fmt.field "jobs" max_spawn Fmt.int;
       Fmt.field "odoc-theme" odoc_theme Fmt.string;
       Fmt.field "share-dir" share_dir Fpath.pp_quoted; ]
-
-  let memo c = Lazy.force c.memo
-  let file_cache_dir c = file_cache_dir c.cache_dir
-  let pkgs c = Lazy.force c.pkgs
-  let pkg_infos c = Lazy.force c.pkg_infos
 end
 
 (*---------------------------------------------------------------------------

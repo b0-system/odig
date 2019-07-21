@@ -238,7 +238,7 @@ let mld_to_odoc b pkg pkg_odocs mld =
   B0_odoc.Compile.to_odoc b.m ~pkg ~odoc_deps mld ~o:odoc;
   odoc
 
-let index_mld_for_pkg b pkg pkg_info pkg_odocs ~user_index_mld =
+let index_mld_for_pkg b pkg pkg_info _pkg_odocs ~user_index_mld =
   let index_mld = Fpath.(pkg_odoc_dir b pkg / "index.mld") in
   let write_index_mld ~user_index =
     let reads = Option.to_list user_index_mld in
@@ -265,23 +265,23 @@ let index_mld_for_pkg b pkg pkg_info pkg_odocs ~user_index_mld =
   index_mld
 
 let mlds_to_odoc b pkg pkg_info pkg_odocs mlds =
-  let rec loop ~made_index odocs = function
+  let rec loop ~user_index_mld pkg_odocs = function
   | mld :: mlds ->
       Memo.file_ready b.m mld;
-      let mld, made_index = match Fpath.basename mld = "index.mld" with
-      | false -> mld, made_index
-      | true ->
-          let user_index_mld = Some mld in
-          index_mld_for_pkg b pkg pkg_info pkg_odocs ~user_index_mld, true
+      let odocs, user_index_mld = match Fpath.basename mld = "index.mld" with
+      | false -> mld_to_odoc b pkg pkg_odocs mld :: pkg_odocs, user_index_mld
+      | true -> pkg_odocs, Some mld
       in
-      loop ~made_index (mld_to_odoc b pkg pkg_odocs mld :: odocs) mlds
-  | [] when made_index -> odocs
+      loop ~user_index_mld odocs mlds
   | [] ->
-      let user_index_mld = None in
+      (* We do the index at the end due to a lack of functioning
+         of `compile-deps` on mld files this increases the chances
+         we get the correct links towards other mld files since those
+         will be in [odocs]. *)
       let mld = index_mld_for_pkg b pkg pkg_info pkg_odocs ~user_index_mld in
-      (mld_to_odoc b pkg pkg_odocs mld :: odocs)
+      (mld_to_odoc b pkg pkg_odocs mld :: pkg_odocs)
   in
-  loop ~made_index:false [] mlds
+  loop ~user_index_mld:None [] mlds
 
 let html_deps_resolve b deps k =
   let deps = List.rev_map B0_odoc.Html.Dep.to_compile_dep deps in

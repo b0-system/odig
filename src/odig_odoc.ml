@@ -343,7 +343,7 @@ let index_intro_to_html b k = match b.index_intro with
 | Some mld ->
     let is_odoc _ _ f acc = if Fpath.has_ext ".odoc" f then f :: acc else acc in
     let odoc_deps = Os.Dir.fold_files ~recurse:true is_odoc b.odoc_dir [] in
-    let odoc_deps = Memo.fail_error odoc_deps in
+    let odoc_deps = Memo.fail_if_error b.m odoc_deps in
     let o = Fpath.(b.odoc_dir / "index-header.html") in
     Memo.file_ready b.m mld;
     B0_odoc.Html_fragment.cmd b.m ~odoc_deps mld ~o;
@@ -390,23 +390,28 @@ let rec build b = match Pkg.Set.choose b.r.pkgs_todo with
     if not gens then (b.r.pkgs_seen <- Pkg.Set.remove pkg b.r.pkgs_seen);
     build b
 
+let write_log_file c memo =
+  Log.if_error ~use:() @@ B0_ui.Memo.Log.write_file (Conf.b0_log_file c) memo
+
 let gen c ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
   Result.bind (Conf.memo c) @@ fun memo ->
   let b =
     builder memo c ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo
   in
-  build b;
+  B0_ui.Sig_exit.on_sigint ~hook:(fun () -> write_log_file c memo) @@ fun () ->
+  Memo.run_fiber b.m (fun () -> build b);
   let ret = Memo.finish b.m in
   let ret = match ret with
   | Ok () as v  -> v
-  | Error fs ->
-      let op_howto = Fmt.tty [`Faint] (Fmt.any "odig log -r") in
-      B00_conv.Memo.pp_never_ready ~op_howto Fmt.stderr fs;
+  | Error e ->
+      let read_howto = Fmt.any "odig log -r " in
+      let write_howto = Fmt.any "odig log -w " in
+      let pp = B0_ui.Memo.pp_finish_error ~read_howto ~write_howto () in
+      pp Fmt.stderr e;
       Error "Documentation might be incomplete."
   in
   find_and_set_theme c;
-  Log.info (fun m -> m ~header:"STATS" "%a" B00_conv.Memo.pp_stats memo);
-  Log.if_error ~use:() @@ B0_ui.Memo.Log.write_file (Conf.b0_log_file c) memo;
+  write_log_file c memo;
   ret
 
 (*---------------------------------------------------------------------------

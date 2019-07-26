@@ -95,8 +95,8 @@ let cache_cmd conf = function
     | false -> Ok 0
     | true ->
         let pct = 50 and max_byte_size = max_int in
-        Result.bind (B00.File_cache.create b0_cache_dir) @@ fun c ->
-        Result.bind (B00.File_cache.trim_size c ~max_byte_size ~pct) @@
+        Result.bind (B000.File_cache.create b0_cache_dir) @@ fun c ->
+        Result.bind (B000.File_cache.trim_size c ~max_byte_size ~pct) @@
         fun () -> Ok 0
 
 let doc_cmd conf background browser pkg_names update no_update show_files =
@@ -169,9 +169,8 @@ let log_cmd conf no_pager (out_fmt, log_output) log_filter =
   let don't = no_pager || out_fmt = `Trace_event in
   Result.bind (B0_ui.Pager.find ~don't ()) @@ fun pager ->
   Result.bind (B0_ui.Pager.page_stdout pager) @@ fun () ->
-  Result.bind (B0_ui.Memo.Log.read_file (Conf.b0_log_file conf)) @@ fun ops ->
-  log_output (log_filter ops);
-  Ok 0
+  Result.bind (B0_ui.Memo.Log.read_file (Conf.b0_log_file conf)) @@
+  fun (info, ops) -> log_output (info, log_filter ops); Ok 0
 
 let odoc_cmd
     conf _odoc pkg_names index_title index_intro force no_pkg_deps no_tag_index
@@ -602,7 +601,7 @@ let log_cmd =
         be changed via the $(b,--order-by) option." ]
   in
   Term.(const log_cmd $ conf $ no_pager $
-        B0_ui.Op.log_out_fmt_cli ~docs:docs_out_fmt () $
+        B0_ui.Memo.Log.out_fmt_cli ~docs:docs_out_fmt () $
         B0_ui.Op.log_filter_cli),
   Term.info "log" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
 

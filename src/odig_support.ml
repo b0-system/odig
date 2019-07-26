@@ -5,7 +5,6 @@
   ---------------------------------------------------------------------------*)
 
 open B0_std
-open B00
 
 module Digest = struct
   include Digest
@@ -454,16 +453,14 @@ module Conf = struct
   let memo ~cwd ~cache_dir (* b0 not odig *) ~trash_dir ~jobs =
     lazy begin
       let feedback =
-        let op_howto ppf o =
-          Fmt.pf ppf "(details: odig log --id %d)" (B00.Op.id o)
-        in
-        let show_op_ui = Log.Info and show_op = Log.Debug in
+        let op_howto ppf o = Fmt.pf ppf "odig log --id %d" (B000.Op.id o) in
+        let show_ui = Log.Info and show_op = Log.Debug in
         let level = Log.level () in
-        B00_conv.Memo.pp_leveled_feedback ~op_howto ~show_op_ui ~show_op ~level
+        B0_ui.Memo.pp_leveled_feedback ~op_howto ~show_op ~show_ui ~level
           Fmt.stderr
       in
       let jobs = Lazy.force jobs in
-      Memo.memo ~cwd ~cache_dir ~trash_dir ~jobs ~feedback ()
+      B00.Memo.memo ~cwd ~cache_dir ~trash_dir ~jobs ~feedback ()
     end
 
   type t =
@@ -474,7 +471,7 @@ module Conf = struct
       html_dir : Fpath.t;
       jobs : int Lazy.t;
       lib_dir : Fpath.t;
-      memo : (Memo.t, string) result Lazy.t;
+      memo : (B00.Memo.t, string) result Lazy.t;
       odoc_theme : string;
       pkg_infos : Pkg_info.t Pkg.Map.t Lazy.t;
       pkgs : Pkg.t list Lazy.t;

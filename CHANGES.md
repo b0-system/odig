@@ -15,6 +15,7 @@
   changes did not invalidate.
 - `gh-pages-amend` tool, add a `--cname-file` option to set
   the `CNAME` file in gh-pages.
+- Fix `META` file (#52). Thanks to Kye W. Shi for the report.
 
 v0.0.4 2019-03-08 La Forclaz (VS)
 ---------------------------------

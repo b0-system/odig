@@ -141,7 +141,7 @@ let require_cobj_deps b cobj = (* Also used to find the digest of cobj *)
         B0_odoc.Compile.Dep.write m (Doc_cobj.path cobj) ~o:deps_file;
         B0_odoc.Compile.Dep.read m deps_file @@ fun deps ->
         let rec loop acc = function
-        | [] -> Memo.Fut.set set_deps acc
+        | [] -> set_deps (Some acc)
         | d :: ds ->
             match B0_odoc.Compile.Dep.name d = Doc_cobj.modname cobj with
             | true ->
@@ -154,7 +154,7 @@ let require_cobj_deps b cobj = (* Also used to find the digest of cobj *)
       end;
       fut_deps
 
-let cobj_deps b cobj k = Memo.Fut.wait (require_cobj_deps b cobj) k
+let cobj_deps b cobj k = Memo.Fut.await (require_cobj_deps b cobj) k
 let cobj_deps_to_odoc_deps b deps k =
   (* For each dependency this tries to find a cmi, cmti or cmt file
      that matches the dependency name and digest. We first look by
@@ -183,7 +183,7 @@ let cobj_deps_to_odoc_deps b deps k =
         end;
         k acc
     | (cobj, deps) :: cs ->
-        Memo.Fut.wait deps begin fun _ ->
+        Memo.Fut.await deps begin fun _ ->
           let digest = B0_odoc.Compile.Dep.digest dep in
           match Digest.Map.find digest b.r.cobjs_by_digest with
           | exception Not_found -> loop cs
@@ -394,25 +394,22 @@ let write_log_file c memo =
   Log.if_error ~use:() @@ B0_ui.Memo.Log.write_file (Conf.b0_log_file c) memo
 
 let gen c ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
-  Result.bind (Conf.memo c) @@ fun memo ->
+  Result.bind (Conf.memo c) @@ fun m ->
   let b =
-    builder memo c ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo
+    builder m c ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo
   in
-  B0_ui.Sig_exit.on_sigint ~hook:(fun () -> write_log_file c memo) @@ fun () ->
-  Memo.run_fiber b.m (fun () -> build b);
-  let ret = Memo.finish b.m in
-  let ret = match ret with
-  | Ok () as v  -> v
+  B0_ui.Sig_exit.on_sigint ~hook:(fun () -> write_log_file c m) @@ fun () ->
+  Memo.spawn_fiber m (fun () -> build b);
+  find_and_set_theme c;
+  Memo.stir ~block:true m;
+  write_log_file c m;
+  match Memo.status b.m with
+  | Ok () as v -> v
   | Error e ->
       let read_howto = Fmt.any "odig log -r " in
       let write_howto = Fmt.any "odig log -w " in
-      let pp = B0_ui.Memo.pp_finish_error ~read_howto ~write_howto () in
-      pp Fmt.stderr e;
-      Error "Documentation might be incomplete."
-  in
-  find_and_set_theme c;
-  write_log_file c memo;
-  ret
+      B0_ui.Memo.pp_error ~read_howto ~write_howto () Fmt.stderr e;
+      Error "Documentation might be incomplete (see: odig log -e)."
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2018 The odig programmers

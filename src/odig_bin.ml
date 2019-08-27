@@ -164,13 +164,13 @@ let doc_cmd conf background browser pkg_names update no_update show_files =
       Fmt.error "@[<v>No doc could be generated for:@,%a@]"
         (Fmt.list Fpath.pp_quoted) fs
 
-let log_cmd conf no_pager (out_fmt, log_output) log_filter =
+let log_cmd conf no_pager (out_fmt, log_output) log_select =
   Log.if_error ~use:err_some @@
   let don't = no_pager || out_fmt = `Trace_event in
   Result.bind (B0_ui.Pager.find ~don't ()) @@ fun pager ->
   Result.bind (B0_ui.Pager.page_stdout pager) @@ fun () ->
   Result.bind (B0_ui.Memo.Log.read_file (Conf.b0_log_file conf)) @@
-  fun (info, ops) -> log_output (info, log_filter ops); Ok 0
+  fun (info, ops) -> log_output (info, log_select ops); Ok 0
 
 let odoc_cmd
     conf _odoc pkg_names index_title index_intro force no_pkg_deps no_tag_index
@@ -589,20 +589,18 @@ let odoc_theme_cmd =
 let log_cmd =
   let doc = "Show odoc build log" and man_xrefs = [ `Main ] in
   let docs_out_fmt = "OUTPUT FORMATS" in
+  let docs_selection = "OPTIONS FOR SELECTING OPERATIONS" in
   let envs = B0_ui.Pager.envs in
   let man = [
     `S Manpage.s_description;
-    `P "The $(tname) command shows odoc build operations. If no specific \
-        selection \
-        is specified all of them are shown. The various selection \
-        options are implicitely $(b,or)-ed and can be eventually filtered by \
-        $(b,--executed) or $(b,--revived).";
-    `P "Operations are sorted by operation execution start time, this can
-        be changed via the $(b,--order-by) option." ]
+    `P "The $(tname) command shows odoc build operations.";
+    `Blocks B0_ui.Op.select_man;
+    `S docs_out_fmt;
+    `S docs_selection; ]
   in
   Term.(const log_cmd $ conf $ no_pager $
         B0_ui.Memo.Log.out_fmt_cli ~docs:docs_out_fmt () $
-        B0_ui.Op.log_filter_cli),
+        B0_ui.Op.select_cli ~docs:docs_selection ()),
   Term.info "log" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
 
 let pkg_cmd =

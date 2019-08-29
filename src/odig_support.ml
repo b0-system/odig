@@ -28,8 +28,8 @@ module Pkg = struct
     let v = if v = "" then "?" else v in
     Fmt.pf ppf "%a" (Fmt.tty_string [`Fg `Green]) v
 
-  let equal = Pervasives.( = )
-  let compare = Pervasives.compare
+  let equal = ( = )
+  let compare = compare
   let compare_by_caseless_name p p' =
     let n p = String.Ascii.lowercase (name p) in
     String.compare (n p) (n p')

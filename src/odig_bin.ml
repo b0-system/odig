@@ -20,14 +20,14 @@ let handle_error code v f = match v with
 let handle_name_error v f = handle_error err_name v f
 let handle_some_error v f = handle_error err_some v f
 let handle_pager no_pager f =
-  handle_error err_some (B0_ui.Pager.find ~don't:no_pager ()) f
+  handle_error err_some (B0_pager.find ~don't:no_pager ()) f
 
 let handle_stdout_paging no_pager f =
   handle_pager no_pager @@ fun pager ->
-  handle_error err_some (B0_ui.Pager.page_stdout pager) f
+  handle_error err_some (B0_pager.page_stdout pager) f
 
 let handle_browser browser f =
-  handle_error err_some (B0_ui.Browser.find ~browser ()) f
+  handle_error err_some (B0_www_browser.find ~browser ()) f
 
 (* Commonalities *)
 
@@ -71,7 +71,7 @@ let browse_cmd conf background browser field pkg_names =
   let rec loop exit = function
   | [] -> exit
   | u :: us ->
-      match B0_ui.Browser.show ~background ~prefix:false browser u with
+      match B0_www_browser.show ~background ~prefix:false browser u with
       | Error e -> Log.err (fun m -> m "%s" e); loop err_uri us
       | Ok () -> loop exit us
   in
@@ -155,7 +155,7 @@ let doc_cmd conf background browser pkg_names update no_update show_files =
       | f :: fs ->
           let file_uri p = Fmt.str "file://%a" Fpath.pp_unquoted p in
           let u = file_uri f in
-          match B0_ui.Browser.show ~background ~prefix:false browser u with
+          match B0_www_browser.show ~background ~prefix:false browser u with
           | Error e -> Log.err (fun m -> m "%s" e); loop err_uri fs
           | Ok () -> loop exit fs
       in
@@ -167,9 +167,9 @@ let doc_cmd conf background browser pkg_names update no_update show_files =
 let log_cmd conf no_pager (out_fmt, log_output) log_select =
   Log.if_error ~use:err_some @@
   let don't = no_pager || out_fmt = `Trace_event in
-  Result.bind (B0_ui.Pager.find ~don't ()) @@ fun pager ->
-  Result.bind (B0_ui.Pager.page_stdout pager) @@ fun () ->
-  Result.bind (B0_ui.Memo.Log.read_file (Conf.b0_log_file conf)) @@
+  Result.bind (B0_pager.find ~don't ()) @@ fun pager ->
+  Result.bind (B0_pager.page_stdout pager) @@ fun () ->
+  Result.bind (B00_ui.Memo.Log.read_file (Conf.b0_log_file conf)) @@
   fun (info, ops) -> log_output (info, log_select ops); Ok 0
 
 let odoc_cmd
@@ -277,7 +277,7 @@ let show_files_cmd conf no_pager pkg_names get_files =
   let doc_dir = Conf.doc_dir conf in
   let doc_dirs = List.map (fun p -> p, (Doc_dir.of_pkg ~doc_dir p)) pkgs in
   let files = List.concat (List.map (fun (p, i) -> get_files i) doc_dirs) in
-  handle_error err_some (B0_ui.Pager.page_files pager files) @@ fun () -> 0
+  handle_error err_some (B0_pager.page_files pager files) @@ fun () -> 0
 
 (* Command line interface *)
 
@@ -291,9 +291,9 @@ let exits =
   Term.exit_info err_some ~doc:"indiscriminate error reported on stderr." ::
   Term.default_exits
 
-let out_fmt = B0_ui.Cli.out_fmt ()
+let out_fmt = B00_ui.Cli.out_fmt ()
 let conf =
-  let path = B0_ui.Cli.Arg.fpath in
+  let path = B0_std_ui.fpath in
   let docs = Manpage.s_common_options in
   let docv = "PATH" in
   let doc dirname dir =
@@ -302,19 +302,27 @@ let conf =
      the parent directory of $(mname)'s install directory." dirname dir
   in
   let b0_std_setup =
+    (* FIXME do it b0caml like *)
     let color_env = Arg.env_var "ODIG_COLOR" in
     let verbosity_env = Arg.env_var "ODIG_VERBOSITY" in
-    B0_ui.B0_std.cli_setup ~color_env ~verbosity_env ()
+    let tty_cap = B0_std_ui.tty_cap ~env:color_env () in
+    let log_level = B0_std_ui.log_level ~env:verbosity_env () in
+    let conf tty_cap log_level =
+      let tty_cap = B0_std_ui.get_tty_cap tty_cap in
+      let log_level = B0_std_ui.get_log_level log_level in
+      B0_std_ui.setup tty_cap log_level ~log_spawns:Log.Debug
+    in
+    Term.(pure conf $ tty_cap $ log_level)
   in
   let b0_cache_dir =
     let env = Arg.env_var "ODIG_B0_CACHE_DIR" in
     let doc_none = "$(b,.cache) in odig cache directory" in
-    B0_ui.Memo.cache_dir ~opts:["b0-cache-dir"] ~doc_none ~env ()
+    B00_ui.Memo.cache_dir ~opts:["b0-cache-dir"] ~doc_none ~env ()
   in
   let b0_log_file =
     let env = Arg.env_var "ODIG_B0_LOG_FILE" in
     let doc_none = "$(b,.log) in odig cache directory" in
-    B0_ui.Memo.log_file ~doc_none ~env ()
+    B00_ui.Memo.log_file ~doc_none ~env ()
   in
   let cache_dir =
     let doc = doc "Cache" "var/cache/odig" in
@@ -332,7 +340,7 @@ let conf =
     let env = Arg.env_var Conf.lib_dir_env in
     Arg.(value & opt (some path) None & info ["lib-dir"] ~doc ~docs ~env ~docv)
   in
-  let jobs = B0_ui.Memo.jobs ~docs ~env:(Arg.env_var "ODIG_JOBS") () in
+  let jobs = B00_ui.Memo.jobs ~docs ~env:(Arg.env_var "ODIG_JOBS") () in
   let odoc_theme =
     let doc =
       "Theme to use for odoc documentation. If unspecified, the theme can be \
@@ -369,15 +377,15 @@ let pkgs_pos1_nonempty, pkgs_pos, pkgs_pos1, pkgs_opt =
   Arg.(value & pos_right 0 string [] & info [] ~doc ~docv),
   Arg.(value & opt_all string [] & info ["p"; "pkg"] ~doc ~docv)
 
-let background = B0_ui.Browser.background ()
-let browser = B0_ui.Browser.browser ()
-let no_pager = B0_ui.Pager.don't ()
+let background = B0_www_browser.background ()
+let browser = B0_www_browser.browser ()
+let no_pager = B0_pager.don't ()
 
 let show_files_cmd ?cmd ~kind get_files =
   let cname = match cmd with None -> kind | Some cmd -> cmd in
   let doc = Fmt.str "Show package %s files" kind in
   let sdocs = Manpage.s_common_options and man_xrefs = [ `Main ] in
-  let envs = B0_ui.Pager.envs in
+  let envs = B0_pager.envs () in
   let man =
     [ `S "DESCRIPTION";
       `P (Fmt.str "The $(tname) command shows package %s files. If \
@@ -519,7 +527,7 @@ let odoc_cmd =
     let doc = "$(docv) is the .mld file to use to define the introduction
                text on the package list page."
     in
-    let some_path = Arg.some B0_ui.Cli.Arg.fpath in
+    let some_path = Arg.some B0_std_ui.fpath in
     Arg.(value & opt some_path None & info ["index-intro"] ~docv:"MLDFILE" ~doc)
   in
   let no_pkg_deps =
@@ -590,23 +598,23 @@ let log_cmd =
   let doc = "Show odoc build log" and man_xrefs = [ `Main ] in
   let docs_out_fmt = "OUTPUT FORMATS" in
   let docs_selection = "OPTIONS FOR SELECTING OPERATIONS" in
-  let envs = B0_ui.Pager.envs in
+  let envs = B0_pager.envs () in
   let man = [
     `S Manpage.s_description;
     `P "The $(tname) command shows odoc build operations.";
-    `Blocks B0_ui.Op.select_man;
+    `Blocks B00_ui.Op.select_man;
     `S docs_out_fmt;
     `S docs_selection; ]
   in
   Term.(const log_cmd $ conf $ no_pager $
-        B0_ui.Memo.Log.out_fmt_cli ~docs:docs_out_fmt () $
-        B0_ui.Op.select_cli ~docs:docs_selection ()),
+        B00_ui.Memo.Log.out_fmt_cli ~docs:docs_out_fmt () $
+        B00_ui.Op.select_cli ~docs:docs_selection ()),
   Term.info "log" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
 
 let pkg_cmd =
   let doc = "Show packages (default command)" in
   let man_xrefs = [ `Main ] in
-  let envs = B0_ui.Pager.envs in
+  let envs = B0_pager.envs () in
   let man = [
     `S Manpage.s_description;
     `P "The $(tname) command shows packages known to odig. If no packages
@@ -620,7 +628,7 @@ let pkg_cmd =
 let readme_cmd = show_files_cmd ~kind:"readme" Doc_dir.readme_files
 let show_cmd =
   let doc = "Show package metadata" and man_xrefs = [ `Main ] in
-  let envs = B0_ui.Pager.envs in
+  let envs = B0_pager.envs () in
   let man = [
     `S Manpage.s_description;
     `P "$(tname) outputs package metadata. If no packages

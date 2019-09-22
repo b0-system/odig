@@ -216,14 +216,15 @@ let pkgs_with_htmldoc conf =
   let by_names = Pkg.by_names (Conf.pkgs conf) in
   let add_pkg _ name dir acc =
     let index = Fpath.(dir / "index.html") in
-    let exists = Os.File.exists index |> Log.warn_if_error ~use:false in
+    let level = Log.Warning in
+    let exists = Os.File.exists index |> Log.if_error ~level ~use:false in
     if not exists then acc else
     match String.Map.find name by_names with
     | exception Not_found -> acc
     | pkg -> pkg :: acc
   in
   let pkgs = Os.Dir.fold_dirs ~recurse:false add_pkg (Conf.html_dir conf) [] in
-  let pkgs = pkgs |> Log.warn_if_error ~use:[] in
+  let pkgs = pkgs |> Log.if_error ~level:Log.Warning ~use:[] in
   List.sort Pkg.compare pkgs
 
 let manual_reference conf ~ocaml_manual_uri =

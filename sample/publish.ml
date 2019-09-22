@@ -7,13 +7,14 @@
 open B0_std
 
 let versions () =
-  Result.bind (Os.Cmd.run_out Cmd.(arg "odig" % "--version")) @@ fun odig ->
-  Result.bind (Os.Cmd.run_out Cmd.(arg "odoc" % "--version")) @@ fun odoc ->
+  let run = Os.Cmd.run_out ~trim:true in
+  Result.bind (run Cmd.(arg "odig" % "--version")) @@ fun odig ->
+  Result.bind (run Cmd.(arg "odoc" % "--version")) @@ fun odoc ->
   Ok (Fmt.str "odig %s and odoc %s" odig odoc)
 
 let odig_html () =
   let cache_path = Cmd.(arg "odig" % "cache" % "path") in
-  Result.bind (Os.Cmd.run_out cache_path) @@ fun path ->
+  Result.bind (Os.Cmd.run_out ~trim:true cache_path) @@ fun path ->
   let htmldir = Fpath.(v path / "html") in
   let add_element _ f _ acc = f :: acc in
   Result.bind (Os.Dir.fold ~recurse:false add_element htmldir []) @@ fun fs ->
@@ -21,7 +22,7 @@ let odig_html () =
 
 let odig_theme_list () =
   let themes = Cmd.(arg "odig" % "odoc-theme" % "list" % "--long") in
-  Result.bind (Os.Cmd.run_out themes) @@ fun themes ->
+  Result.bind (Os.Cmd.run_out ~trim:true themes) @@ fun themes ->
   let parse_theme p = match String.cut_left ~sep:" " (String.trim p) with
   | None -> Fmt.failwith "%S: could not parse theme" p
   | Some (tn, path) -> Fpath.v ("doc@" ^ tn), Fpath.v path
@@ -55,7 +56,10 @@ let pp_updated ppf = function
 | false -> Fmt.string ppf "No update to publish on"
 | true -> Fmt.string ppf "Published docs on"
 
-let publish () new_commit remote branch =
+let publish tty_cap log_level new_commit remote branch =
+  let tty_cap = B0_std_ui.get_tty_cap tty_cap in
+  let log_level = B0_std_ui.get_log_level log_level in
+  B0_std_ui.setup tty_cap log_level ~log_spawns:Log.Debug;
   Log.if_error ~use:1 @@
   Result.bind (versions ()) @@ fun versions ->
   Result.bind (odig_html ()) @@ fun (htmldir, htmldir_contents) ->
@@ -98,8 +102,10 @@ let main () =
       let default = B0_github.Pages.default_branch in
       Arg.(value & opt string default & info ["b"; "branch"] ~doc ~docv)
     in
+    let tty_cap = B0_std_ui.tty_cap () in
+    let log_level = B0_std_ui.log_level () in
     let doc = "Updates odig's sample output on GitHub pages" in
-    Term.(const publish $ B0_ui.B0_std.cli_setup () $ new_commit $
+    Term.(const publish $ tty_cap $ log_level $ new_commit $
           remote $ branch),
     Term.info "publish" ~version:"%%VERSION%%" ~doc
   in

@@ -43,7 +43,7 @@ module Pkg = struct
     fun () ->
     let ocaml_pkg () =
       let ocaml_where = Cmd.(arg "ocamlc" % "-where") in
-      let p = Os.Cmd.run_out ocaml_where |> Result.to_failure in
+      let p = Os.Cmd.run_out ~trim:true ocaml_where |> Result.to_failure in
       "ocaml", Fpath.of_string p |> Result.to_failure
     in
     try
@@ -196,8 +196,8 @@ module Opam = struct
 
   let bin = lazy begin
     Result.bind (Os.Cmd.must_find_tool (Fpath.v "opam")) @@ fun opam ->
-    Result.bind (Os.Cmd.run_out Cmd.(path opam % "--version")) @@ fun v ->
-    match String.cut_left ~sep:"." (String.trim v) with
+    Result.bind (Os.Cmd.run_out ~trim:true Cmd.(path opam % "--version")) @@
+    fun v -> match String.cut_left ~sep:"." (String.trim v) with
     | Some (maj, _)  when
         maj <> "" && Char.code maj.[0] - 0x30 >= 2 -> Ok opam
     | Some _ | None ->
@@ -253,7 +253,7 @@ module Opam = struct
         match
           Log.time (fun _ m -> m "opam show") @@ fun () ->
           let stderr = `Stdo (Os.Cmd.out_null) in
-          Os.Cmd.run_out ~stderr show
+          Os.Cmd.run_out ~stderr ~trim:true show
         with
         | Error e -> Log.err (fun m -> m "%s" e); no_data qpkgs
         | Ok out ->
@@ -435,7 +435,7 @@ module Conf = struct
   let get_dir default_dir var = function
   | Some dir -> dir
   | None ->
-      match Os.Env.find ~empty_to_none:true var with
+      match Os.Env.find ~empty_is_none:true var with
       | Some l -> Fpath.of_string l |> Result.to_failure
       | None -> in_prefix_path default_dir
 
@@ -446,7 +446,7 @@ module Conf = struct
   let get_odoc_theme = function
   | Some v -> v
   | None ->
-      match Os.Env.find ~empty_to_none:true odoc_theme_env with
+      match Os.Env.find ~empty_is_none:true odoc_theme_env with
       | Some t -> t
       | None -> B0_odoc.Theme.get_user_preference () |> Result.to_failure
 
@@ -456,7 +456,7 @@ module Conf = struct
         let op_howto ppf o = Fmt.pf ppf "odig log --id %d" (B000.Op.id o) in
         let show_ui = Log.Info and show_op = Log.Debug in
         let level = Log.level () in
-        B0_ui.Memo.pp_leveled_feedback ~op_howto ~show_op ~show_ui ~level
+        B00_ui.Memo.pp_leveled_feedback ~op_howto ~show_op ~show_ui ~level
           Fmt.stderr
       in
       let jobs = Lazy.force jobs in
@@ -491,17 +491,17 @@ module Conf = struct
       let odoc_theme = get_odoc_theme odoc_theme in
       let b0_cache_dir =
         let b0_dir = cache_dir and cache_dir = b0_cache_dir in
-        B0_ui.Memo.get_cache_dir ~cwd ~b0_dir ~cache_dir
+        B00_ui.Memo.get_cache_dir ~cwd ~b0_dir ~cache_dir
       in
       let b0_log_file =
         let b0_dir = cache_dir and log_file = b0_log_file in
-        B0_ui.Memo.get_log_file ~cwd ~b0_dir ~log_file
+        B00_ui.Memo.get_log_file ~cwd ~b0_dir ~log_file
       in
       let trash_dir =
         let b0_dir = cache_dir and trash_dir = None in
-        B0_ui.Memo.get_trash_dir ~cwd ~b0_dir ~trash_dir
+        B00_ui.Memo.get_trash_dir ~cwd ~b0_dir ~trash_dir
       in
-      let jobs = lazy (B0_ui.Memo.find_jobs ~jobs ()) in
+      let jobs = lazy (B00_ui.Memo.find_jobs ~jobs ()) in
       let memo =
         let cwd = cache_dir and cache_dir = b0_cache_dir in
         memo ~cwd ~cache_dir ~trash_dir ~jobs

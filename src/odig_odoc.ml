@@ -391,14 +391,14 @@ let rec build b = match Pkg.Set.choose b.r.pkgs_todo with
     build b
 
 let write_log_file c memo =
-  Log.if_error ~use:() @@ B0_ui.Memo.Log.write_file (Conf.b0_log_file c) memo
+  Log.if_error ~use:() @@ B00_ui.Memo.Log.write_file (Conf.b0_log_file c) memo
 
 let gen c ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
   Result.bind (Conf.memo c) @@ fun m ->
   let b =
     builder m c ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo
   in
-  B0_ui.Sig_exit.on_sigint ~hook:(fun () -> write_log_file c m) @@ fun () ->
+  Os.Sig_exit.on_sigint ~hook:(fun () -> write_log_file c m) @@ fun () ->
   Memo.spawn_fiber m (fun () -> build b);
   find_and_set_theme c;
   Memo.stir ~block:true m;
@@ -408,7 +408,7 @@ let gen c ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
   | Error e ->
       let read_howto = Fmt.any "odig log -r " in
       let write_howto = Fmt.any "odig log -w " in
-      B0_ui.Memo.pp_error ~read_howto ~write_howto () Fmt.stderr e;
+      B00_ui.Memo.pp_error ~read_howto ~write_howto () Fmt.stderr e;
       Error "Documentation might be incomplete (see: odig log -e)."
 
 (*---------------------------------------------------------------------------

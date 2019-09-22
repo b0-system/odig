@@ -6,6 +6,16 @@
 
 open B0_std
 
+let pp_updated ppf = function
+| false -> Fmt.string ppf "No update to publish on"
+| true -> Fmt.string ppf "Published docs on"
+
+let get_msg ~src ~dst = function
+| Some m -> m
+| None ->
+    Fmt.str "Update %a\n\nWith contents of %a"
+      Fpath.pp_quoted dst Fpath.pp_quoted src
+
 let publish ~amend ~msg ~remote ~branch preserve_symlinks cname_file src dst =
   let follow_symlinks = not preserve_symlinks in
   let dst_upd = B0_github.Pages.update ~follow_symlinks ~src:(Some src) dst in
@@ -19,36 +29,30 @@ let publish ~amend ~msg ~remote ~branch preserve_symlinks cname_file src dst =
   let force = true in
   B0_github.Pages.commit_updates repo ~amend ~force ~remote ~branch ~msg updates
 
-let pp_updated ppf = function
-| false -> Fmt.string ppf "No update to publish on"
-| true -> Fmt.string ppf "Published docs on"
-
 let publish_cmd
-    () new_commit remote branch msg preserve_symlinks cname_file src dst
+    tty_cap log_level new_commit remote branch msg preserve_symlinks
+    cname_file src dst
   =
-  let msg = match msg with
-  | Some m -> m
-  | None ->
-      Fmt.str "Update %a\n\nWith contents of %a"
-        Fpath.pp_quoted dst Fpath.pp_quoted src
-  in
+  let tty_cap = B0_std_ui.get_tty_cap tty_cap in
+  let log_level = B0_std_ui.get_log_level log_level in
+  B0_std_ui.setup tty_cap log_level ~log_spawns:Log.Debug;
+  Log.if_error ~use:1 @@
+  let msg = get_msg ~src ~dst msg in
   let amend = not new_commit in
   let pub =
     publish ~amend ~msg ~remote ~branch preserve_symlinks cname_file src dst
   in
-  let ret = Result.bind pub @@ fun updated ->
-    Log.app begin fun m ->
-      m "[%a] %a %a"
-        (Fmt.tty_string [`Fg `Green]) "DONE" pp_updated updated
-        B0_vcs.Git.pp_remote_branch (remote, branch)
-    end;
-    Ok 0
-  in
-  Log.if_error ~use:1 ret
+  Result.bind pub @@ fun updated ->
+  Log.app begin fun m ->
+    m "[%a] %a %a"
+      (Fmt.tty_string [`Fg `Green]) "DONE" pp_updated updated
+      B0_vcs.Git.pp_remote_branch (remote, branch)
+  end;
+  Ok 0
 
 let main () =
   let open Cmdliner in
-  let some_path = Arg.some B0_ui.Cli.Arg.fpath in
+  let some_path = Arg.some B0_std_ui.fpath in
   let cmd =
     let preserve_symlinks =
       let doc = "Do not follow symlinks in $(i,SRC), preserve them." in
@@ -91,6 +95,8 @@ let main () =
       in
       Arg.(value & opt some_path None & info ["cname-file"] ~doc ~docv:"FILE")
     in
+    let tty_cap = B0_std_ui.tty_cap () in
+    let log_level = B0_std_ui.log_level () in
     let doc = "Publish directories on GitHub pages" in
     let man = [
       `S Manpage.s_description;
@@ -103,13 +109,13 @@ let main () =
       `S Manpage.s_bugs;
       `P "Report them, see $(i,%%PKG_HOMEPAGE%%) for contact information." ];
     in
-    Term.(const publish_cmd $ B0_ui.B0_std.cli_setup () $ new_commit $ remote $
+    Term.(const publish_cmd $ tty_cap $ log_level $ new_commit $ remote $
           branch $ msg $ preserve_symlinks $ cname_file $ src $ dst),
     Term.info "gh-pages-amend" ~version:"%%VERSION%%" ~doc ~man
   in
   Term.exit_status @@ Term.eval cmd
 
-let () = main ()
+let () = if !Sys.interactive then () else main ()
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2019 The odig programmers

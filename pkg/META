@@ -1,7 +1,6 @@
 description = "Lookup documentation of installed OCaml packages"
 version = "%%VERSION_NUM%%"
 requires = ""
-description = "Lookup documentation of installed OCaml packages"
 package "support" (
   requires = "b0.std b0.b00 b0.care"
   version = "%%VERSION_NUM%%"

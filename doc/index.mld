@@ -1,4 +1,4 @@
-{0 Odig}
+{0 Odig {%html: <span class="version">%%VERSION%%</span>%}}
 
 Odig is a command line tool to lookup documentation of installed OCaml
 packages.

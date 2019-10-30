@@ -46,8 +46,9 @@ let find_pkgs conf = function
     | miss ->
         let exists = List.rev_map Pkg.name pkgs in
         let add_error acc n =
-          let did_you_mean = Fmt.did_you_mean ~kind:"package" Fmt.string in
-          let err = Fmt.str "%a" did_you_mean (n, String.suggest exists n) in
+          let kind = Fmt.any "package" in
+          let unknown = Fmt.(unknown' ~kind Fmt.string ~hint:did_you_mean) in
+          let err = Fmt.str "%a" unknown (n, String.suggest exists n) in
           err :: acc
         in
         Error (String.concat "\n" (List.fold_left add_error [] miss))

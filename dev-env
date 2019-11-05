@@ -13,7 +13,7 @@ export ODIG_LIB_DIR=$P/lib
 export ODIG_DOC_DIR=$P/doc
 export ODIG_SHARE_DIR=$P/share
 
-ODIG_BRZO=$(brzo --where)
+ODIG_BRZO=$(brzo --path)
 ODIG_OCB=$(pwd)/_build/src/brzo_bin.native
 
 odig ()

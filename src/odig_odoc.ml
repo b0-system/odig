@@ -399,10 +399,16 @@ let gen c ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
     builder m c ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo
   in
   Os.Sig_exit.on_sigint ~hook:(fun () -> write_log_file c m) @@ fun () ->
-  Memo.spawn_fiber m (fun () -> build b);
-  find_and_set_theme c;
+  Memo.spawn_fiber m (fun () ->
+      Memo.delete b.m b.html_dir @@ fun () ->
+      Memo.delete b.m b.odoc_dir @@ fun () ->
+      build b);
   Memo.stir ~block:true m;
+  find_and_set_theme c;
   write_log_file c m;
+  Log.time (fun _ m -> m "deleting trash") begin fun () ->
+    Log.if_error ~use:() (B00.Memo.delete_trash ~block:false m)
+  end;
   match Memo.status b.m with
   | Ok () as v -> v
   | Error e ->

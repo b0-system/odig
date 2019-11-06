@@ -25,9 +25,9 @@ let set_theme conf t = (* Not symlinking because of file: and FF. *)
   let src = B0_odoc.Theme.path t in
   let dst = Fpath.(Conf.html_dir conf / theme_dir) in
   let replace src dst =
-    let allow_hardlinks = true and make_path = true and recurse = true in
+    let make_path = true and recurse = true in
     Result.bind (Os.Path.delete ~recurse:true dst) @@ fun _ ->
-    Os.Dir.copy ~allow_hardlinks ~make_path ~recurse ~src dst
+    Os.Dir.copy ~make_path ~recurse ~src dst
   in
   Result.bind (replace src dst) @@ fun () ->
   let manual_dir = Fpath.(Conf.html_dir conf / ocaml_manual_pkg) in
@@ -333,9 +333,9 @@ let write_ocaml_manual b =
   match Os.File.exists manual_index |> Log.if_error ~use:false with
   | false -> Ok None
   | true ->
-      let recurse = true and make_path = true and allow_hardlinks = true in
+      let recurse = true and make_path = true in
       Result.bind (Os.Path.delete ~recurse dst) @@ fun _ ->
-      Result.bind (Os.Dir.copy ~allow_hardlinks ~make_path ~recurse ~src dst)
+      Result.bind (Os.Dir.copy ~make_path ~recurse ~src dst)
       @@ fun _ -> Ok (Some "ocaml-manual/index.html")
 
 let index_intro_to_html b k = match b.index_intro with

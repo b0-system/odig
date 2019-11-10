@@ -165,13 +165,15 @@ let doc_cmd conf background browser pkg_names update no_update show_files =
       Fmt.error "@[<v>No doc could be generated for:@,%a@]"
         (Fmt.list Fpath.pp_quoted) fs
 
-let log_cmd conf no_pager (out_fmt, log_output) log_select =
+let log_cmd conf no_pager format kind op_selector =
   Log.if_error ~use:err_some @@
-  let don't = no_pager || out_fmt = `Trace_event in
+  let don't = no_pager || format = `Trace_event in
   Result.bind (B0_pager.find ~don't ()) @@ fun pager ->
   Result.bind (B0_pager.page_stdout pager) @@ fun () ->
-  Result.bind (B00_ui.Memo.Log.read_file (Conf.b0_log_file conf)) @@
-  fun (info, ops) -> log_output (info, log_select ops); Ok 0
+  let log_file = Conf.b0_log_file conf in
+  Result.bind (B00_ui.Memo.Log.read log_file) @@ fun l ->
+  B00_ui.Memo.Log.out Fmt.stdout format kind op_selector ~path:log_file l;
+  Ok 0
 
 let odoc_cmd
     conf _odoc pkg_names index_title index_intro force no_pkg_deps no_tag_index
@@ -292,7 +294,7 @@ let exits =
   Term.exit_info err_some ~doc:"indiscriminate error reported on stderr." ::
   Term.default_exits
 
-let out_fmt = B00_ui.Cli.out_fmt ()
+let details = B00_ui.Cli.out_details ()
 let conf =
   let path = B0_std_ui.fpath in
   let docs = Manpage.s_common_options in
@@ -592,24 +594,27 @@ let odoc_theme_cmd =
     in
     Arg.(value & flag & info ["default"] ~doc)
   in
-  Term.(const odoc_theme_cmd $ conf $ out_fmt $ action $ theme $ set_default),
+  Term.(const odoc_theme_cmd $ conf $ details $ action $ theme $ set_default),
   Term.info "odoc-theme" ~doc ~sdocs ~exits ~man ~man_xrefs
 
 let log_cmd =
   let doc = "Show odoc build log" and man_xrefs = [ `Main ] in
-  let docs_out_fmt = "OUTPUT FORMATS" in
+  let docs_format = "OUTPUT FORMAT" in
+  let docs_details = "OUTPUT DETAILS" in
   let docs_selection = "OPTIONS FOR SELECTING OPERATIONS" in
   let envs = B0_pager.envs () in
   let man = [
     `S Manpage.s_description;
     `P "The $(tname) command shows odoc build operations.";
-    `Blocks B00_ui.Op.select_man;
-    `S docs_out_fmt;
+    `Blocks B00_ui.Op.query_man;
+    `S docs_format;
+    `S docs_details;
     `S docs_selection; ]
   in
   Term.(const log_cmd $ conf $ no_pager $
-        B00_ui.Memo.Log.out_fmt_cli ~docs:docs_out_fmt () $
-        B00_ui.Op.select_cli ~docs:docs_selection ()),
+        B00_ui.Memo.Log.out_format_cli ~docs:docs_format () $
+        B00_ui.Cli.out_details ~docs:docs_details () $
+        B00_ui.Op.query_cli ~docs:docs_selection ()),
   Term.info "log" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
 
 let pkg_cmd =
@@ -623,7 +628,7 @@ let pkg_cmd =
     `P "See the packaging conventions in $(b,odig doc) $(mname) for the package
         install structure.";]
   in
-  Term.(const pkg_cmd $ conf $ no_pager $ out_fmt $ pkgs_pos),
+  Term.(const pkg_cmd $ conf $ no_pager $ details $ pkgs_pos),
   Term.info "pkg" ~doc ~sdocs ~envs ~exits ~man ~man_xrefs
 
 let readme_cmd = show_files_cmd ~kind:"readme" Doc_dir.readme_files
@@ -650,7 +655,7 @@ let show_cmd =
     let doc = "Show empty fields." in
     Arg.(value & flag & info ["e"; "show-empty"] ~doc)
   in
-  Term.(const show_cmd $ conf $ no_pager $ out_fmt $ show_empty $ field $
+  Term.(const show_cmd $ conf $ no_pager $ details $ show_empty $ field $
         pkgs_pos1),
   Term.info "show" ~doc ~sdocs ~envs ~exits ~man ~man_xrefs
 

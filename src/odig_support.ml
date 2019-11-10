@@ -459,7 +459,6 @@ module Conf = struct
         B00_ui.Memo.pp_leveled_feedback ~op_howto ~show_op ~show_ui ~level
           Fmt.stderr
       in
-      let jobs = Lazy.force jobs in
       B00.Memo.memo ~cwd ~cache_dir ~trash_dir ~jobs ~feedback ()
     end
 
@@ -469,7 +468,7 @@ module Conf = struct
       cache_dir : Fpath.t;
       doc_dir : Fpath.t;
       html_dir : Fpath.t;
-      jobs : int Lazy.t;
+      jobs : int;
       lib_dir : Fpath.t;
       memo : (B00.Memo.t, string) result Lazy.t;
       odoc_theme : string;
@@ -501,7 +500,7 @@ module Conf = struct
         let b0_dir = cache_dir and trash_dir = None in
         B00_ui.Memo.get_trash_dir ~cwd ~b0_dir ~trash_dir
       in
-      let jobs = lazy (B00_ui.Memo.find_jobs ~jobs ()) in
+      let jobs = B00_ui.Memo.get_jobs ~jobs in
       let memo =
         let cwd = cache_dir and cache_dir = b0_cache_dir in
         memo ~cwd ~cache_dir ~trash_dir ~jobs
@@ -522,7 +521,7 @@ module Conf = struct
   let cache_dir c = c.cache_dir
   let doc_dir c = c.doc_dir
   let html_dir c = c.html_dir
-  let jobs c = Lazy.force c.jobs
+  let jobs c = c.jobs
   let lib_dir c = c.lib_dir
   let memo c = Lazy.force c.memo
   let odoc_theme c = c.odoc_theme

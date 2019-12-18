@@ -307,13 +307,17 @@ let pkg_to_html b pkg =
   match cobjs = [] && mlds = [] with
   | true -> false
   | false ->
-      let odocs = List.map (cobj_to_odoc b) cobjs in
-      let mld_odocs = mlds_to_odoc b pkg pkg_info odocs mlds in
-      let odoc_files = List.rev_append odocs mld_odocs in
-      let pkg_odoc_dir = pkg_odoc_dir b pkg in
-      let deps_file = Fpath.(pkg_odoc_dir / Pkg.name pkg + ".html.deps") in
-      B0_odoc.Html.Dep.write b.m ~odoc_files pkg_odoc_dir ~o:deps_file;
-      B0_odoc.Html.Dep.read b.m deps_file begin fun deps ->
+      begin
+        let pkg_html_dir = pkg_html_dir b pkg in
+        let pkg_odoc_dir = pkg_odoc_dir b pkg in
+        Memo.delete b.m pkg_html_dir @@ fun () ->
+        Memo.delete b.m pkg_odoc_dir @@ fun () ->
+        let odocs = List.map (cobj_to_odoc b) cobjs in
+        let mld_odocs = mlds_to_odoc b pkg pkg_info odocs mlds in
+        let odoc_files = List.rev_append odocs mld_odocs in
+        let deps_file = Fpath.(pkg_odoc_dir / Pkg.name pkg + ".html.deps") in
+        B0_odoc.Html.Dep.write b.m ~odoc_files pkg_odoc_dir ~o:deps_file;
+        B0_odoc.Html.Dep.read b.m deps_file @@ fun deps ->
         html_deps_resolve b deps @@ fun odoc_deps ->
         let theme_uri = (Some theme_dir) and html_dir = b.html_dir in
         let to_html = B0_odoc.Html.write b.m ?theme_uri ~html_dir ~odoc_deps in
@@ -400,10 +404,7 @@ let gen c ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
     builder m c ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo
   in
   Os.Sig_exit.on_sigint ~hook:(fun () -> write_log_file c m) @@ fun () ->
-  Memo.spawn_fiber m (fun () ->
-      Memo.delete b.m b.html_dir @@ fun () ->
-      Memo.delete b.m b.odoc_dir @@ fun () ->
-      build b);
+  Memo.spawn_fiber m (fun () -> build b);
   Memo.stir ~block:true m;
   find_and_set_theme c;
   write_log_file c m;

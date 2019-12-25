@@ -23,12 +23,15 @@ val index_mld :
        by {!pkg_list} has a tag index and links the tags of the
        metadata section into it.}} *)
 
+val pkgs_with_html_docs : Conf.t -> Pkg.t list
+(** [pkg_with_html_docs c] looks up in [c] packages that
+    seem to have generated documentation. *)
+
 val pkg_list :
   Conf.t -> index_title:string option -> raw_index_intro:string option ->
-  tag_index:bool -> ocaml_manual_uri:string option -> string
-(** [pkg_list c ~index_title ~raw_index_intro ~tag_index ~ocaml_manual_uri]
-    is an HTML page for the packages that have their documentation generated in
-    [c].
+  tag_index:bool -> ocaml_manual_uri:string option -> Pkg.t list -> string
+(** [pkg_list c ~index_title ~raw_index_intro ~tag_index ~ocaml_manual_uri pkgs]
+    is an HTML page package list for the packages [pkgs].
     {ul
     {- [index_title] is a title for the page with the list of
        packages; if unspecified one is automatically generated.}

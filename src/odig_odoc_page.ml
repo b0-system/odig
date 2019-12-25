@@ -212,21 +212,6 @@ let tag_list conf pkgs =
     nav [tag_links classes];
     El.splice (List.map tag_section classes)]
 
-let pkgs_with_htmldoc conf =
-  let by_names = Pkg.by_names (Conf.pkgs conf) in
-  let add_pkg _ name dir acc =
-    let index = Fpath.(dir / "index.html") in
-    let level = Log.Warning in
-    let exists = Os.File.exists index |> Log.if_error ~level ~use:false in
-    if not exists then acc else
-    match String.Map.find name by_names with
-    | exception Not_found -> acc
-    | pkg -> pkg :: acc
-  in
-  let pkgs = Os.Dir.fold_dirs ~recurse:false add_pkg (Conf.html_dir conf) [] in
-  let pkgs = pkgs |> Log.if_error ~level:Log.Warning ~use:[] in
-  List.sort Pkg.compare pkgs
-
 let manual_reference conf ~ocaml_manual_uri =
   let manual_online = "https://caml.inria.fr/pub/docs/manual-ocaml/" in
   let uri, suff = match ocaml_manual_uri with
@@ -244,7 +229,23 @@ let stdlib_link conf =
   | false -> old_style_stdlib
   | true -> new_style_stdlib ^ "#modules"
 
-let pkg_list conf ~index_title ~raw_index_intro ~tag_index ~ocaml_manual_uri =
+let pkgs_with_html_docs conf =
+  let by_names = Pkg.by_names (Conf.pkgs conf) in
+  let add_pkg _ name dir acc =
+    let exists = Os.File.exists Fpath.(dir / "index.html") in
+    match exists |> Log.if_error ~level:Log.Warning ~use:false with
+    | false -> acc
+    | true ->
+        match String.Map.find name by_names with
+        | exception Not_found -> acc
+        | pkg -> pkg :: acc
+  in
+  let pkgs = Os.Dir.fold_dirs ~recurse:false add_pkg (Conf.html_dir conf) [] in
+  let pkgs = pkgs |> Log.if_error ~level:Log.Warning ~use:[] in
+  List.sort Pkg.compare pkgs
+
+let pkg_list
+    conf ~index_title ~raw_index_intro ~tag_index ~ocaml_manual_uri pkgs =
   (* XXX for now it's easier to do it this way. In the future we should
      rather use the ocamldoc language. Either by using
      https://github.com/ocaml/odoc/issues/94 or `--fragment`. So
@@ -292,7 +293,6 @@ let pkg_list conf ~index_title ~raw_index_intro ~tag_index ~ocaml_manual_uri =
     in
     El.header El.[ nav [txt "\xF0\x9F\x90\xAB"]; splice contents ]
   in
-  let pkgs = pkgs_with_htmldoc conf in
   let style_href = "_odoc-theme/odoc.css" in
   let page_title = match index_title with
   | None -> Fpath.(basename @@ parent (Conf.lib_dir conf))

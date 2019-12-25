@@ -354,26 +354,26 @@ let index_intro_to_html b k = match b.index_intro with
     Memo.read b.m o @@ fun index_header -> k (Some index_header)
 
 let write_pkgs_index b ~ocaml_manual_uri =
+  let add_pkg_data pkg_infos acc p = match Pkg.Map.find p pkg_infos with
+  | exception Not_found -> acc
+  | info ->
+      let version = Pkg_info.get `Version info in
+      let synopsis = Pkg_info.get `Synopsis info in
+      let tags = Pkg_info.get `Tags info in
+      let ( ++ ) = List.rev_append in
+      version ++ synopsis ++ tags ++ acc
+  in
+  index_intro_to_html b @@ fun raw_index_intro ->
+  let pkg_infos = Conf.pkg_infos b.conf in
+  let pkgs = Odig_odoc_page.pkgs_with_html_docs b.conf in
+  let stamp = match raw_index_intro with None -> [] | Some s -> [s] in
+  let stamp = List.fold_left (add_pkg_data pkg_infos) stamp pkgs in
+  let stamp = String.concat " " (odig_version :: stamp) in
   let index = Fpath.(b.html_dir / "index.html") in
   let index_title = b.index_title in
-  let pkg_index p = Fpath.(b.html_dir / Pkg.name p / "index.html") in
-  let add_page_data p acc =
-    (* FIXME. Coarse grained and wrong. First we could lookup tags and
-       synopses and use the stamp.  Second pkg_index seems rather to
-       be a sync matter if we keep the wait file operation rather use
-       that. Third it takes only pkgs_seen into account rather than
-       Odig_odoc_page.pkgs_with_htmldoc. The API should likely be changed
-       a bit to first get the info about which packages will be in the index.*)
-    match Opam.file p with
-    | None -> pkg_index p :: acc
-    | Some o -> o :: pkg_index p :: acc
-  in
-  let reads = Pkg.Set.fold add_page_data b.r.pkgs_seen [] in
-  let reads = match b.index_intro with None -> reads | Some f -> f :: reads in
-  index_intro_to_html b @@ fun raw_index_intro ->
-  Memo.write b.m ~stamp:odig_version ~reads index @@ fun () ->
+  Memo.write b.m ~stamp index @@ fun () ->
   Ok (Odig_odoc_page.pkg_list b.conf ~index_title ~raw_index_intro
-        ~tag_index:b.tag_index ~ocaml_manual_uri)
+        ~tag_index:b.tag_index ~ocaml_manual_uri pkgs)
 
 let rec build b = match Pkg.Set.choose b.r.pkgs_todo with
 | exception Not_found ->

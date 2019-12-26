@@ -1,19 +1,18 @@
 
 
-
+- Generate package index page even if some package fails (#57).
 - Hide anchoring links to screen readers on odig generated pages (#55).
 - Remove the `--trace` option of `odig odoc` and corresponding
   `ODIG_ODOC_TRACE` variable for generating a build log in Event trace
-  format. A build log is now unconditionally written, see the `--log`,
-  `ODIG_LOG` and `odig log` command. Use `odig log --trace-event` to generate
-  what `--trace` did.
-- For consistency with other tools options `--{cache,doc,lib,share}dir` 
+  format. See the `odig log` command. Use `odig log --trace-event` to
+  generate what `--trace` did.
+- For consistency with other tools, options `--{cache,doc,lib,share}dir` 
   are renamed to `--{cache,doc,lib,share}-dir` and corresponding 
   environment variable from `ODIG_{CACHE,DOC,LIB,SHARE}DIR` to
   `ODIG_{CACHE,DOC,LIB,SHARE}_DIR`.
 - mld only packages: work around `odoc html-deps` bug (#50).
-- Package pages: fix cache invalidation. In particular opam metadata
-  changes did not invalidate.
+- Package landing pages: fix cache invalidation. In particular opam metadata
+  changes did not retrigger a rebuild.
 - `gh-pages-amend` tool, add a `--cname-file` option to set
   the `CNAME` file in gh-pages.
 - Fix `META` file (#52). Thanks to Kye W. Shi for the report.

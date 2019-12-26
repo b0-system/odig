@@ -31,6 +31,7 @@ let () =
        Pkg.doc "doc/manual.mld" ~dst:"odoc-pages/manual.mld";
        Pkg.doc "doc/packaging.mld" ~dst:"odoc-pages/packaging.mld";
        Pkg.test "sample/publish";
+       theme "default";
        theme "dark";
        theme "light";
        theme "solarized.dark";

@@ -9,7 +9,9 @@ open B0_std
 open B0_htmlg
 
 let anchor_href aid = At.href (Fmt.str "#%s" aid)
-let anchor_a aid = El.a ~at:At.[anchor_href aid; class' "anchor"] []
+let anchor_a aid =
+  El.a ~at:At.[anchor_href aid; class' "anchor"; v "aria-hidden" "true"] []
+
 let a_to_utf_8_txt ~href:h txt =
   El.a ~at:At.[type' "text/plain; charset=UTF-8"; href h] [El.txt txt]
 

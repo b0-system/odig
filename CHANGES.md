@@ -1,13 +1,14 @@
 
 
 
+- Hide anchoring links to screen readers on odig generated pages (#55).
 - Remove the `--trace` option of `odig odoc` and corresponding
   `ODIG_ODOC_TRACE` variable for generating a build log in Event trace
   format. A build log is now unconditionally written, see the `--log`,
   `ODIG_LOG` and `odig log` command. Use `odig log --trace-event` to generate
   what `--trace` did.
 - For consistency with other tools options `--{cache,doc,lib,share}dir` 
-  are renamed to `--{cache,doc,lib,share}--dir` and corresponding 
+  are renamed to `--{cache,doc,lib,share}-dir` and corresponding 
   environment variable from `ODIG_{CACHE,DOC,LIB,SHARE}DIR` to
   `ODIG_{CACHE,DOC,LIB,SHARE}_DIR`.
 - mld only packages: work around `odoc html-deps` bug (#50).

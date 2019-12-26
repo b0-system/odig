@@ -9,9 +9,9 @@ open B0_std
 open B0_htmlg
 
 let anchor_href aid = At.href (Fmt.str "#%s" aid)
-let anchor_a aid = El.a ~a:At.[anchor_href aid; class' "anchor"] []
+let anchor_a aid = El.a ~at:At.[anchor_href aid; class' "anchor"] []
 let a_to_utf_8_txt ~href:h txt =
-  El.a ~a:At.[type' "text/plain; charset=UTF-8"; href h] [El.txt txt]
+  El.a ~at:At.[type' "text/plain; charset=UTF-8"; href h] [El.txt txt]
 
 let doc_dir_link ?txt f =
   let fname = Fpath.basename (Fpath.v f) in
@@ -26,17 +26,17 @@ let pkg_title pkg pkg_info =
     | [] -> El.txt "" | v :: _ -> el v
     in
     let version = get_first `Version @@ fun version ->
-      El.span ~a:At.[class' "version"] El.[txt version]
+      El.span ~at:At.[class' "version"] [El.txt version]
     in
     let changes_link = get_first `Changes_files @@ fun c ->
       doc_dir_link ~txt:"changes" c
     in
     let issues_link = get_first `Issues @@ fun issues ->
-      El.a ~a:At.[href issues] El.[txt "issues"]
+      El.a ~at:At.[href issues] [El.txt "issues"]
     in
-    let info_link = El.a ~a:At.[href "#package_info"] El.[txt "more…"] in
+    let info_link = El.a ~at:At.[href "#package_info"] [El.txt "more…"] in
     let sp = El.txt " " in
-    El.[version; sp; nav [changes_link; sp; issues_link; sp; info_link]]
+    [version; sp; El.nav [changes_link; sp; issues_link; sp; info_link]]
   in
   Fmt.str "{0:package-%s Package %s {%%html:%s%%}}"
     (Pkg.name pkg) (Pkg.name pkg)
@@ -104,18 +104,18 @@ let pkg_info_section pkg pkg_info ~with_tag_links =
       let fid = Fmt.str "info-%s" fname in
       let vs = List.sort compare vs in
       let vs = List.map (fun v -> El.li (fval v)) vs in
-      El.tr ~a:At.[id fid] El.[td [(anchor_a fid); txt fname]; td [ul vs]]
+      El.tr ~at:At.[id fid] El.[td [(anchor_a fid); txt fname]; td [ul vs]]
   in
   let defs pkg pkg_info =
-    let string_val str = El.[txt str] in
-    let uri_val uri = El.[a ~a:At.[href uri] El.[txt uri]] in
+    let string_val str = [El.txt str] in
+    let uri_val uri = [El.a ~at:At.[href uri] [El.txt uri]] in
     let file_val f = [doc_dir_link f] in
     let pkg_val pkg =
-      El.[a ~a:At.[href (Fmt.str "../%s/index.html" pkg)] El.[txt pkg]]
+      [El.a ~at:At.[href (Fmt.str "../%s/index.html" pkg)] [El.txt pkg]]
     in
     let tag_val t = match with_tag_links with
-    | true -> El.[a ~a:At.[href (Fmt.str "../index.html#tag-%s" t)] [txt t]]
-    | false -> El.[txt t]
+    | true -> [El.a ~at:At.[href (Fmt.str "../index.html#tag-%s" t)] [El.txt t]]
+    | false -> [El.txt t]
     in
     [ def_values `Authors "authors" string_val pkg_info;
       def_values `Changes_files "changes-files" file_val pkg_info;
@@ -133,7 +133,7 @@ let pkg_info_section pkg pkg_info ~with_tag_links =
   in
   Fmt.str "{1:package_info Package info}\n {%%html:%s%%}" @@
   El.to_string ~doc_type:false
-    (El.table ~a:At.[class' "package"; class' "info"] (defs pkg pkg_info))
+    (El.table ~at:At.[class' "package"; class' "info"] (defs pkg pkg_info))
 
 let index_mld conf pkg pkg_info ~user_index ~with_tag_links =
   Fmt.str "%s\n%s\n%s"
@@ -152,40 +152,40 @@ let pkg_li conf ~pid pkg =
     let synopsis = String.concat " " (Pkg_info.get `Synopsis info) in
     let index = Fmt.str "%s/index.html" name in
     let pid = pid name in
-    El.li ~a:At.[id pid] El.[
+    El.li ~at:At.[id pid] [
         anchor_a pid;
-        a ~a:At.[href index] [txt name]; txt " ";
-        span ~a:At.[class' "version"] [txt version]; txt " ";
-        span ~a:At.[class' "synopsis"] [txt synopsis]; ]
+        El.a ~at:At.[href index] [El.txt name]; El.txt " ";
+        El.span ~at:At.[class' "version"] [El.txt version]; El.txt " ";
+        El.span ~at:At.[class' "synopsis"] [El.txt synopsis]; ]
 
 let pkg_list conf pkgs =
   let letter_id l = Fmt.str "name-%s" l in
-  let letter_link (l, _) = El.(a ~a:At.[anchor_href (letter_id l)] [txt l]) in
+  let letter_link (l, _) = El.(a ~at:At.[anchor_href (letter_id l)] [txt l]) in
   let letter_section (l, pkgs) =
     let pkgs = List.sort Pkg.compare_by_caseless_name pkgs in
     let letter_id = letter_id l in
     let pid = Fmt.str "package-%s" in
     El.splice @@
-    El.[h3 ~a:At.[id letter_id] [anchor_a letter_id; txt l];
-        ol ~a:At.[class' "packages"] (List.map (pkg_li conf ~pid) pkgs)]
+    [El.h3 ~at:At.[id letter_id] [anchor_a letter_id; El.txt l];
+     El.ol ~at:At.[class' "packages"] (List.map (pkg_li conf ~pid) pkgs)]
   in
   let by_name = "by-name" in
   let classes p = [String.of_char (Char.Ascii.lowercase (Pkg.name p).[0])] in
   let classes = List.classify ~cmp_elts:Pkg.compare ~classes pkgs in
-  El.div ~a:At.[class' by_name] El.[
-      h2 ~a:At.[id by_name] [anchor_a by_name; txt "Packages by name"];
-      nav (List.map letter_link classes);
+  El.div ~at:At.[class' by_name] [
+      El.h2 ~at:At.[id by_name] [anchor_a by_name; El.txt "Packages by name"];
+      El.nav (List.map letter_link classes);
       El.splice (List.map letter_section classes) ]
 
 let tag_list conf pkgs =
   let tag_id t = Fmt.str "tag-%s" t in
   let tag_links tags =
-    let tag_li (t, _) = El.(li [a ~a:At.[anchor_href (tag_id t)] [txt t]]) in
+    let tag_li (t, _) = El.(li [a ~at:At.[anchor_href (tag_id t)] [txt t]]) in
     let tags_by_letter (letter, tags) =
       let lid = Fmt.str "tags-%s" letter in
-      El.(tr ~a:At.[id lid]
+      El.(tr ~at:At.[id lid]
             [td [anchor_a lid; txt letter];
-             td [ol ~a:At.[class' "tags"] (List.map tag_li tags)]])
+             td [ol ~at:At.[class' "tags"] (List.map tag_li tags)]])
     in
     let classes (t, _) = [String.of_char (Char.Ascii.lowercase t.[0])] in
     let cmp_elts (t, _) (t', _) = String.compare t t' in
@@ -197,8 +197,8 @@ let tag_list conf pkgs =
     let tag_id = tag_id t in
     let pid = Fmt.str "tag-%s-package-%s" t in
     El.splice @@
-    El.[h3 ~a:At.[id tag_id] [anchor_a tag_id; span [txt t]];
-        ol ~a:At.[class' "packages"] (List.map (pkg_li conf ~pid) pkgs)]
+    [El.h3 ~at:At.[id tag_id] [anchor_a tag_id; El.span [El.txt t]];
+     El.ol ~at:At.[class' "packages"] (List.map (pkg_li conf ~pid) pkgs)]
   in
   let by_tag = "by-tag" in
   let pkg_infos = Conf.pkg_infos conf in
@@ -206,10 +206,9 @@ let tag_list conf pkgs =
   | Not_found -> assert false
   in
   let classes = List.classify ~cmp_elts:Pkg.compare ~classes pkgs in
-  let open El in
-  div ~a:At.[class' by_tag] [
-    h2 ~a:At.[id by_tag] [anchor_a by_tag; txt "Packages by tag"];
-    nav [tag_links classes];
+  El.div ~at:At.[class' by_tag] [
+    El.h2 ~at:At.[id by_tag] [anchor_a by_tag; El.txt "Packages by tag"];
+    El.nav [tag_links classes];
     El.splice (List.map tag_section classes)]
 
 let manual_reference conf ~ocaml_manual_uri =
@@ -218,7 +217,7 @@ let manual_reference conf ~ocaml_manual_uri =
   | None -> manual_online, El.txt " (online, latest version)."
   | Some href -> href, El.txt ""
   in
-  El.splice @@ El.[a ~a:At.[href uri] [txt "OCaml manual"]; suff], uri
+  El.splice @@ [El.a ~at:At.[href uri] [El.txt "OCaml manual"]; suff], uri
 
 let stdlib_link conf =
   let htmldir = Conf.html_dir conf in
@@ -251,44 +250,47 @@ let pkg_list
      https://github.com/ocaml/odoc/issues/94 or `--fragment`. So
      that we don't have to guess the way package links are formed. *)
   let doc_head ~style_href page_title = (* a basic head *)
-    El.head El.[
-        meta ~a:At.[charset "utf-8"];
-        meta ~a:At.[name "generator"; content "odig %%VERSION%%"];
-        meta ~a:At.[name "viewport";
-                     content "width=device-width, initial-scale=1.0"];
-        link ~a:At.[rel "stylesheet"; type' "text/css"; media "screen, print";
-                     href style_href; ];
-        title [txt page_title]]
+    El.head [
+      El.meta ~at:At.[charset "utf-8"];
+      El.meta ~at:At.[name "generator"; content "odig %%VERSION%%"];
+      El.meta ~at:At.[name "viewport";
+                   content "width=device-width, initial-scale=1.0"];
+      El.link ~at:At.[rel "stylesheet"; type' "text/css"; media "screen, print";
+                      href style_href; ];
+      El.title [El.txt page_title]]
   in
   let doc_header =
     let comma = El.txt ", " in
     let manual_markup, manual_href = manual_reference conf ~ocaml_manual_uri in
     let contents = match raw_index_intro with
-    | Some h -> El.[raw h]
+    | Some h -> [El.raw h]
     | None ->
         let stdlib_link = stdlib_link conf in
         let browse_by_tag = match tag_index with
-        | true -> El.(splice [a ~a:At.[href "#by-tag"] [txt "by tag"]; comma])
+        | true -> El.(splice [a ~at:At.[href "#by-tag"] [txt "by tag"]; comma])
         | false -> El.splice []
         in
         let packages_by_tag_li = match tag_index with
-        | true -> El.li El.[a ~a:At.[href "#by-tag"] [txt "Packages by tag"]]
         | false -> El.splice []
+        | true ->
+            El.li [El.a ~at:At.[href "#by-tag"] [El.txt "Packages by tag"]]
         in
-        El.[
-          h1 [txt "OCaml package documentation"];
-          p [txt "Browse ";
-             a ~a:At.[href "#by-name"] [txt "by name"]; comma;
-             browse_by_tag;
-             txt " the "; a ~a:At.[href stdlib_link] [txt "standard library"];
-             txt " and the "; manual_markup; txt ".";];
-          p [small [txt "Generated for ";
-                    code [txt (Fpath.to_string (Conf.lib_dir conf))]]];
-          nav ~a:At.[class' "toc"] [
-            ul [
-              li [a ~a:At.[href stdlib_link] [txt "OCaml standard library"]];
-              li [a ~a:At.[href manual_href] [txt "OCaml manual"]];
-              li [a ~a:At.[href "#by-name"] [txt "Packages by name"]];
+        [ El.h1 [El.txt "OCaml package documentation"];
+          El.p [El.txt "Browse ";
+                El.a ~at:At.[href "#by-name"] [El.txt "by name"]; comma;
+                browse_by_tag;
+                El.txt " the ";
+                El.a ~at:At.[href stdlib_link] [El.txt "standard library"];
+                El.txt " and the "; manual_markup; El.txt ".";];
+          El.p [El.small [El.txt "Generated for ";
+                          El.code
+                            [El.txt (Fpath.to_string (Conf.lib_dir conf))]]];
+          El.nav ~at:At.[class' "toc"] [
+            El.ul [
+              El.li [El.a ~at:At.[href stdlib_link]
+                       [El.txt "OCaml standard library"]];
+              El.li [El.a ~at:At.[href manual_href] [El.txt "OCaml manual"]];
+              El.li [El.a ~at:At.[href "#by-name"] [El.txt "Packages by name"]];
               packages_by_tag_li; ]]]
     in
     El.header El.[ nav [txt "\xF0\x9F\x90\xAB"]; splice contents ]
@@ -299,14 +301,14 @@ let pkg_list
   | Some t -> t
   in
   El.to_string ~doc_type:true @@
-  El.html El.[
-      doc_head ~style_href page_title;
-      body ~a:At.[class' "odig";
-                   (* see https://github.com/ocaml/odoc/issues/298 *)
-                   class' "content"]
-        [ doc_header;
-          pkg_list conf pkgs;
-          if tag_index then tag_list conf pkgs else El.splice []]]
+  El.html [
+    doc_head ~style_href page_title;
+    El.body ~at:At.[class' "odig";
+                    (* see https://github.com/ocaml/odoc/issues/298 *)
+                    class' "content"]
+      [ doc_header;
+        pkg_list conf pkgs;
+        if tag_index then tag_list conf pkgs else El.splice []]]
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2018 The odig programmers

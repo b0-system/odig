@@ -304,28 +304,23 @@ let pkg_to_html b pkg =
   in
   let cobjs = Pkg_info.doc_cobjs pkg_info in
   let mlds = Doc_dir.odoc_pages (Pkg_info.doc_dir pkg_info) in
-  match cobjs = [] && mlds = [] with
-  | true -> false
-  | false ->
-      begin
-        let pkg_html_dir = pkg_html_dir b pkg in
-        let pkg_odoc_dir = pkg_odoc_dir b pkg in
-        Memo.delete b.m pkg_html_dir @@ fun () ->
-        Memo.delete b.m pkg_odoc_dir @@ fun () ->
-        let odocs = List.map (cobj_to_odoc b) cobjs in
-        let mld_odocs = mlds_to_odoc b pkg pkg_info odocs mlds in
-        let odoc_files = List.rev_append odocs mld_odocs in
-        let deps_file = Fpath.(pkg_odoc_dir / Pkg.name pkg + ".html.deps") in
-        B0_odoc.Html.Dep.write b.m ~odoc_files pkg_odoc_dir ~o:deps_file;
-        B0_odoc.Html.Dep.read b.m deps_file @@ fun deps ->
-        html_deps_resolve b deps @@ fun odoc_deps ->
-        let theme_uri = (Some theme_dir) and html_dir = b.html_dir in
-        let to_html = B0_odoc.Html.write b.m ?theme_uri ~html_dir ~odoc_deps in
-        List.iter to_html odoc_files;
-        link_odoc_assets b pkg pkg_info;
-        link_odoc_doc_dir b pkg pkg_info;
-      end;
-      true
+  if cobjs = [] && mlds = [] then () else
+  let pkg_html_dir = pkg_html_dir b pkg in
+  let pkg_odoc_dir = pkg_odoc_dir b pkg in
+  Memo.delete b.m pkg_html_dir @@ fun () ->
+  Memo.delete b.m pkg_odoc_dir @@ fun () ->
+  let odocs = List.map (cobj_to_odoc b) cobjs in
+  let mld_odocs = mlds_to_odoc b pkg pkg_info odocs mlds in
+  let odoc_files = List.rev_append odocs mld_odocs in
+  let deps_file = Fpath.(pkg_odoc_dir / Pkg.name pkg + ".html.deps") in
+  B0_odoc.Html.Dep.write b.m ~odoc_files pkg_odoc_dir ~o:deps_file;
+  B0_odoc.Html.Dep.read b.m deps_file @@ fun deps ->
+  html_deps_resolve b deps @@ fun odoc_deps ->
+  let theme_uri = (Some theme_dir) and html_dir = b.html_dir in
+  let to_html = B0_odoc.Html.write b.m ?theme_uri ~html_dir ~odoc_deps in
+  List.iter to_html odoc_files;
+  link_odoc_assets b pkg pkg_info;
+  link_odoc_doc_dir b pkg pkg_info
 
 let write_ocaml_manual b =
   (* Not symlinking because of file: and FF *)
@@ -390,8 +385,7 @@ let rec build b = match Pkg.Set.choose b.r.pkgs_todo with
 | pkg ->
     b.r.pkgs_todo <- Pkg.Set.remove pkg b.r.pkgs_todo;
     b.r.pkgs_seen <- Pkg.Set.add pkg b.r.pkgs_seen;
-    let gens = pkg_to_html b pkg in
-    if not gens then (b.r.pkgs_seen <- Pkg.Set.remove pkg b.r.pkgs_seen);
+    pkg_to_html b pkg;
     build b
 
 let write_log_file c memo =

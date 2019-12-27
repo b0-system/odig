@@ -24,7 +24,7 @@ let theme t =
 let () =
   Pkg.describe "odig" @@ fun c ->
   Ok [ Pkg.mllib "src/odig_support.mllib";
-       Pkg.bin "src/odig_bin" ~dst:"odig";
+       Pkg.bin "src/odig_main" ~dst:"odig";
        Pkg.bin "src/gh_pages_amend" ~dst:"gh-pages-amend";
        Pkg.etc "themes/ocamldoc.css"; (* still there for topkg doc support *)
        Pkg.doc "doc/index.mld" ~dst:"odoc-pages/index.mld";

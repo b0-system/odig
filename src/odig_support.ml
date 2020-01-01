@@ -420,114 +420,81 @@ module Pkg_info = struct
     loop [] (Opam.query pkgs)
 end
 
+module Env = struct
+  let b0_cache_dir = "ODIG_B0_CACHE_DIR"
+  let b0_log_file = "ODIG_B0_LOG_FILE"
+  let cache_dir = "ODIG_CACHE_DIR"
+  let color = "ODIG_COLOR"
+  let doc_dir = "ODIG_DOC_DIR"
+  let lib_dir = "ODIG_LIB_DIR"
+  let odoc_theme = "ODIG_ODOC_THEME"
+  let share_dir = "ODIG_SHARE_DIR"
+  let verbosity = "ODIG_VERBOSITY"
+end
+
 module Conf = struct
-  let cache_dir_env = "ODIG_CACHE_DIR"
-  let doc_dir_env = "ODIG_DOC_DIR"
-  let lib_dir_env = "ODIG_LIB_DIR"
-  let odoc_theme_env = "ODIG_ODOC_THEME"
-  let share_dir_env = "ODIG_SHARE_DIR"
-
-  let in_prefix_path dir =
-    (* relocation hack find directory relative to executable path *)
-    let exec = Fpath.of_string Sys.executable_name |> Result.to_failure in
-    Fpath.((parent @@ parent @@ exec) // dir)
-
-  let get_dir default_dir var = function
-  | Some dir -> dir
-  | None ->
-      match Os.Env.find ~empty_is_none:true var with
-      | Some l -> Fpath.of_string l |> Result.to_failure
-      | None -> in_prefix_path default_dir
-
-  let get_cache_dir dir = get_dir Fpath.(v "var/cache/odig") cache_dir_env dir
-  let get_lib_dir dir = get_dir (Fpath.v "lib") lib_dir_env dir
-  let get_doc_dir dir = get_dir (Fpath.v "doc") doc_dir_env dir
-  let get_share_dir dir = get_dir (Fpath.v "share") share_dir_env dir
-  let get_odoc_theme = function
-  | Some v -> v
-  | None ->
-      match Os.Env.find ~empty_is_none:true odoc_theme_env with
-      | Some t -> t
-      | None -> B0_odoc.Theme.get_user_preference () |> Result.to_failure
-
-  let memo ~cwd ~cache_dir (* b0 not odig *) ~trash_dir ~jobs =
-    lazy begin
-      let feedback =
-        let op_howto ppf o = Fmt.pf ppf "odig log --id %d" (B000.Op.id o) in
-        let show_ui = Log.Info and show_op = Log.Debug in
-        let level = Log.level () in
-        B00_ui.Memo.pp_leveled_feedback ~op_howto ~show_op ~show_ui ~level
-          Fmt.stderr
-      in
-      B00.Memo.memo ~cwd ~cache_dir ~trash_dir ~jobs ~feedback ()
-    end
 
   type t =
     { b0_cache_dir : Fpath.t;
       b0_log_file : Fpath.t;
       cache_dir : Fpath.t;
+      cwd : Fpath.t;
       doc_dir : Fpath.t;
       html_dir : Fpath.t;
       jobs : int;
       lib_dir : Fpath.t;
+      log_level : Log.level;
       memo : (B00.Memo.t, string) result Lazy.t;
       odoc_theme : string;
       pkg_infos : Pkg_info.t Pkg.Map.t Lazy.t;
       pkgs : Pkg.t list Lazy.t;
-      share_dir : Fpath.t; }
+      share_dir : Fpath.t;
+      tty_cap : Tty.cap; }
+
+  let memo ~cwd ~cache_dir (* b0 not odig *) ~trash_dir ~jobs =
+    let feedback =
+      let op_howto ppf o = Fmt.pf ppf "odig log --id %d" (B000.Op.id o) in
+      let show_op = Log.Debug and show_ui = Log.Info and level = Log.level () in
+      B00_ui.Memo.pp_leveled_feedback ~op_howto ~show_op ~show_ui ~level
+        Fmt.stderr
+    in
+    B00.Memo.memo ~cwd ~cache_dir ~trash_dir ~jobs ~feedback ()
 
   let v
-      ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~jobs ~lib_dir ~odoc_theme
-      ~share_dir ()
+      ~b0_cache_dir ~b0_log_file ~cache_dir ~cwd ~doc_dir ~html_dir ~jobs
+      ~lib_dir ~log_level ~odoc_theme ~share_dir ~tty_cap ()
     =
-    try
-      let cwd = Os.Dir.cwd () |> Result.to_failure in
-      let cache_dir = get_cache_dir cache_dir in
-      let lib_dir = get_lib_dir lib_dir in
-      let doc_dir = get_doc_dir doc_dir in
-      let share_dir = get_share_dir share_dir in
-      let html_dir = Fpath.(cache_dir / "html") in
-      let odoc_theme = get_odoc_theme odoc_theme in
-      let b0_cache_dir =
-        let b0_dir = cache_dir and cache_dir = b0_cache_dir in
-        B00_ui.Memo.get_cache_dir ~cwd ~b0_dir ~cache_dir
-      in
-      let b0_log_file =
-        let b0_dir = cache_dir and log_file = b0_log_file in
-        B00_ui.Memo.get_log_file ~cwd ~b0_dir ~log_file
-      in
-      let trash_dir =
-        let b0_dir = cache_dir and trash_dir = None in
-        B00_ui.Memo.get_trash_dir ~cwd ~b0_dir ~trash_dir
-      in
-      let jobs = B00_ui.Memo.get_jobs ~jobs in
-      let memo =
-        let cwd = cache_dir and cache_dir = b0_cache_dir in
-        memo ~cwd ~cache_dir ~trash_dir ~jobs
-      in
-      let pkgs = lazy (Pkg.of_dir lib_dir) in
-      let pkg_infos = Lazy.from_fun @@ fun () ->
-        let add acc (p, i) = Pkg.Map.add p i acc in
-        let pkg_infos = Pkg_info.query doc_dir (Lazy.force pkgs) in
-        List.fold_left add Pkg.Map.empty pkg_infos
-      in
-      Ok { b0_cache_dir; b0_log_file; cache_dir; doc_dir; html_dir; jobs;
-           lib_dir; memo; odoc_theme; pkg_infos; pkgs; share_dir; }
-    with
-    | Failure e -> Fmt.error "conf: %s" e
+    let trash_dir =
+      B00_ui.Memo.get_trash_dir ~cwd ~b0_dir:cache_dir ~trash_dir:None
+    in
+    let memo =
+      lazy (memo ~cwd:cache_dir ~cache_dir:b0_cache_dir ~trash_dir ~jobs)
+    in
+    let pkgs = lazy (Pkg.of_dir lib_dir) in
+    let pkg_infos = Lazy.from_fun @@ fun () ->
+      let add acc (p, i) = Pkg.Map.add p i acc in
+      let pkg_infos = Pkg_info.query doc_dir (Lazy.force pkgs) in
+      List.fold_left add Pkg.Map.empty pkg_infos
+    in
+    { b0_cache_dir; b0_log_file; cache_dir; cwd; doc_dir; html_dir; jobs;
+      lib_dir; log_level; memo; odoc_theme; pkg_infos; pkgs; share_dir;
+      tty_cap }
 
   let b0_cache_dir c = c.b0_cache_dir
   let b0_log_file c = c.b0_log_file
   let cache_dir c = c.cache_dir
+  let cwd c = c.cwd
   let doc_dir c = c.doc_dir
   let html_dir c = c.html_dir
   let jobs c = c.jobs
   let lib_dir c = c.lib_dir
+  let log_level c = c.log_level
   let memo c = Lazy.force c.memo
   let odoc_theme c = c.odoc_theme
   let pkg_infos c = Lazy.force c.pkg_infos
   let pkgs c = Lazy.force c.pkgs
   let share_dir c = c.share_dir
+  let tty_cap c = c.tty_cap
   let pp =
     Fmt.record @@
     [ Fmt.field "b0-cache-dir" b0_cache_dir Fpath.pp_quoted;
@@ -538,6 +505,48 @@ module Conf = struct
       Fmt.field "jobs" jobs Fmt.int;
       Fmt.field "odoc-theme" odoc_theme Fmt.string;
       Fmt.field "share-dir" share_dir Fpath.pp_quoted; ]
+
+  (* Setup *)
+
+  let get_dir ~cwd ~exec default_dir = function
+  | Some dir -> Fpath.(cwd // dir)
+  | None ->
+      (* relocation hack find directory relative to executable path *)
+      Fpath.((parent @@ parent @@ exec) // default_dir)
+
+  let get_odoc_theme = function
+  | Some v -> Ok v
+  | None ->
+      Result.bind (B0_odoc.Theme.get_user_preference ()) @@ fun n ->
+      Ok (Option.value ~default:B0_odoc.Theme.odig_default n)
+
+  let setup_with_cli
+      ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~jobs ~lib_dir ~log_level
+      ~odoc_theme ~share_dir ~tty_cap ()
+    =
+    Result.map_error (Fmt.str "conf: %s") @@
+    let tty_cap = B0_std_ui.get_tty_cap tty_cap in
+    let log_level = B0_std_ui.get_log_level log_level in
+    B0_std_ui.setup tty_cap log_level ~log_spawns:Log.Debug;
+    Result.bind (Os.Dir.cwd ()) @@ fun cwd ->
+    Result.bind (Fpath.of_string Sys.executable_name) @@ fun exec ->
+    let cache_dir = get_dir ~cwd ~exec (Fpath.v "var/cache/odig") cache_dir in
+    let b0_cache_dir =
+      let b0_dir = cache_dir and cache_dir = b0_cache_dir in
+      B00_ui.Memo.get_cache_dir ~cwd ~b0_dir ~cache_dir
+    in
+    let b0_log_file =
+      let b0_dir = cache_dir and log_file = b0_log_file in
+      B00_ui.Memo.get_log_file ~cwd ~b0_dir ~log_file
+    in
+    let html_dir = Fpath.(cache_dir / "html") in
+    let lib_dir = get_dir ~cwd ~exec (Fpath.v "lib") lib_dir in
+    let doc_dir = get_dir ~cwd ~exec (Fpath.v "doc") doc_dir in
+    let share_dir = get_dir ~cwd ~exec (Fpath.v "share") share_dir in
+    Result.bind (get_odoc_theme odoc_theme) @@ fun odoc_theme ->
+    let jobs = B00_ui.Memo.get_jobs ~jobs in
+    Ok (v ~b0_cache_dir ~b0_log_file ~cache_dir ~cwd ~doc_dir ~html_dir
+          ~jobs ~lib_dir ~log_level ~odoc_theme ~share_dir ~tty_cap ())
 end
 
 (*---------------------------------------------------------------------------

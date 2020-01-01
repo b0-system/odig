@@ -1,5 +1,13 @@
 
-
+- Rework the `odoc-theme` command. The `set` command now
+  unconditionally writes to `~/.conf/odig/odoc-theme` and
+  sets the theme for generated doc (the `--default` flag no longer exists). 
+  The `default` command is renamed to `get`, a `--config` option is added 
+  to get the theme written in the configuration file (which can be overriden 
+  by an environment variable).
+- Add theme `odig.default` and make this the default theme. This
+  theme automatically switches between `odig.light` or `odig.dark`
+  according to user preference (#54).
 - Generate package index page even if some package fails (#57).
 - Hide anchoring links to screen readers on odig generated pages (#55).
 - Remove the `--trace` option of `odig odoc` and corresponding

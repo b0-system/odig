@@ -18,50 +18,57 @@ let link_if_exists src dst = match src with
 (* Theme handling *)
 
 let ocaml_manual_pkg = "ocaml-manual"
-let theme_dir = "_odoc-theme"
 
-let set_theme conf t = (* Not symlinking because of file: and FF. *)
-  Log.time (fun _ m -> m "setting theme") @@ fun () ->
-  let src = B0_odoc.Theme.path t in
-  let dst = Fpath.(Conf.html_dir conf / theme_dir) in
-  let replace src dst =
-    let make_path = true and recurse = true in
-    Result.bind (Os.Path.delete ~recurse:true dst) @@ fun _ ->
-    Os.Dir.copy ~make_path ~recurse ~src dst
+let get_theme conf =
+  let ts = B0_odoc.Theme.of_dir (Conf.share_dir conf) in
+  let odig_theme =
+    let odig t = B0_odoc.Theme.name t = B0_odoc.Theme.odig_default in
+    match List.find odig ts with exception Not_found -> None | t -> Some t
   in
-  Result.bind (replace src dst) @@ fun () ->
+  let name = Conf.odoc_theme conf in
+  let fallback = match odig_theme with
+  | Some t -> Some (B0_odoc.Theme.name t)
+  | None -> Some (B0_odoc.Theme.odoc_default)
+  in
+  Log.if_error ~level:Log.Warning ~use:odig_theme @@
+  Result.bind (B0_odoc.Theme.find ~fallback name ts) @@ fun t ->
+  Ok (Some t)
+
+let write_ocaml_manual_theme conf m theme =
+  let write_original_css conf ~o =
+    let css = Fpath.(Conf.doc_dir conf / ocaml_manual_pkg / "manual.css") in
+    B00.Memo.delete m o @@ fun () ->
+    B00.Memo.file_ready m css;
+    Memo.copy m ~src:css o
+  in
   let manual_dir = Fpath.(Conf.html_dir conf / ocaml_manual_pkg) in
   match Os.Dir.exists manual_dir |> Log.if_error ~use:false with
-  | false -> Ok ()
+  | false -> ()
   | true ->
-      let theme_man_css = Fpath.(src / "manual.css") in
       let manual_css = Fpath.(manual_dir / "manual.css") in
-      match Os.File.exists theme_man_css |> Log.if_error ~use:false with
-      | false ->
-          let css = Fpath.(Conf.doc_dir conf / ocaml_manual_pkg / "manual.css")
-          in
-          Os.File.copy ~force:true ~make_path:true ~src:css manual_css
-      | true ->
-          let dst = Fpath.(manual_dir / theme_dir) in
-          (* We copy the theme again in ocaml-manual because of FF... *)
-          Result.bind (replace src dst) @@ fun () ->
-          let css = "@charset UTF-8;\n@import url(\"_odoc-theme/manual.css\");"
-          in
-          Os.File.write ~force:true ~make_path:true manual_css css
+      let theme_manual_css = match theme with
+      | None -> None
+      | Some t ->
+          let css = Fpath.(B0_odoc.Theme.path t / "manual.css") in
+          if Os.File.exists css |> Log.if_error ~use:false
+          then Some (t, css)
+          else None
+      in
+      match theme_manual_css with
+      | None -> write_original_css conf ~o:manual_css
+      | Some (t, css) ->
+          (* We copy the theme again in ocaml-manual because of FF. *)
+          let to_dir = Fpath.(manual_dir / B0_odoc.Theme.default_uri) in
+          B00.Memo.delete m to_dir @@ fun () ->
+          B0_odoc.Theme.write m t ~to_dir;
+          Memo.write m manual_css @@ fun () ->
+          Ok "@charset UTF-8;\n@import url(\"_odoc-theme/manual.css\");"
 
-let find_and_set_theme conf =
-  let set t = set_theme conf t |> Log.if_error ~level:Log.Warning ~use:() in
-  let ts = B0_odoc.Theme.of_dir (Conf.share_dir conf) in
-  let theme = Conf.odoc_theme conf in
-  match B0_odoc.Theme.find theme ts with
-  | Ok t -> set t
-  | Error e ->
-      Log.warn begin fun m ->
-        m "@[<v>%s@,Using default theme %s@]" e B0_odoc.Theme.default
-      end;
-      match B0_odoc.Theme.find B0_odoc.Theme.default ts with
-      | Error e -> Log.warn (fun m -> m "Can't find default theme %s" e)
-      | Ok t -> set t
+let write_theme conf m theme =
+  let to_dir = Fpath.(Conf.html_dir conf / B0_odoc.Theme.default_uri) in
+  B00.Memo.delete m to_dir @@ fun () ->
+  (match theme with None -> () | Some t -> B0_odoc.Theme.write m t ~to_dir);
+  write_ocaml_manual_theme conf m theme
 
 (* Builder *)
 
@@ -76,6 +83,7 @@ type builder =
     conf : Conf.t;
     odoc_dir : Fpath.t;
     html_dir : Fpath.t;
+    theme : B0_odoc.Theme.t option;
     index_title : string option;
     index_intro : Fpath.t option;
     pkg_deps : bool;
@@ -87,6 +95,7 @@ let builder m conf ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
   let cache_dir = Conf.cache_dir conf in
   let odoc_dir = Fpath.(cache_dir / "odoc") in
   let html_dir = Conf.html_dir conf in
+  let theme = get_theme conf in
   let cobjs_by_modname =
     let add p i acc = Doc_cobj.by_modname ~init:acc (Pkg_info.doc_cobjs i) in
     Pkg.Map.fold add (Conf.pkg_infos conf) String.Map.empty
@@ -95,8 +104,9 @@ let builder m conf ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
   let cobj_deps = Fpath.Map.empty in
   let pkgs_todo = Pkg.Set.of_list pkgs_todo in
   let pkgs_seen = Pkg.Set.empty in
-  { m; conf; odoc_dir; html_dir; index_title; index_intro; pkg_deps; tag_index;
-    cobjs_by_modname; r = { cobjs_by_digest; cobj_deps; pkgs_todo; pkgs_seen } }
+  { m; conf; odoc_dir; html_dir; theme; index_title; index_intro; pkg_deps;
+    tag_index; cobjs_by_modname;
+    r = { cobjs_by_digest; cobj_deps; pkgs_todo; pkgs_seen } }
 
 let require_pkg b pkg =
   if Pkg.Set.mem pkg b.r.pkgs_seen || Pkg.Set.mem pkg b.r.pkgs_todo then () else
@@ -316,26 +326,14 @@ let pkg_to_html b pkg =
   B0_odoc.Html.Dep.write b.m ~odoc_files pkg_odoc_dir ~o:deps_file;
   B0_odoc.Html.Dep.read b.m deps_file @@ fun deps ->
   html_deps_resolve b deps @@ fun odoc_deps ->
-  let theme_uri = (Some theme_dir) and html_dir = b.html_dir in
+  let theme_uri = match b.theme with
+  | Some _ -> Some B0_odoc.Theme.default_uri | None -> None
+  in
+  let html_dir = b.html_dir in
   let to_html = B0_odoc.Html.write b.m ?theme_uri ~html_dir ~odoc_deps in
   List.iter to_html odoc_files;
   link_odoc_assets b pkg pkg_info;
   link_odoc_doc_dir b pkg pkg_info
-
-let write_ocaml_manual b =
-  (* Not symlinking because of file: and FF *)
-  (* FIXME this is out of b0 we should make a decision about copy files & co *)
-  let manual_pkg_dir = Fpath.(Conf.doc_dir b.conf / ocaml_manual_pkg) in
-  let manual_index = Fpath.(manual_pkg_dir / "index.html") in
-  let src = manual_pkg_dir in
-  let dst = Fpath.(Conf.html_dir b.conf / ocaml_manual_pkg) in
-  match Os.File.exists manual_index |> Log.if_error ~use:false with
-  | false -> Ok None
-  | true ->
-      let recurse = true and make_path = true in
-      Result.bind (Os.Path.delete ~recurse dst) @@ fun _ ->
-      Result.bind (Os.Dir.copy ~make_path ~recurse ~src dst)
-      @@ fun _ -> Ok (Some "ocaml-manual/index.html")
 
 let index_intro_to_html b k = match b.index_intro with
 | None -> k None
@@ -363,6 +361,10 @@ let write_pkgs_index b ~ocaml_manual_uri =
   let pkgs = Odig_odoc_page.pkgs_with_html_docs b.conf in
   let stamp = match raw_index_intro with None -> [] | Some s -> [s] in
   let stamp = List.fold_left (add_pkg_data pkg_infos) stamp pkgs in
+  let stamp = match ocaml_manual_uri with
+  | None -> stamp
+  | Some s -> (s :: stamp)
+  in
   let stamp = String.concat " " (odig_version :: stamp) in
   let index = Fpath.(b.html_dir / "index.html") in
   let index_title = b.index_title in
@@ -370,17 +372,39 @@ let write_pkgs_index b ~ocaml_manual_uri =
   Ok (Odig_odoc_page.pkg_list b.conf ~index_title ~raw_index_intro
         ~tag_index:b.tag_index ~ocaml_manual_uri pkgs)
 
+let write_ocaml_manual b =
+  let manual_pkg_dir = Fpath.(Conf.doc_dir b.conf / ocaml_manual_pkg) in
+  let manual_index = Fpath.(manual_pkg_dir / "index.html") in
+  let dst = Fpath.(Conf.html_dir b.conf / ocaml_manual_pkg) in
+  match Os.File.exists manual_index |> Log.if_error ~use:false with
+  | false -> None
+  | true ->
+      begin
+        Memo.delete b.m dst @@ fun () ->
+        let copy_file m ~src_root ~dst_root src =
+          let dst = Fpath.reroot ~root:src_root ~dst:dst_root src in
+          B00.Memo.file_ready m src;
+          B00.Memo.copy m ~src dst
+        in
+        let src = manual_pkg_dir in
+        let files = Os.Dir.fold_files ~recurse:true Os.Dir.path_list src [] in
+        let files = Memo.fail_if_error b.m files in
+        List.iter (copy_file b.m ~src_root:src ~dst_root:dst) files
+      end;
+      Some "ocaml-manual/index.html"
+
 let rec build b = match Pkg.Set.choose b.r.pkgs_todo with
 | exception Not_found ->
     Memo.stir ~block:true b.m;
     begin match Pkg.Set.is_empty b.r.pkgs_todo with
     | false -> build b
     | true ->
-        let without_theme = true in
+        let without_theme = match b.theme with None -> true | Some _ -> false in
         let html_dir = b.html_dir and build_dir = b.odoc_dir in
         B0_odoc.Support_files.write b.m ~without_theme ~html_dir ~build_dir;
-        let ocaml_manual_uri = write_ocaml_manual b |> Log.if_error ~use:None in
-        write_pkgs_index b ~ocaml_manual_uri
+        let ocaml_manual_uri = write_ocaml_manual b in
+        write_pkgs_index b ~ocaml_manual_uri;
+        write_theme b.conf b.m b.theme;
     end
 | pkg ->
     b.r.pkgs_todo <- Pkg.Set.remove pkg b.r.pkgs_todo;
@@ -400,7 +424,6 @@ let gen c ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
   Os.Sig_exit.on_sigint ~hook:(fun () -> write_log_file c m) @@ fun () ->
   Memo.spawn_fiber m (fun () -> build b);
   Memo.stir ~block:true m;
-  find_and_set_theme c;
   write_log_file c m;
   Log.time (fun _ m -> m "deleting trash") begin fun () ->
     Log.if_error ~use:() (B00.Memo.delete_trash ~block:false m)
@@ -412,6 +435,14 @@ let gen c ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
       let write_howto = Fmt.any "odig log -w " in
       B000_conv.Op.pp_aggregate_error ~read_howto ~write_howto () Fmt.stderr e;
       Error "Documentation might be incomplete (see: odig log -e)."
+
+let install_theme c theme =
+  Result.bind (Conf.memo c) @@ fun m ->
+  Memo.spawn_fiber m (fun () -> write_theme c m theme);
+  Memo.stir ~block:true m;
+  match Memo.status m with
+  | Ok () as v -> v
+  | Error e -> Error "Could not set theme"
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2018 The odig programmers

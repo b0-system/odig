@@ -276,6 +276,46 @@ module Pkg_info : sig
       {!Doc_cobj.of_pkg}, {!Opam.query} and {!Doc_dir.of_pkg}. *)
 end
 
+(** Odig environment variables. *)
+module Env : sig
+
+  (** {1:env Environment variables} *)
+
+  val b0_cache_dir : string
+  (** [b0_cache_dir] is the environment variable that can be used to
+      define the odig b0 cache directory. *)
+
+  val b0_log_file : string
+  (** [b0_log_file] is the environment variable that can be used to
+      define the odig b0 log_file. *)
+
+  val cache_dir : string
+  (** [cache_dir] is the environment variable that can be used to
+      define the odig cache directory. *)
+
+  val color : string
+  (** [color] is the variable used to specify TTY styling. *)
+
+  val doc_dir : string
+  (** [doc_dir] is the environment variable that can be used to
+      define a doc dir. *)
+
+  val lib_dir : string
+  (** [lib_dir] is the environment variable that can be used to
+      define a lib dir. *)
+
+  val odoc_theme : string
+  (** [odoc_theme] is the environment variable that can be used
+      to define the default odoc theme. *)
+
+  val share_dir : string
+  (** [share_dir_env] is the environment variable that can be used to
+      define a share dir. *)
+
+  val verbosity : string
+  (** [verbosity] is the variable used to specify log verbosity. *)
+end
+
 (** Odig configuration. *)
 module Conf : sig
 
@@ -285,12 +325,12 @@ module Conf : sig
   (** The type for configuration. *)
 
   val v :
-    b0_cache_dir:Fpath.t option -> b0_log_file:Fpath.t option ->
-    cache_dir:Fpath.t option -> doc_dir:Fpath.t option -> jobs:int option ->
-    lib_dir:Fpath.t option -> odoc_theme:B0_odoc.Theme.name option ->
-    share_dir:Fpath.t option -> unit -> (t, string) result
-  (** [v] consructs a configuration with given attributes. If unspecified
-      they are discovered in various ways. *)
+    b0_cache_dir:Fpath.t -> b0_log_file:Fpath.t -> cache_dir:Fpath.t ->
+    cwd:Fpath.t -> doc_dir:Fpath.t -> html_dir:Fpath.t -> jobs:int ->
+    lib_dir:Fpath.t -> log_level:Log.level -> odoc_theme:B0_odoc.Theme.name ->
+    share_dir:Fpath.t -> tty_cap:Tty.cap -> unit -> t
+  (** [v] consructs a configuration with given attributes. See
+      the corresponding accessors for details. *)
 
   val b0_cache_dir : t -> Fpath.t
   (** [b0_cache_dir c] is [c]'s b0 cache directory. *)
@@ -301,17 +341,23 @@ module Conf : sig
   val cache_dir : t -> Fpath.t
   (** [cache_dir c] is [c]'s cache directory. *)
 
+  val cwd : t -> Fpath.t
+  (** [cwd c] is [c]'s current working directory. *)
+
   val doc_dir : t -> Fpath.t
   (** [doc_dir c] is [c]'s documentation directory. *)
 
   val lib_dir : t -> Fpath.t
   (** [lib_dir c] is [c]'s library directory. *)
 
+  val log_level : t -> Log.level
+  (** [log_level c] is [c]'s log level. *)
+
   val html_dir : t -> Fpath.t
   (** [html_dir c] is [c]'s HTML directory, where the API docs
       are generated (derived from {!cache_dir}). *)
 
-  val odoc_theme : t -> string
+  val odoc_theme : t -> B0_odoc.Theme.name
   (** [odoc_theme c] is [c]'s odoc theme to use. *)
 
   val jobs : t -> int
@@ -329,30 +375,23 @@ module Conf : sig
   val share_dir : t -> Fpath.t
   (** [share_dir c] is [c]'s share directory. *)
 
+  val tty_cap : t -> Tty.cap
+  (** [tty_cap c] is [c]'s tty capability. *)
+
   val pp : t Fmt.t
   (** [pp] formats configurations. *)
 
-  (** {1:env Environment variables} *)
+  (** {1:setup Setup} *)
 
-  val cache_dir_env : string
-  (** [cache_dir_env] is the environment variable that can be used to
-      define the odig cache directory. *)
-
-  val lib_dir_env : string
-  (** [lib_dir_env] is the environment variable that can be used to
-      define a lib dir. *)
-
-  val doc_dir_env : string
-  (** [doc_dir_env] is the environment variable that can be used to
-      define a doc dir. *)
-
-  val share_dir_env : string
-  (** [share_dir_env] is the environment variable that can be used to
-      define a share dir. *)
-
-  val odoc_theme_env : string
-  (** [odoc_theme_env] is the environment variable that can be used
-      to define the default odoc theme. *)
+  val setup_with_cli :
+    b0_cache_dir:Fpath.t option -> b0_log_file:Fpath.t option ->
+    cache_dir:Fpath.t option -> doc_dir:Fpath.t option -> jobs:int option ->
+    lib_dir:Fpath.t option -> log_level:Log.level option ->
+    odoc_theme:B0_odoc.Theme.name option -> share_dir:Fpath.t option ->
+    tty_cap:Tty.cap option option -> unit -> (t, string) result
+  (** [setup_with_cli] determines and setups a configuration with the given
+      values. These are expected to have been determined by environment
+      variables and command line arguments. *)
 end
 
 (*---------------------------------------------------------------------------

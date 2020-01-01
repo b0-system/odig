@@ -1,13 +1,12 @@
-
 - Rework the `odoc-theme` command. The `set` command now
-  unconditionally writes to `~/.conf/odig/odoc-theme` and
-  sets the theme for generated doc (the `--default` flag no longer exists). 
-  The `default` command is renamed to `get`, a `--config` option is added 
-  to get the theme written in the configuration file (which can be overriden 
-  by an environment variable).
-- Add theme `odig.default` and make this the default theme. This
-  theme automatically switches between `odig.light` or `odig.dark`
-  according to user preference (#54).
+  unconditionally writes to `~/.conf/odig/odoc-theme` and sets the
+  theme for generated doc (the `--default` flag no longer exists).
+  The `default` command is renamed to `get`, a `--config` option is
+  added to get the theme actually written in the configuration file.
+- Add theme `odig.default`, `gruvbox` and `solarized`. These themes
+  automatically switch between their corresponding light or dark 
+  version acccording to the user browser preference (#54).
+- Make `odig.default` the default theme instead of `odoc.default`.
 - Generate package index page even if some package fails (#57).
 - Hide anchoring links to screen readers on odig generated pages (#55).
 - Remove the `--trace` option of `odig odoc` and corresponding
@@ -25,7 +24,6 @@
   the `CNAME` file in gh-pages.
 - Fix `META` file (#52). Thanks to Kye W. Shi for the report.
 - Fix 4.08 `Pervasives` deprecation.
-
 
 v0.0.4 2019-03-08 La Forclaz (VS)
 ---------------------------------

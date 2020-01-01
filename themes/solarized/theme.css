@@ -1,0 +1,38 @@
+/* Theme based https://ethanschoonover.com/solarized/ light
+   with one out of scheme color for links. */
+:root
+{ --color-bg: #fdf6e3; /* base3 */
+  --color-bg-highlight: #073642; /* base02 */
+  --color-fg: #839496; /* base0 */
+  --color-rule: #eee8d5; /* base2 */
+
+  --color-code-block-bg: #eee8d5; /* base2 */
+  --color-code-fg: #839496; /* base0 */
+  --color-code-comment: #586e75; /* base01 */
+  --color-code-keyword: #268bd2; /* blue */
+  --color-code-type-id: #b58900; /* yellow */
+  --color-code-string: #2aa198; /* cyan */
+
+  --color-link: #5e7fc4; /* out of scheme */
+  --color-broken-link: #dc322f; /* red */ }
+
+@media (prefers-color-scheme: dark)
+{
+/* Theme based on https://ethanschoonover.com/solarized/ dark
+   with one out of scheme color for links. */
+:root
+{ --color-bg: #002b36; /* base03 */
+  --color-bg-highlight: #eee8d5; /* base2 */
+  --color-fg: #839496; /* base0 */
+  --color-rule: #073642; /* base02 */
+
+  --color-code-block-bg: #073642; /* base02 */
+  --color-code-fg: #839496; /* base0 */
+  --color-code-comment: #586e75; /* base01 */
+  --color-code-keyword: #268bd2; /* blue */
+  --color-code-type-id: #b58900; /* yellow */
+  --color-code-string: #2aa198; /* cyan */
+
+  --color-link: #7788aa; /* out of scheme */
+  --color-broken-link: #dc322f; /* red */ }
+}

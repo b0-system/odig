@@ -34,7 +34,9 @@ let () =
        theme "default";
        theme "dark";
        theme "light";
+       theme "solarized";
        theme "solarized.dark";
        theme "solarized.light";
+       theme "gruvbox";
        theme "gruvbox.dark";
        theme "gruvbox.light"; ]

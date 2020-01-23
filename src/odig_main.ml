@@ -4,7 +4,7 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-open B0_std
+open B00_std
 open Odig_support
 
 (* Exit codes *)
@@ -49,7 +49,7 @@ let browse_cmd conf background browser field pkg_names =
   Log.if_error ~use:Exit.no_such_name @@
   Result.bind (find_pkgs conf pkg_names) @@ fun pkgs ->
   Log.if_error' ~use:Exit.some_error @@
-  Result.bind (B0_www_browser.find ~browser ()) @@ fun browser ->
+  Result.bind (B00_www_browser.find ~browser ()) @@ fun browser ->
   let get_uris = match field with
   | `Homepage -> Opam.homepage
   | `Issues -> Opam.bug_reports
@@ -60,7 +60,7 @@ let browse_cmd conf background browser field pkg_names =
   let rec loop exit = function
   | [] -> Ok exit
   | u :: us ->
-      match B0_www_browser.show ~background ~prefix:false browser u with
+      match B00_www_browser.show ~background ~prefix:false browser u with
       | Error e -> Log.err (fun m -> m "%s" e); loop Exit.err_uri us
       | Ok () -> loop exit us
   in
@@ -98,7 +98,7 @@ let doc_cmd conf background browser pkg_names update no_update show_files =
   Log.if_error ~use:Exit.no_such_name @@
   Result.bind pkgs @@ fun pkgs ->
   Log.if_error' ~use:Exit.some_error @@
-  Result.bind (B0_www_browser.find ~browser ()) @@ fun browser ->
+  Result.bind (B00_www_browser.find ~browser ()) @@ fun browser ->
   let prepare_files = match pkgs with
   | [] ->
       let root_index = Fpath.(Conf.html_dir conf / "index.html") in
@@ -143,7 +143,7 @@ let doc_cmd conf background browser pkg_names update no_update show_files =
       | f :: fs ->
           let file_uri p = Fmt.str "file://%a" Fpath.pp_unquoted p in
           let u = file_uri f in
-          match B0_www_browser.show ~background ~prefix:false browser u with
+          match B00_www_browser.show ~background ~prefix:false browser u with
           | Error e -> Log.err (fun m -> m "%s" e); loop Exit.err_uri fs
           | Ok () -> loop exit fs
       in
@@ -155,8 +155,8 @@ let doc_cmd conf background browser pkg_names update no_update show_files =
 let log_cmd conf no_pager format kind op_selector =
   Log.if_error ~use:Exit.some_error @@
   let don't = no_pager || format = `Trace_event in
-  Result.bind (B0_pager.find ~don't ()) @@ fun pager ->
-  Result.bind (B0_pager.page_stdout pager) @@ fun () ->
+  Result.bind (B00_pager.find ~don't ()) @@ fun pager ->
+  Result.bind (B00_pager.page_stdout pager) @@ fun () ->
   let log_file = Conf.b0_log_file conf in
   Result.bind (B00_ui.Memo.Log.read log_file) @@ fun l ->
   B00_ui.Memo.Log.out Fmt.stdout format kind op_selector ~path:log_file l;
@@ -176,12 +176,12 @@ let odoc_cmd
 
 let odoc_theme_cmd conf out_fmt action theme read_conf =
   let list_themes conf out_fmt =
-    match B0_odoc.Theme.of_dir (Conf.share_dir conf) with
+    match B00_odoc.Theme.of_dir (Conf.share_dir conf) with
     | [] -> 0
     | ts ->
         let pp_theme = function
-        | `Short -> B0_odoc.Theme.pp_name
-        | `Normal | `Long -> B0_odoc.Theme.pp
+        | `Short -> B00_odoc.Theme.pp_name
+        | `Normal | `Long -> B00_odoc.Theme.pp
         in
         Fmt.pr "@[<v>%a@]@." (Fmt.list (pp_theme out_fmt)) ts; 0
   in
@@ -190,28 +190,28 @@ let odoc_theme_cmd conf out_fmt action theme read_conf =
     let n = match read_conf with
     | false -> Ok (Conf.odoc_theme conf)
     | true ->
-      Result.bind (B0_odoc.Theme.get_user_preference ()) @@ fun n ->
-      Ok (Option.value ~default:B0_odoc.Theme.odig_default n)
+      Result.bind (B00_odoc.Theme.get_user_preference ()) @@ fun n ->
+      Ok (Option.value ~default:B00_odoc.Theme.odig_default n)
     in
     Result.bind n @@ fun n -> Fmt.pr "%s@." n; Ok 0
   in
   let set_theme conf theme =
-    let ts = B0_odoc.Theme.of_dir (Conf.share_dir conf) in
+    let ts = B00_odoc.Theme.of_dir (Conf.share_dir conf) in
     let theme = match theme with None -> Conf.odoc_theme conf | Some t -> t in
     Log.if_error ~level:Log.Error ~use:Exit.no_such_name @@
-    Result.bind (B0_odoc.Theme.find ~fallback:None theme ts) @@ fun t ->
+    Result.bind (B00_odoc.Theme.find ~fallback:None theme ts) @@ fun t ->
     Log.if_error' ~use:Exit.some_error @@
     Result.bind (Odig_odoc.install_theme conf (Some t)) @@ fun () ->
-    let name = Some (B0_odoc.Theme.name t) in
-    Result.bind (B0_odoc.Theme.set_user_preference name) @@
+    let name = Some (B00_odoc.Theme.name t) in
+    Result.bind (B00_odoc.Theme.set_user_preference name) @@
     fun () -> Ok 0
   in
   let path conf theme =
-    let ts = B0_odoc.Theme.of_dir (Conf.share_dir conf) in
+    let ts = B00_odoc.Theme.of_dir (Conf.share_dir conf) in
     let theme = match theme with None -> Conf.odoc_theme conf | Some t -> t in
     Log.if_error ~level:Log.Error ~use:Exit.no_such_name @@
-    Result.bind (B0_odoc.Theme.find ~fallback:None theme ts) @@ fun t ->
-    Fmt.pr "%a@." Fpath.pp_unquoted (B0_odoc.Theme.path t); Ok 0
+    Result.bind (B00_odoc.Theme.find ~fallback:None theme ts) @@ fun t ->
+    Fmt.pr "%a@." Fpath.pp_unquoted (B00_odoc.Theme.path t); Ok 0
   in
   match action with
   | `List -> list_themes conf out_fmt
@@ -223,8 +223,8 @@ let pkg_cmd conf no_pager out_fmt pkg_names =
   Log.if_error ~use:Exit.no_such_name @@
   Result.bind (find_pkgs conf pkg_names) @@ fun pkgs ->
   Log.if_error' ~use:Exit.some_error @@
-  Result.bind (B0_pager.find ~don't:no_pager ()) @@ fun pager ->
-  Result.bind (B0_pager.page_stdout pager) @@ fun () ->
+  Result.bind (B00_pager.find ~don't:no_pager ()) @@ fun pager ->
+  Result.bind (B00_pager.page_stdout pager) @@ fun () ->
   let pp_pkgs = match out_fmt with
   | `Short -> (fun ppf () -> (Fmt.list Pkg.pp_name) ppf pkgs)
   | `Normal ->
@@ -248,8 +248,8 @@ let show_cmd conf no_pager out_fmt show_empty field pkg_names =
   Log.if_error ~use:Exit.no_such_name @@
   Result.bind (find_pkgs conf pkg_names) @@ fun pkgs ->
   Log.if_error' ~use:Exit.some_error @@
-  Result.bind (B0_pager.find ~don't:no_pager ()) @@ fun pager ->
-  Result.bind (B0_pager.page_stdout pager) @@ fun () ->
+  Result.bind (B00_pager.find ~don't:no_pager ()) @@ fun pager ->
+  Result.bind (B00_pager.page_stdout pager) @@ fun () ->
   let pp_field field out_fmt show_empty = match out_fmt with
   | `Short | `Normal ->
       (fun ppf (p, i) -> match Pkg_info.get field i with
@@ -272,11 +272,11 @@ let show_files_cmd conf no_pager pkg_names get_files =
   Log.if_error ~use:Exit.no_such_name @@
   Result.bind (find_pkgs conf pkg_names) @@ fun pkgs ->
   Log.if_error' ~use:Exit.some_error @@
-  Result.bind (B0_pager.find ~don't:no_pager ()) @@ fun pager ->
+  Result.bind (B00_pager.find ~don't:no_pager ()) @@ fun pager ->
   let doc_dir = Conf.doc_dir conf in
   let doc_dirs = List.map (fun p -> p, (Doc_dir.of_pkg ~doc_dir p)) pkgs in
   let files = List.concat (List.map (fun (p, i) -> get_files i) doc_dirs) in
-  Result.bind (B0_pager.page_files pager files) @@ fun () -> Ok 0
+  Result.bind (B00_pager.page_files pager files) @@ fun () -> Ok 0
 
 (* Command line interface *)
 
@@ -294,7 +294,7 @@ let exits =
 
 let details = B00_ui.Cli.out_details ()
 let conf =
-  let path = B0_std_ui.fpath in
+  let path = B00_std_ui.fpath in
   let docs = Manpage.s_common_options in
   let docv = "PATH" in
   let doc dirname dir =
@@ -345,8 +345,8 @@ let conf =
            ~docv)
   in
   let jobs = B00_ui.Memo.jobs ~docs ~env:(Arg.env_var "ODIG_JOBS") () in
-  let tty_cap = B0_std_ui.tty_cap ~env:(Arg.env_var Env.color) () in
-  let log_level = B0_std_ui.log_level ~env:(Arg.env_var Env.verbosity) () in
+  let tty_cap = B00_std_ui.tty_cap ~env:(Arg.env_var Env.color) () in
+  let log_level = B00_std_ui.log_level ~env:(Arg.env_var Env.verbosity) () in
   let conf
       b0_cache_dir b0_log_file cache_dir doc_dir jobs lib_dir log_level
       odoc_theme share_dir tty_cap
@@ -368,15 +368,15 @@ let pkgs_pos1_nonempty, pkgs_pos, pkgs_pos1, pkgs_opt =
   Arg.(value & pos_right 0 string [] & info [] ~doc ~docv),
   Arg.(value & opt_all string [] & info ["p"; "pkg"] ~doc ~docv)
 
-let background = B0_www_browser.background ()
-let browser = B0_www_browser.browser ()
-let no_pager = B0_pager.don't ()
+let background = B00_www_browser.background ()
+let browser = B00_www_browser.browser ()
+let no_pager = B00_pager.don't ()
 
 let show_files_cmd ?cmd ~kind get_files =
   let cname = match cmd with None -> kind | Some cmd -> cmd in
   let doc = Fmt.str "Show package %s files" kind in
   let sdocs = Manpage.s_common_options and man_xrefs = [ `Main ] in
-  let envs = B0_pager.envs () in
+  let envs = B00_pager.envs () in
   let man =
     [ `S "DESCRIPTION";
       `P (Fmt.str "The $(tname) command shows package %s files. If \
@@ -517,7 +517,7 @@ let odoc_cmd =
     let doc = "$(docv) is the .mld file to use to define the introduction
                text on the package list page."
     in
-    let some_path = Arg.some B0_std_ui.fpath in
+    let some_path = Arg.some B00_std_ui.fpath in
     Arg.(value & opt some_path None & info ["index-intro"] ~docv:"MLDFILE" ~doc)
   in
   let no_pkg_deps =
@@ -593,7 +593,7 @@ let log_cmd =
   let docs_format = "OUTPUT FORMAT" in
   let docs_details = "OUTPUT DETAILS" in
   let docs_selection = "OPTIONS FOR SELECTING OPERATIONS" in
-  let envs = B0_pager.envs () in
+  let envs = B00_pager.envs () in
   let man = [
     `S Manpage.s_description;
     `P "The $(tname) command shows odoc build operations.";
@@ -611,7 +611,7 @@ let log_cmd =
 let pkg_cmd =
   let doc = "Show packages (default command)" in
   let man_xrefs = [ `Main ] in
-  let envs = B0_pager.envs () in
+  let envs = B00_pager.envs () in
   let man = [
     `S Manpage.s_description;
     `P "The $(tname) command shows packages known to odig. If no packages
@@ -625,7 +625,7 @@ let pkg_cmd =
 let readme_cmd = show_files_cmd ~kind:"readme" Doc_dir.readme_files
 let show_cmd =
   let doc = "Show package metadata" and man_xrefs = [ `Main ] in
-  let envs = B0_pager.envs () in
+  let envs = B00_pager.envs () in
   let man = [
     `S Manpage.s_description;
     `P "$(tname) outputs package metadata. If no packages

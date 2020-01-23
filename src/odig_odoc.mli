@@ -14,7 +14,7 @@ open Odig_support
 
 val gen :
   Conf.t -> force:bool -> index_title:string option ->
-  index_intro:B0_std.Fpath.t option -> pkg_deps:bool -> tag_index:bool ->
+  index_intro:B00_std.Fpath.t option -> pkg_deps:bool -> tag_index:bool ->
   Pkg.t list -> (unit, string) result
 (** [gen c ~force ~index_intro ~pkg_deps ~tag_index pkgs]
     generates API reference for packages [pkgs].
@@ -30,7 +30,7 @@ val gen :
        page and package pages hyperlink into it from the package information
        section.}} *)
 
-val install_theme : Conf.t -> B0_odoc.Theme.t option -> (unit, string) result
+val install_theme : Conf.t -> B00_odoc.Theme.t option -> (unit, string) result
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2018 The odig programmers

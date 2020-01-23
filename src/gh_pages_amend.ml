@@ -4,7 +4,7 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-open B0_std
+open B00_std
 
 let pp_updated ppf = function
 | false -> Fmt.string ppf "No update to publish on"
@@ -18,24 +18,26 @@ let get_msg ~src ~dst = function
 
 let publish ~amend ~msg ~remote ~branch preserve_symlinks cname_file src dst =
   let follow_symlinks = not preserve_symlinks in
-  let dst_upd = B0_github.Pages.update ~follow_symlinks ~src:(Some src) dst in
-  let rupdates = [ B0_github.Pages.nojekyll; dst_upd ] in
+  let dst_upd = B00_github.Pages.update ~follow_symlinks ~src:(Some src) dst in
+  let rupdates = [ B00_github.Pages.nojekyll; dst_upd ] in
   let rupdates = match cname_file with
   | None -> rupdates
-  | Some f -> B0_github.Pages.update ~src:(Some f) (Fpath.v "CNAME") :: rupdates
+  | Some f ->
+      B00_github.Pages.update ~src:(Some f) (Fpath.v "CNAME") :: rupdates
   in
   let updates = List.rev rupdates in
-  Result.bind (B0_vcs.get ()) @@ fun repo ->
+  Result.bind (B00_vcs.get ()) @@ fun repo ->
   let force = true in
-  B0_github.Pages.commit_updates repo ~amend ~force ~remote ~branch ~msg updates
+  B00_github.Pages.commit_updates
+    repo ~amend ~force ~remote ~branch ~msg updates
 
 let publish_cmd
     tty_cap log_level new_commit remote branch msg preserve_symlinks
     cname_file src dst
   =
-  let tty_cap = B0_std_ui.get_tty_cap tty_cap in
-  let log_level = B0_std_ui.get_log_level log_level in
-  B0_std_ui.setup tty_cap log_level ~log_spawns:Log.Debug;
+  let tty_cap = B00_std_ui.get_tty_cap tty_cap in
+  let log_level = B00_std_ui.get_log_level log_level in
+  B00_std_ui.setup tty_cap log_level ~log_spawns:Log.Debug;
   Log.if_error ~use:1 @@
   let msg = get_msg ~src ~dst msg in
   let amend = not new_commit in
@@ -46,13 +48,13 @@ let publish_cmd
   Log.app begin fun m ->
     m "[%a] %a %a"
       (Fmt.tty_string [`Fg `Green]) "DONE" pp_updated updated
-      B0_vcs.Git.pp_remote_branch (remote, branch)
+      B00_vcs.Git.pp_remote_branch (remote, branch)
   end;
   Ok 0
 
 let main () =
   let open Cmdliner in
-  let some_path = Arg.some B0_std_ui.fpath in
+  let some_path = Arg.some B00_std_ui.fpath in
   let cmd =
     let preserve_symlinks =
       let doc = "Do not follow symlinks in $(i,SRC), preserve them." in
@@ -68,7 +70,7 @@ let main () =
     in
     let branch =
       let doc = "Publish on branch $(docv)." and docv = "BRANCH" in
-      let default = B0_github.Pages.default_branch in
+      let default = B00_github.Pages.default_branch in
       Arg.(value & opt string default & info ["b"; "branch"] ~doc ~docv)
     in
     let msg =
@@ -95,8 +97,8 @@ let main () =
       in
       Arg.(value & opt some_path None & info ["cname-file"] ~doc ~docv:"FILE")
     in
-    let tty_cap = B0_std_ui.tty_cap () in
-    let log_level = B0_std_ui.log_level () in
+    let tty_cap = B00_std_ui.tty_cap () in
+    let log_level = B00_std_ui.log_level () in
     let doc = "Publish directories on GitHub pages" in
     let man = [
       `S Manpage.s_description;

@@ -4,7 +4,7 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-open B0_std
+open B00_std
 
 let versions () =
   let run = Os.Cmd.run_out ~trim:true in
@@ -37,7 +37,7 @@ let link_themes dir htmldir_contents themes =
         let odoc_theme = Fpath.(dir / "_odoc-theme") in
         Os.Path.copy ~make_path:true
           ~recurse:true ~src:tcontents odoc_theme |> Result.to_failure;
-        B0_github.Pages.update ~follow_symlinks:false ~src:(Some dir) tdir
+        B00_github.Pages.update ~follow_symlinks:false ~src:(Some dir) tdir
     | f :: fs ->
         if f = "_odoc-theme" then loop fs else
         let src = Fpath.(v ".." / "doc" / f) in
@@ -57,9 +57,9 @@ let pp_updated ppf = function
 | true -> Fmt.string ppf "Published docs on"
 
 let publish tty_cap log_level new_commit remote branch =
-  let tty_cap = B0_std_ui.get_tty_cap tty_cap in
-  let log_level = B0_std_ui.get_log_level log_level in
-  B0_std_ui.setup tty_cap log_level ~log_spawns:Log.Debug;
+  let tty_cap = B00_std_ui.get_tty_cap tty_cap in
+  let log_level = B00_std_ui.get_log_level log_level in
+  B00_std_ui.setup tty_cap log_level ~log_spawns:Log.Debug;
   Log.if_error ~use:1 @@
   Result.bind (versions ()) @@ fun versions ->
   Result.bind (odig_html ()) @@ fun (htmldir, htmldir_contents) ->
@@ -69,20 +69,20 @@ let publish tty_cap log_level new_commit remote branch =
   Result.join @@
   Os.Dir.with_tmp @@ fun dir ->
   Result.bind (link_themes dir htmldir_contents themes) @@ fun theme_updates ->
-  let udoc = B0_github.Pages.update ~src:(Some htmldir) (Fpath.v "doc") in
-  let updates = B0_github.Pages.nojekyll :: udoc :: theme_updates in
-  Result.bind (B0_vcs.get ()) @@ fun repo ->
+  let udoc = B00_github.Pages.update ~src:(Some htmldir) (Fpath.v "doc") in
+  let updates = B00_github.Pages.nojekyll :: udoc :: theme_updates in
+  Result.bind (B00_vcs.get ()) @@ fun repo ->
   let msg = Fmt.str "Update sample output with %s." versions in
   let amend = not new_commit and force = true in
   let pub =
-    B0_github.Pages.commit_updates repo ~remote ~branch ~amend ~force ~msg
+    B00_github.Pages.commit_updates repo ~remote ~branch ~amend ~force ~msg
       updates
   in
   Result.bind pub @@ fun updated ->
   Log.app begin fun m ->
       m "[%a] %a %a"
         (Fmt.tty_string [`Fg `Green]) "DONE" pp_updated updated
-        B0_vcs.Git.pp_remote_branch (remote, B0_github.Pages.default_branch)
+        B00_vcs.Git.pp_remote_branch (remote, B00_github.Pages.default_branch)
   end;
   Ok 0
 
@@ -99,11 +99,11 @@ let main () =
     in
     let branch =
       let doc = "Publish on branch $(docv)." and docv = "BRANCH" in
-      let default = B0_github.Pages.default_branch in
+      let default = B00_github.Pages.default_branch in
       Arg.(value & opt string default & info ["b"; "branch"] ~doc ~docv)
     in
-    let tty_cap = B0_std_ui.tty_cap () in
-    let log_level = B0_std_ui.log_level () in
+    let tty_cap = B00_std_ui.tty_cap () in
+    let log_level = B00_std_ui.log_level () in
     let doc = "Updates odig's sample output on GitHub pages" in
     Term.(const publish $ tty_cap $ log_level $ new_commit $
           remote $ branch),

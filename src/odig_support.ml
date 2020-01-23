@@ -4,7 +4,7 @@
    %%NAME%% %%VERSION%%
   ---------------------------------------------------------------------------*)
 
-open B0_std
+open B00_std
 
 module Digest = struct
   include Digest
@@ -517,17 +517,17 @@ module Conf = struct
   let get_odoc_theme = function
   | Some v -> Ok v
   | None ->
-      Result.bind (B0_odoc.Theme.get_user_preference ()) @@ fun n ->
-      Ok (Option.value ~default:B0_odoc.Theme.odig_default n)
+      Result.bind (B00_odoc.Theme.get_user_preference ()) @@ fun n ->
+      Ok (Option.value ~default:B00_odoc.Theme.odig_default n)
 
   let setup_with_cli
       ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~jobs ~lib_dir ~log_level
       ~odoc_theme ~share_dir ~tty_cap ()
     =
     Result.map_error (Fmt.str "conf: %s") @@
-    let tty_cap = B0_std_ui.get_tty_cap tty_cap in
-    let log_level = B0_std_ui.get_log_level log_level in
-    B0_std_ui.setup tty_cap log_level ~log_spawns:Log.Debug;
+    let tty_cap = B00_std_ui.get_tty_cap tty_cap in
+    let log_level = B00_std_ui.get_log_level log_level in
+    B00_std_ui.setup tty_cap log_level ~log_spawns:Log.Debug;
     Result.bind (Os.Dir.cwd ()) @@ fun cwd ->
     Result.bind (Fpath.of_string Sys.executable_name) @@ fun exec ->
     let cache_dir = get_dir ~cwd ~exec (Fpath.v "var/cache/odig") cache_dir in

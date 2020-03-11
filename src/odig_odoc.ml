@@ -325,7 +325,11 @@ let pkg_to_html b pkg =
   let deps_file = Fpath.(pkg_odoc_dir / Pkg.name pkg + ".html.deps") in
   B00_odoc.Html.Dep.write b.m ~odoc_files pkg_odoc_dir ~o:deps_file;
   B00_odoc.Html.Dep.read b.m deps_file @@ fun deps ->
-  html_deps_resolve b deps @@ fun odoc_deps ->
+  html_deps_resolve b deps @@ fun odoc_deps_res ->
+  (* XXX html deps is a bit broken make sure we have at least our
+     own files as deps maybe related to compiler-deps not working on .mld
+     files *)
+  let odoc_deps = Fpath.uniquify (List.rev_append odoc_files odoc_deps_res) in
   let theme_uri = match b.theme with
   | Some _ -> Some B00_odoc.Theme.default_uri | None -> None
   in

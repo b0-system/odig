@@ -1,3 +1,6 @@
+v0.0.5 2019-03-11 La Forclaz (VS)
+---------------------------------
+
 - Rework the `odoc-theme` command. The `set` command now
   unconditionally writes to `~/.conf/odig/odoc-theme` and sets the
   theme for generated doc (the `--default` flag no longer exists).
@@ -24,6 +27,8 @@
   the `CNAME` file in gh-pages.
 - Fix `META` file (#52). Thanks to Kye W. Shi for the report.
 - Fix 4.08 `Pervasives` deprecation.
+- Require OCaml >= 4.05.0 
+
 
 v0.0.4 2019-03-08 La Forclaz (VS)
 ---------------------------------

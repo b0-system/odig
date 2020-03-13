@@ -1,4 +1,4 @@
-v0.0.5 2019-03-11 La Forclaz (VS)
+v0.0.5 2020-03-11 La Forclaz (VS)
 ---------------------------------
 
 - Rework the `odoc-theme` command. The `set` command now

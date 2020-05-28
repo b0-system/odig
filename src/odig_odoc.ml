@@ -150,7 +150,7 @@ let require_cobj_deps b cobj = (* Also used to find the digest of cobj *)
         B00_odoc.Compile.Dep.write m (Doc_cobj.path cobj) ~o:deps_file;
         B00_odoc.Compile.Dep.read m deps_file @@ fun deps ->
         let rec loop acc = function
-        | [] -> set_deps (Some acc)
+        | [] -> set_deps acc
         | d :: ds ->
             match B00_odoc.Compile.Dep.name d = Doc_cobj.modname cobj with
             | true ->

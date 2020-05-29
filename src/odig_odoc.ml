@@ -5,6 +5,7 @@
 
 open Odig_support
 open B00_std
+open B00_std.Fut.Syntax
 open B00
 
 let odig_version = "%%VERSION%%"
@@ -36,9 +37,11 @@ let get_theme conf =
 let write_ocaml_manual_theme conf m theme =
   let write_original_css conf ~o =
     let css = Fpath.(Conf.doc_dir conf / ocaml_manual_pkg / "manual.css") in
-    B00.Memo.delete m o @@ fun () ->
+    ignore @@
+    let* () = B00.Memo.delete m o in
     B00.Memo.file_ready m css;
-    Memo.copy m ~src:css o
+    Memo.copy m ~src:css o;
+    Fut.return ()
   in
   let manual_dir = Fpath.(Conf.html_dir conf / ocaml_manual_pkg) in
   match Os.Dir.exists manual_dir |> Log.if_error ~use:false with
@@ -58,22 +61,25 @@ let write_ocaml_manual_theme conf m theme =
       | Some (t, css) ->
           (* We copy the theme again in ocaml-manual because of FF. *)
           let to_dir = Fpath.(manual_dir / B00_odoc.Theme.default_uri) in
-          B00.Memo.delete m to_dir @@ fun () ->
+          ignore @@
+          let* () = B00.Memo.delete m to_dir in
           B00_odoc.Theme.write m t ~to_dir;
-          Memo.write m manual_css @@ fun () ->
-          Ok "@charset UTF-8;\n@import url(\"_odoc-theme/manual.css\");"
+          (Memo.write m manual_css @@ fun () ->
+           Ok "@charset UTF-8;\n@import url(\"_odoc-theme/manual.css\");");
+          Fut.return ()
 
 let write_theme conf m theme =
   let to_dir = Fpath.(Conf.html_dir conf / B00_odoc.Theme.default_uri) in
-  B00.Memo.delete m to_dir @@ fun () ->
+  let* () = B00.Memo.delete m to_dir in
   (match theme with None -> () | Some t -> B00_odoc.Theme.write m t ~to_dir);
-  write_ocaml_manual_theme conf m theme
+  write_ocaml_manual_theme conf m theme;
+  Fut.return ()
 
 (* Builder *)
 
 type resolver =
   { mutable cobjs_by_digest : Doc_cobj.t list Digest.Map.t;
-    mutable cobj_deps : (B00_odoc.Compile.Dep.t list Memo.Fut.t) Fpath.Map.t;
+    mutable cobj_deps : (B00_odoc.Compile.Dep.t list Fut.t) Fpath.Map.t;
     mutable pkgs_todo : Pkg.Set.t;
     mutable pkgs_seen : Pkg.Set.t; }
 
@@ -137,20 +143,21 @@ let require_cobj_deps b cobj = (* Also used to find the digest of cobj *)
   let set_cobj_deps b cobj dep =
     b.r.cobj_deps <- Fpath.Map.add (Doc_cobj.path cobj) dep b.r.cobj_deps
   in
-  match Fpath.Map.find (Doc_cobj.path cobj) b.r.cobj_deps with
-  | deps -> deps
-  | exception Not_found ->
+  match Fpath.Map.find_opt (Doc_cobj.path cobj) b.r.cobj_deps with
+  | Some deps -> deps
+  | None ->
       let m = Memo.with_mark b.m (Pkg.name (Doc_cobj.pkg cobj)) in
-      let fut_deps, set_deps = Memo.Fut.create m in
+      let fut_deps, set_deps = Fut.create () in
       let odoc_file = odoc_file_for_cobj b cobj in
       let deps_file = Fpath.(odoc_file + ".deps") in
       set_cobj_deps b cobj fut_deps;
       begin
         Memo.file_ready m (Doc_cobj.path cobj);
         B00_odoc.Compile.Dep.write m (Doc_cobj.path cobj) ~o:deps_file;
-        B00_odoc.Compile.Dep.read m deps_file @@ fun deps ->
+        ignore @@
+        let* deps = B00_odoc.Compile.Dep.read m deps_file in
         let rec loop acc = function
-        | [] -> set_deps acc
+        | [] -> set_deps acc; Fut.return ()
         | d :: ds ->
             match B00_odoc.Compile.Dep.name d = Doc_cobj.modname cobj with
             | true ->
@@ -163,8 +170,8 @@ let require_cobj_deps b cobj = (* Also used to find the digest of cobj *)
       end;
       fut_deps
 
-let cobj_deps b cobj k = Memo.Fut.await (require_cobj_deps b cobj) k
-let cobj_deps_to_odoc_deps b deps k =
+let cobj_deps b cobj = require_cobj_deps b cobj
+let cobj_deps_to_odoc_deps b deps =
   (* For each dependency this tries to find a cmi, cmti or cmt file
      that matches the dependency name and digest. We first look by
      dependency name in the universe and then request on the fly the
@@ -176,59 +183,60 @@ let cobj_deps_to_odoc_deps b deps k =
      to be built; unless [b.pkg_deps] is false. *)
   let candidate_cobjs dep =
     let n = B00_odoc.Compile.Dep.name dep in
-    let cobjs = match String.Map.find n b.cobjs_by_modname with
-    | cobjs -> cobjs
-    | exception Not_found ->
+    let cobjs = match String.Map.find_opt n b.cobjs_by_modname with
+    | Some cobjs -> cobjs
+    | None ->
         Log.debug (fun m -> m "Cannot find compilation object for %s" n);
         []
     in
     dep, List.map (fun cobj -> cobj, (require_cobj_deps b cobj)) cobjs
   in
-  let resolve_dep (dep, candidates) acc k =
+  let resolve_dep (dep, candidates) acc =
     let rec loop = function
     | [] ->
         Log.debug begin fun m ->
           m "Cannot resolve dependency for %a" B00_odoc.Compile.Dep.pp dep
         end;
-        k acc
+        Fut.return acc
     | (cobj, deps) :: cs ->
-        Memo.Fut.await deps begin fun _ ->
-          let digest = B00_odoc.Compile.Dep.digest dep in
-          match Digest.Map.find digest b.r.cobjs_by_digest with
-          | exception Not_found -> loop cs
-          | cobj :: _ (* FIXME Log on debug. *) ->
-              begin match b.pkg_deps with
-              | true ->
-                  require_pkg b (Doc_cobj.pkg cobj);
-                  k (odoc_file_for_cobj b cobj :: acc)
-              | false ->
-                  let pkg = Doc_cobj.pkg cobj in
-                  if Pkg.Set.mem pkg b.r.pkgs_todo ||
-                     Pkg.Set.mem pkg b.r.pkgs_seen
-                  then k (odoc_file_for_cobj b cobj :: acc)
-                  else loop cs
-              end
-          | [] -> assert false
-        end
+        Fut.bind deps @@ fun _ ->
+        let digest = B00_odoc.Compile.Dep.digest dep in
+        match Digest.Map.find_opt digest b.r.cobjs_by_digest with
+        | None -> loop cs
+        | Some (cobj :: _ (* FIXME Log on debug. *)) ->
+            begin match b.pkg_deps with
+            | true ->
+                require_pkg b (Doc_cobj.pkg cobj);
+                Fut.return (odoc_file_for_cobj b cobj :: acc)
+            | false ->
+                let pkg = Doc_cobj.pkg cobj in
+                if Pkg.Set.mem pkg b.r.pkgs_todo ||
+                   Pkg.Set.mem pkg b.r.pkgs_seen
+                then Fut.return (odoc_file_for_cobj b cobj :: acc)
+                else loop cs
+            end
+        | Some [] -> assert false
     in
     loop candidates
   in
   let dep_candidates_list = List.map candidate_cobjs deps in
   let rec loop cs acc = match cs with
-  | [] -> k acc
-  | c :: cs -> resolve_dep c acc (loop cs)
+  | [] -> Fut.return acc
+  | c :: cs -> Fut.bind (resolve_dep c acc) (loop cs)
   in
   loop dep_candidates_list []
 
 let cobj_to_odoc b cobj =
   let odoc = odoc_file_for_cobj b cobj in
   begin
-    cobj_deps b cobj @@ fun deps ->
-    cobj_deps_to_odoc_deps b deps @@ fun odoc_deps ->
+    ignore @@
+    let* deps = cobj_deps b cobj in
+    let* odoc_deps = cobj_deps_to_odoc_deps b deps in
     let pkg = Pkg.name (Doc_cobj.pkg cobj) in
     let hidden = Doc_cobj.hidden cobj in
     let cobj = Doc_cobj.path cobj in
-    B00_odoc.Compile.to_odoc b.m ~hidden ~pkg ~odoc_deps cobj ~o:odoc
+    B00_odoc.Compile.to_odoc b.m ~hidden ~pkg ~odoc_deps cobj ~o:odoc;
+    Fut.return ()
   end;
   odoc
 
@@ -269,7 +277,11 @@ let index_mld_for_pkg b pkg pkg_info _pkg_odocs ~user_index_mld =
   in
   begin match user_index_mld with
   | None -> write_index_mld ~user_index:None
-  | Some i -> Memo.read b.m i @@ fun s -> write_index_mld ~user_index:(Some s)
+  | Some i ->
+      ignore @@
+      let* s = Memo.read b.m i in
+      write_index_mld ~user_index:(Some s);
+      Fut.return ()
   end;
   index_mld
 
@@ -292,9 +304,9 @@ let mlds_to_odoc b pkg pkg_info pkg_odocs mlds =
   in
   loop ~user_index_mld:None [] mlds
 
-let html_deps_resolve b deps k =
+let html_deps_resolve b deps =
   let deps = List.rev_map B00_odoc.Html.Dep.to_compile_dep deps in
-  cobj_deps_to_odoc_deps b deps k
+  cobj_deps_to_odoc_deps b deps
 
 let link_odoc_assets b pkg pkg_info =
   let src = Doc_dir.odoc_assets_dir (Pkg_info.doc_dir pkg_info) in
@@ -313,18 +325,18 @@ let pkg_to_html b pkg =
   in
   let cobjs = Pkg_info.doc_cobjs pkg_info in
   let mlds = Doc_dir.odoc_pages (Pkg_info.doc_dir pkg_info) in
-  if cobjs = [] && mlds = [] then () else
+  if cobjs = [] && mlds = [] then Fut.return () else
   let pkg_html_dir = pkg_html_dir b pkg in
   let pkg_odoc_dir = pkg_odoc_dir b pkg in
-  Memo.delete b.m pkg_html_dir @@ fun () ->
-  Memo.delete b.m pkg_odoc_dir @@ fun () ->
+  let* () = Memo.delete b.m pkg_html_dir in
+  let* () = Memo.delete b.m pkg_odoc_dir in
   let odocs = List.map (cobj_to_odoc b) cobjs in
   let mld_odocs = mlds_to_odoc b pkg pkg_info odocs mlds in
   let odoc_files = List.rev_append odocs mld_odocs in
   let deps_file = Fpath.(pkg_odoc_dir / Pkg.name pkg + ".html.deps") in
   B00_odoc.Html.Dep.write b.m ~odoc_files pkg_odoc_dir ~o:deps_file;
-  B00_odoc.Html.Dep.read b.m deps_file @@ fun deps ->
-  html_deps_resolve b deps @@ fun odoc_deps_res ->
+  let* deps = B00_odoc.Html.Dep.read b.m deps_file in
+  let* odoc_deps_res = html_deps_resolve b deps in
   (* XXX html deps is a bit broken make sure we have at least our
      own files as deps maybe related to compiler-deps not working on .mld
      files *)
@@ -336,10 +348,11 @@ let pkg_to_html b pkg =
   let to_html = B00_odoc.Html.write b.m ?theme_uri ~html_dir ~odoc_deps in
   List.iter to_html odoc_files;
   link_odoc_assets b pkg pkg_info;
-  link_odoc_doc_dir b pkg pkg_info
+  link_odoc_doc_dir b pkg pkg_info;
+  Fut.return ()
 
-let index_intro_to_html b k = match b.index_intro with
-| None -> k None
+let index_intro_to_html b = match b.index_intro with
+| None -> Fut.return None
 | Some mld ->
     let is_odoc _ _ f acc = if Fpath.has_ext ".odoc" f then f :: acc else acc in
     let odoc_deps = Os.Dir.fold_files ~recurse:true is_odoc b.odoc_dir [] in
@@ -347,7 +360,8 @@ let index_intro_to_html b k = match b.index_intro with
     let o = Fpath.(b.odoc_dir / "index-header.html") in
     Memo.file_ready b.m mld;
     B00_odoc.Html_fragment.cmd b.m ~odoc_deps mld ~o;
-    Memo.read b.m o @@ fun index_header -> k (Some index_header)
+    let* index_header = Memo.read b.m o in
+    Fut.return (Some index_header)
 
 let write_pkgs_index b ~ocaml_manual_uri =
   let add_pkg_data pkg_infos acc p = match Pkg.Map.find p pkg_infos with
@@ -359,7 +373,7 @@ let write_pkgs_index b ~ocaml_manual_uri =
       let ( ++ ) = List.rev_append in
       version ++ synopsis ++ tags ++ acc
   in
-  index_intro_to_html b @@ fun raw_index_intro ->
+  let* raw_index_intro = index_intro_to_html b in
   let pkg_infos = Conf.pkg_infos b.conf in
   let pkgs = Odig_odoc_page.pkgs_with_html_docs b.conf in
   let stamp = match raw_index_intro with None -> [] | Some s -> [s] in
@@ -371,9 +385,10 @@ let write_pkgs_index b ~ocaml_manual_uri =
   let stamp = String.concat " " (odig_version :: stamp) in
   let index = Fpath.(b.html_dir / "index.html") in
   let index_title = b.index_title in
-  Memo.write b.m ~stamp index @@ fun () ->
-  Ok (Odig_odoc_page.pkg_list b.conf ~index_title ~raw_index_intro
-        ~tag_index:b.tag_index ~ocaml_manual_uri pkgs)
+  (Memo.write b.m ~stamp index @@ fun () ->
+   Ok (Odig_odoc_page.pkg_list b.conf ~index_title ~raw_index_intro
+         ~tag_index:b.tag_index ~ocaml_manual_uri pkgs));
+  Fut.return ()
 
 let write_ocaml_manual b =
   let manual_pkg_dir = Fpath.(Conf.doc_dir b.conf / ocaml_manual_pkg) in
@@ -383,7 +398,8 @@ let write_ocaml_manual b =
   | false -> None
   | true ->
       begin
-        Memo.delete b.m dst @@ fun () ->
+        ignore @@
+        let* () = Memo.delete b.m dst in
         let copy_file m ~src_root ~dst_root src =
           let dst = Fpath.reroot ~root:src_root ~dst:dst_root src in
           B00.Memo.file_ready m src;
@@ -392,7 +408,8 @@ let write_ocaml_manual b =
         let src = manual_pkg_dir in
         let files = Os.Dir.fold_files ~recurse:true Os.Dir.path_list src [] in
         let files = Memo.fail_if_error b.m files in
-        List.iter (copy_file b.m ~src_root:src ~dst_root:dst) files
+        List.iter (copy_file b.m ~src_root:src ~dst_root:dst) files;
+        Fut.return ()
       end;
       Some "ocaml-manual/index.html"
 
@@ -406,13 +423,13 @@ let rec build b = match Pkg.Set.choose b.r.pkgs_todo with
         let html_dir = b.html_dir and build_dir = b.odoc_dir in
         B00_odoc.Support_files.write b.m ~without_theme ~html_dir ~build_dir;
         let ocaml_manual_uri = write_ocaml_manual b in
-        write_pkgs_index b ~ocaml_manual_uri;
+        ignore (write_pkgs_index b ~ocaml_manual_uri);
         write_theme b.conf b.m b.theme;
     end
 | pkg ->
     b.r.pkgs_todo <- Pkg.Set.remove pkg b.r.pkgs_todo;
     b.r.pkgs_seen <- Pkg.Set.add pkg b.r.pkgs_seen;
-    pkg_to_html b pkg;
+    ignore (pkg_to_html b pkg);
     build b
 
 let write_log_file c memo =
@@ -425,7 +442,7 @@ let gen c ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
     builder m c ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo
   in
   Os.Sig_exit.on_sigint ~hook:(fun () -> write_log_file c m) @@ fun () ->
-  Memo.spawn_fiber m (fun () -> build b);
+  Memo.run_proc m (fun () -> build b);
   Memo.stir ~block:true m;
   write_log_file c m;
   Log.time (fun _ m -> m "deleting trash") begin fun () ->
@@ -441,7 +458,7 @@ let gen c ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
 
 let install_theme c theme =
   Result.bind (Conf.memo c) @@ fun m ->
-  Memo.spawn_fiber m (fun () -> write_theme c m theme);
+  Memo.run_proc m (fun () -> write_theme c m theme);
   Memo.stir ~block:true m;
   match Memo.status m with
   | Ok () as v -> v

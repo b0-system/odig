@@ -1,1 +1,1 @@
-(srcs-x sample themes src/gh_pages_amend.ml pkg)
+(srcs-x B0.ml sample themes src/gh_pages_amend.ml pkg)

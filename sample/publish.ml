@@ -7,12 +7,12 @@ open B00_std
 
 let versions () =
   let run = Os.Cmd.run_out ~trim:true in
-  Result.bind (run Cmd.(arg "odig" % "--version")) @@ fun odig ->
-  Result.bind (run Cmd.(arg "odoc" % "--version")) @@ fun odoc ->
+  Result.bind (run Cmd.(atom "odig" % "--version")) @@ fun odig ->
+  Result.bind (run Cmd.(atom "odoc" % "--version")) @@ fun odoc ->
   Ok (Fmt.str "odig %s and odoc %s" odig odoc)
 
 let odig_html () =
-  let cache_path = Cmd.(arg "odig" % "cache" % "path") in
+  let cache_path = Cmd.(atom "odig" % "cache" % "path") in
   Result.bind (Os.Cmd.run_out ~trim:true cache_path) @@ fun path ->
   let htmldir = Fpath.(v path / "html") in
   let add_element _ f _ acc = f :: acc in
@@ -20,7 +20,7 @@ let odig_html () =
   Ok (htmldir, fs)
 
 let odig_theme_list () =
-  let themes = Cmd.(arg "odig" % "odoc-theme" % "list" % "--long") in
+  let themes = Cmd.(atom "odig" % "odoc-theme" % "list" % "--long") in
   Result.bind (Os.Cmd.run_out ~trim:true themes) @@ fun themes ->
   let parse_theme p = match String.cut_left ~sep:" " (String.trim p) with
   | None -> Fmt.failwith "%S: could not parse theme" p
@@ -56,9 +56,9 @@ let pp_updated ppf = function
 | true -> Fmt.string ppf "Published docs on"
 
 let publish tty_cap log_level new_commit remote branch =
-  let tty_cap = B00_std_ui.get_tty_cap tty_cap in
-  let log_level = B00_std_ui.get_log_level log_level in
-  B00_std_ui.setup tty_cap log_level ~log_spawns:Log.Debug;
+  let tty_cap = B00_cli.B00_std.get_tty_cap tty_cap in
+  let log_level = B00_cli.B00_std.get_log_level log_level in
+  B00_cli.B00_std.setup tty_cap log_level ~log_spawns:Log.Debug;
   Log.if_error ~use:1 @@
   Result.bind (versions ()) @@ fun versions ->
   Result.bind (odig_html ()) @@ fun (htmldir, htmldir_contents) ->
@@ -101,8 +101,8 @@ let main () =
       let default = B00_github.Pages.default_branch in
       Arg.(value & opt string default & info ["b"; "branch"] ~doc ~docv)
     in
-    let tty_cap = B00_std_ui.tty_cap () in
-    let log_level = B00_std_ui.log_level () in
+    let tty_cap = B00_cli.B00_std.tty_cap () in
+    let log_level = B00_cli.B00_std.log_level () in
     let doc = "Updates odig's sample output on GitHub pages" in
     Term.(const publish $ tty_cap $ log_level $ new_commit $
           remote $ branch),

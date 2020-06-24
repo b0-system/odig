@@ -434,14 +434,14 @@ let rec build b = match Pkg.Set.choose b.r.pkgs_todo with
 
 let write_log_file c memo =
   Log.if_error ~use:() @@
-  B00_ui.Memo.Log.(write (Conf.b0_log_file c) (of_memo memo))
+  B00_cli.Memo.Log.(write (Conf.b0_log_file c) (of_memo memo))
 
 let gen c ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
   Result.bind (Conf.memo c) @@ fun m ->
   let b =
     builder m c ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo
   in
-  Os.Sig_exit.on_sigint ~hook:(fun () -> write_log_file c m) @@ fun () ->
+  Os.Exit.on_sigint ~hook:(fun () -> write_log_file c m) @@ fun () ->
   Memo.run_proc m (fun () -> build b);
   Memo.stir ~block:true m;
   write_log_file c m;

@@ -157,8 +157,8 @@ let log_cmd conf no_pager format kind op_selector =
   Result.bind (B00_pager.find ~don't ()) @@ fun pager ->
   Result.bind (B00_pager.page_stdout pager) @@ fun () ->
   let log_file = Conf.b0_log_file conf in
-  Result.bind (B00_ui.Memo.Log.read log_file) @@ fun l ->
-  B00_ui.Memo.Log.out Fmt.stdout format kind op_selector ~path:log_file l;
+  Result.bind (B00_cli.Memo.Log.read log_file) @@ fun l ->
+  B00_cli.Memo.Log.out Fmt.stdout format kind op_selector ~path:log_file l;
   Ok 0
 
 let odoc_cmd
@@ -291,9 +291,9 @@ let exits =
     ~doc:"indiscriminate error reported on stderr." ::
   Term.default_exits
 
-let details = B00_ui.Cli.out_details ()
+let details = B00_cli.Arg.output_details ()
 let conf =
-  let path = B00_std_ui.fpath in
+  let path = B00_cli.fpath in
   let docs = Manpage.s_common_options in
   let docv = "PATH" in
   let doc dirname dir =
@@ -304,12 +304,12 @@ let conf =
   let b0_cache_dir =
     let env = Arg.env_var Env.b0_cache_dir in
     let doc_none = "$(b,.cache) in odig cache directory" in
-    B00_ui.Memo.cache_dir ~opts:["b0-cache-dir"] ~doc_none ~env ()
+    B00_cli.Memo.cache_dir ~opts:["b0-cache-dir"] ~doc_none ~env ()
   in
   let b0_log_file =
     let env = Arg.env_var Env.b0_log_file in
     let doc_none = "$(b,.log) in odig cache directory" in
-    B00_ui.Memo.log_file ~doc_none ~env ()
+    B00_cli.Memo.log_file ~doc_none ~env ()
   in
   let cache_dir =
     let doc = doc "Cache" "var/cache/odig" in
@@ -343,9 +343,10 @@ let conf =
     Arg.(value & opt (some path) None & info ["share-dir"] ~doc ~docs ~env
            ~docv)
   in
-  let jobs = B00_ui.Memo.jobs ~docs ~env:(Arg.env_var "ODIG_JOBS") () in
-  let tty_cap = B00_std_ui.tty_cap ~env:(Arg.env_var Env.color) () in
-  let log_level = B00_std_ui.log_level ~env:(Arg.env_var Env.verbosity) () in
+  let jobs = B00_cli.Memo.jobs ~docs ~env:(Arg.env_var "ODIG_JOBS") () in
+  let tty_cap = B00_cli.B00_std.tty_cap ~env:(Arg.env_var Env.color) () in
+  let log_level = B00_cli.B00_std.log_level ~env:(Arg.env_var Env.verbosity) ()
+  in
   let conf
       b0_cache_dir b0_log_file cache_dir doc_dir jobs lib_dir log_level
       odoc_theme share_dir tty_cap
@@ -516,7 +517,7 @@ let odoc_cmd =
     let doc = "$(docv) is the .mld file to use to define the introduction
                text on the package list page."
     in
-    let some_path = Arg.some B00_std_ui.fpath in
+    let some_path = Arg.some B00_cli.fpath in
     Arg.(value & opt some_path None & info ["index-intro"] ~docv:"MLDFILE" ~doc)
   in
   let no_pkg_deps =
@@ -596,15 +597,15 @@ let log_cmd =
   let man = [
     `S Manpage.s_description;
     `P "The $(tname) command shows odoc build operations.";
-    `Blocks B00_ui.Op.query_man;
+    `Blocks B00_cli.Op.query_man;
     `S docs_format;
     `S docs_details;
     `S docs_selection; ]
   in
   Term.(const log_cmd $ conf $ no_pager $
-        B00_ui.Memo.Log.out_format_cli ~docs:docs_format () $
-        B00_ui.Cli.out_details ~docs:docs_details () $
-        B00_ui.Op.query_cli ~docs:docs_selection ()),
+        B00_cli.Memo.Log.out_format_cli ~docs:docs_format () $
+        B00_cli.Arg.output_details ~docs:docs_details () $
+        B00_cli.Op.query_cli ~docs:docs_selection ()),
   Term.info "log" ~doc ~sdocs ~exits ~envs ~man ~man_xrefs
 
 let pkg_cmd =

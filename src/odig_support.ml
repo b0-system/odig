@@ -41,7 +41,7 @@ module Pkg = struct
     Log.time (fun _ m -> m "package list of %a" Fpath.pp_quoted dir) @@
     fun () ->
     let ocaml_pkg () =
-      let ocaml_where = Cmd.(arg "ocamlc" % "-where") in
+      let ocaml_where = Cmd.(atom "ocamlc" % "-where") in
       let p = Os.Cmd.run_out ~trim:true ocaml_where |> Result.to_failure in
       "ocaml", Fpath.of_string p |> Result.to_failure
     in
@@ -74,7 +74,7 @@ module Doc_cobj = struct
   let pkg cobj = cobj.pkg
   let hidden cobj = cobj.hidden
   let don't_list cobj =
-    hidden cobj || String.is_infix ~affix:"__" (modname cobj)
+    hidden cobj || String.includes ~sub:"__" (modname cobj)
 
   let add_cobj pkg _ _ path acc =
     try
@@ -194,7 +194,7 @@ module Opam = struct
     | false -> None
 
   let bin = lazy begin
-    Result.bind (Os.Cmd.must_find_tool (Fpath.v "opam")) @@ fun opam ->
+    Result.bind (Os.Cmd.get_tool (Fpath.v "opam")) @@ fun opam ->
     Result.bind (Os.Cmd.run_out ~trim:true Cmd.(path opam % "--version")) @@
     fun v -> match String.cut_left ~sep:"." (String.trim v) with
     | Some (maj, _)  when
@@ -288,7 +288,7 @@ module Doc_dir = struct
     | Some doc_dir ->
         let add_file _ base file (cs, ls, rs as acc) =
           let base = String.uppercase_ascii base in
-          let is_pre pre = String.is_prefix pre base in
+          let is_pre pre = String.starts_with pre base in
           if is_pre "CHANGE" || is_pre "HISTORY" || is_pre "NEWS"
           then (file :: cs), ls, rs else
           if is_pre "LICENSE" then cs, (file :: ls), rs else
@@ -454,7 +454,7 @@ module Conf = struct
     let feedback =
       let op_howto ppf o = Fmt.pf ppf "odig log --id %d" (B000.Op.id o) in
       let show_op = Log.Debug and show_ui = Log.Info and level = Log.level () in
-      B00_ui.Memo.pp_leveled_feedback ~op_howto ~show_op ~show_ui ~level
+      B00_cli.Memo.pp_leveled_feedback ~op_howto ~show_op ~show_ui ~level
         Fmt.stderr
     in
     B00.Memo.memo ~cwd ~cache_dir ~trash_dir ~jobs ~feedback ()
@@ -464,7 +464,7 @@ module Conf = struct
       ~lib_dir ~log_level ~odoc_theme ~share_dir ~tty_cap ()
     =
     let trash_dir =
-      B00_ui.Memo.get_trash_dir ~cwd ~b0_dir:cache_dir ~trash_dir:None
+      B00_cli.Memo.get_trash_dir ~cwd ~b0_dir:cache_dir ~trash_dir:None
     in
     let memo =
       lazy (memo ~cwd:cache_dir ~cache_dir:b0_cache_dir ~trash_dir ~jobs)
@@ -524,26 +524,26 @@ module Conf = struct
       ~odoc_theme ~share_dir ~tty_cap ()
     =
     Result.map_error (Fmt.str "conf: %s") @@
-    let tty_cap = B00_std_ui.get_tty_cap tty_cap in
-    let log_level = B00_std_ui.get_log_level log_level in
-    B00_std_ui.setup tty_cap log_level ~log_spawns:Log.Debug;
+    let tty_cap = B00_cli.B00_std.get_tty_cap tty_cap in
+    let log_level = B00_cli.B00_std.get_log_level log_level in
+    B00_cli.B00_std.setup tty_cap log_level ~log_spawns:Log.Debug;
     Result.bind (Os.Dir.cwd ()) @@ fun cwd ->
     Result.bind (Fpath.of_string Sys.executable_name) @@ fun exec ->
     let cache_dir = get_dir ~cwd ~exec (Fpath.v "var/cache/odig") cache_dir in
     let b0_cache_dir =
       let b0_dir = cache_dir and cache_dir = b0_cache_dir in
-      B00_ui.Memo.get_cache_dir ~cwd ~b0_dir ~cache_dir
+      B00_cli.Memo.get_cache_dir ~cwd ~b0_dir ~cache_dir
     in
     let b0_log_file =
       let b0_dir = cache_dir and log_file = b0_log_file in
-      B00_ui.Memo.get_log_file ~cwd ~b0_dir ~log_file
+      B00_cli.Memo.get_log_file ~cwd ~b0_dir ~log_file
     in
     let html_dir = Fpath.(cache_dir / "html") in
     let lib_dir = get_dir ~cwd ~exec (Fpath.v "lib") lib_dir in
     let doc_dir = get_dir ~cwd ~exec (Fpath.v "doc") doc_dir in
     let share_dir = get_dir ~cwd ~exec (Fpath.v "share") share_dir in
     Result.bind (get_odoc_theme odoc_theme) @@ fun odoc_theme ->
-    let jobs = B00_ui.Memo.get_jobs ~jobs in
+    let jobs = B00_cli.Memo.get_jobs ~jobs in
     Ok (v ~b0_cache_dir ~b0_log_file ~cache_dir ~cwd ~doc_dir ~html_dir
           ~jobs ~lib_dir ~log_level ~odoc_theme ~share_dir ~tty_cap ())
 end

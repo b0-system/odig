@@ -74,7 +74,7 @@ module Doc_cobj = struct
   let pkg cobj = cobj.pkg
   let hidden cobj = cobj.hidden
   let don't_list cobj =
-    hidden cobj || String.includes ~sub:"__" (modname cobj)
+    hidden cobj || String.includes ~affix:"__" (modname cobj)
 
   let add_cobj pkg _ _ path acc =
     try

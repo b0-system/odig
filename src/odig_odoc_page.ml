@@ -213,7 +213,7 @@ let tag_list conf pkgs =
     El.splice (List.map tag_section classes)]
 
 let manual_reference conf ~ocaml_manual_uri =
-  let manual_online = "https://caml.inria.fr/pub/docs/manual-ocaml/" in
+  let manual_online = "https://ocaml.org/manual/" in
   let uri, suff = match ocaml_manual_uri with
   | None -> manual_online, El.txt " (online, latest version)."
   | Some href -> href, El.txt ""

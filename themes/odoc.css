@@ -199,7 +199,7 @@ code, pre
   color: var(--color-code-fg); }
 
 code span, pre span /* Allows to use spans to control breakpoints */
-{ display: inline-block;
+{ white-space: nowrap;
   text-indent: 0; /* That bit is important because of dt.spec's text-indent */ }
 
 pre code { font-size: inherit } /* don't apply transform twice... */

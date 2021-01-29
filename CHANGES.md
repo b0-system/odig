@@ -1,3 +1,7 @@
+
+- Stylesheets. Change strategy to make code spans unbreakable,
+  the previous way broke Chrome in-page search. (odoc#125).
+
 v0.0.5 2020-03-11 La Forclaz (VS)
 ---------------------------------
 

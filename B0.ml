@@ -45,5 +45,16 @@ let default =
     |> add licenses ["ISC"; "PT-Sans-fonts"; "DejaVu-fonts"]
     |> add repo "git+https://erratique.ch/repos/odig.git"
     |> add issues "https://github.com/b0-system/odig/issues"
+    |> add B0_opam.Meta.build
+      {|[["ocaml" "pkg/pkg.ml" "build" "--dev-pkg" "%{dev}%"]]|}
+    |> add B0_opam.Meta.depends
+      [ "ocaml", {|>= "4.08"|};
+        "ocamlfind", {|build|};
+        "ocamlbuild", {|build|};
+        "topkg", {|build & >= "1.0.3"|};
+        "cmdliner", {|>= "1.0.0"|};
+        "odoc", {|>= "1.5.0" & < "2.0.0"|};
+        "b0", {|= "0.0.2"|}; ]
+    |> tag B0_opam.tag
   in
   B0_pack.v "default" ~doc:"The odig project" ~meta ~locked:true units

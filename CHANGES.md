@@ -1,6 +1,11 @@
+v0.0.6 2021-02-11 La Forclaz (VS)
+---------------------------------
 
-- Stylesheets. Change strategy to make code spans unbreakable,
-  the previous way broke Chrome in-page search. (odoc#125).
+- Stylesheets. Change strategy to make code spans unbreakable.
+  The previous way broke Chrome in-page search.
+- Track `b0` changes.
+- Update link to OCaml manual (#59).
+- Require OCaml >= 4.08.0
 
 v0.0.5 2020-03-11 La Forclaz (VS)
 ---------------------------------

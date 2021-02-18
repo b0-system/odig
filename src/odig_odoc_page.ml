@@ -173,10 +173,10 @@ let pkg_list conf pkgs =
   let by_name = "by-name" in
   let classes p = [String.of_char (Char.Ascii.lowercase (Pkg.name p).[0])] in
   let classes = List.classify ~cmp_elts:Pkg.compare ~classes pkgs in
-  El.div ~at:At.[class' by_name] [
-      El.h2 ~at:At.[id by_name] [anchor_a by_name; El.txt "Packages by name"];
+  [ El.h2 ~at:At.[id by_name] [anchor_a by_name; El.txt "Packages by name"];
+    El.div ~at:At.[class' by_name] [
       El.nav (List.map letter_link classes);
-      El.splice (List.map letter_section classes) ]
+      El.splice (List.map letter_section classes) ]]
 
 let tag_list conf pkgs =
   let tag_id t = Fmt.str "tag-%s" t in
@@ -207,15 +207,15 @@ let tag_list conf pkgs =
   | Not_found -> assert false
   in
   let classes = List.classify ~cmp_elts:Pkg.compare ~classes pkgs in
-  El.div ~at:At.[class' by_tag] [
-    El.h2 ~at:At.[id by_tag] [anchor_a by_tag; El.txt "Packages by tag"];
-    El.nav [tag_links classes];
-    El.splice (List.map tag_section classes)]
+  [ El.h2 ~at:At.[id by_tag] [anchor_a by_tag; El.txt "Packages by tag"];
+    El.div ~at:At.[class' by_tag] [
+      El.nav [tag_links classes];
+      El.splice (List.map tag_section classes)]]
 
 let manual_reference conf ~ocaml_manual_uri =
   let manual_online = "https://ocaml.org/manual/" in
   let uri, suff = match ocaml_manual_uri with
-  | None -> manual_online, El.txt " (online, latest version)."
+  | None -> manual_online, El.txt " (online, latest version)"
   | Some href -> href, El.txt ""
   in
   El.splice @@ [El.a ~at:At.[href uri] [El.txt "OCaml manual"]; suff], uri
@@ -260,21 +260,16 @@ let pkg_list
                       href style_href; ];
       El.title [El.txt page_title]]
   in
+  let stdlib_link = stdlib_link conf in
+  let manual_markup, manual_href = manual_reference conf ~ocaml_manual_uri in
   let doc_header =
     let comma = El.txt ", " in
-    let manual_markup, manual_href = manual_reference conf ~ocaml_manual_uri in
     let contents = match raw_index_intro with
     | Some h -> [El.raw h]
     | None ->
-        let stdlib_link = stdlib_link conf in
         let browse_by_tag = match tag_index with
         | true -> El.(splice [a ~at:At.[href "#by-tag"] [txt "by tag"]; comma])
         | false -> El.splice []
-        in
-        let packages_by_tag_li = match tag_index with
-        | false -> El.splice []
-        | true ->
-            El.li [El.a ~at:At.[href "#by-tag"] [El.txt "Packages by tag"]]
         in
         [ El.h1 [El.txt "OCaml package documentation"];
           El.p [El.txt "Browse ";
@@ -285,16 +280,22 @@ let pkg_list
                 El.txt " and the "; manual_markup; El.txt ".";];
           El.p [El.small [El.txt "Generated for ";
                           El.code
-                            [El.txt (Fpath.to_string (Conf.lib_dir conf))]]];
-          El.nav ~at:At.[class' "toc"] [
-            El.ul [
-              El.li [El.a ~at:At.[href stdlib_link]
-                       [El.txt "OCaml standard library"]];
-              El.li [El.a ~at:At.[href manual_href] [El.txt "OCaml manual"]];
-              El.li [El.a ~at:At.[href "#by-name"] [El.txt "Packages by name"]];
-              packages_by_tag_li; ]]]
+                            [El.txt (Fpath.to_string (Conf.lib_dir conf))]]];]
     in
-    El.header El.[ nav [txt "\xF0\x9F\x90\xAB"]; splice contents ]
+    El.header ~at:At.[class' "odoc-preamble"] contents
+  in
+  let toc =
+    let packages_by_tag_li = match tag_index with
+    | false -> El.splice []
+    | true -> El.li [El.a ~at:At.[href "#by-tag"] [El.txt "Packages by tag"]]
+    in
+    El.nav ~at:At.[class' "odoc-toc"] [
+      El.ul [
+        El.li [El.a ~at:At.[href stdlib_link]
+                 [El.txt "OCaml standard library"]];
+        El.li [El.a ~at:At.[href manual_href] [El.txt "OCaml manual"]];
+        El.li [El.a ~at:At.[href "#by-name"] [El.txt "Packages by name"]];
+        packages_by_tag_li; ]]
   in
   let style_href = "_odoc-theme/odoc.css" in
   let page_title = match index_title with
@@ -304,12 +305,13 @@ let pkg_list
   El.to_string ~doc_type:true @@
   El.html [
     doc_head ~style_href page_title;
-    El.body ~at:At.[class' "odig";
-                    (* see https://github.com/ocaml/odoc/issues/298 *)
-                    class' "content"]
-      [ doc_header;
-        pkg_list conf pkgs;
-        if tag_index then tag_list conf pkgs else El.splice []]]
+    El.body ~at:At.[class' "odoc"]
+      [ El.nav ~at:At.[class' "odoc-nav"] [El.txt "\xF0\x9F\x90\xAB"];
+        doc_header;
+        toc;
+        El.div ~at:At.[class' "odoc-content"] [
+          El.splice (pkg_list conf pkgs);
+          El.splice (if tag_index then tag_list conf pkgs else [])]]]
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2018 The odig programmers

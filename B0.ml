@@ -53,7 +53,7 @@ let default =
         "ocamlbuild", {|build|};
         "topkg", {|build & >= "1.0.3"|};
         "cmdliner", {|>= "1.0.0"|};
-        "odoc", {|>= "1.5.0" & < "2.0.0"|};
+        "odoc", {|> "1.5.2" |};
         "b0", {|= "0.0.2"|}; ]
     |> tag B0_opam.tag
   in

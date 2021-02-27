@@ -1,5 +1,5 @@
 #!/bin/sh
 eval $(opam env)
-opam update odig
-odig odoc -v --odoc-theme=odig.light \
-             --index-title 4.07.1 --index-intro=intro.mld
+opam update odoc odig
+odig odoc -v --odoc-theme=odig.default \
+     --index-title 4.11.1 --index-intro=intro.mld

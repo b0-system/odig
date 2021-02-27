@@ -4,24 +4,25 @@
   ---------------------------------------------------------------------------*)
 
 open B00_std
+open Result.Syntax
 
 let versions () =
   let run = Os.Cmd.run_out ~trim:true in
-  Result.bind (run Cmd.(atom "odig" % "--version")) @@ fun odig ->
-  Result.bind (run Cmd.(atom "odoc" % "--version")) @@ fun odoc ->
+  let* odig = run Cmd.(atom "odig" % "--version") in
+  let* odoc = run Cmd.(atom "odoc" % "--version") in
   Ok (Fmt.str "odig %s and odoc %s" odig odoc)
 
 let odig_html () =
   let cache_path = Cmd.(atom "odig" % "cache" % "path") in
-  Result.bind (Os.Cmd.run_out ~trim:true cache_path) @@ fun path ->
+  let* path = Os.Cmd.run_out ~trim:true cache_path in
   let htmldir = Fpath.(v path / "html") in
   let add_element _ f _ acc = f :: acc in
-  Result.bind (Os.Dir.fold ~recurse:false add_element htmldir []) @@ fun fs ->
+  let* fs = Os.Dir.fold ~recurse:false add_element htmldir [] in
   Ok (htmldir, fs)
 
 let odig_theme_list () =
   let themes = Cmd.(atom "odig" % "odoc-theme" % "list" % "--long") in
-  Result.bind (Os.Cmd.run_out ~trim:true themes) @@ fun themes ->
+  let* themes = Os.Cmd.run_out ~trim:true themes in
   let parse_theme p = match String.cut_left ~sep:" " (String.trim p) with
   | None -> Fmt.failwith "%S: could not parse theme" p
   | Some (tn, path) -> Fpath.v ("doc@" ^ tn), Fpath.v path
@@ -60,24 +61,23 @@ let publish tty_cap log_level new_commit remote branch =
   let log_level = B00_cli.B00_std.get_log_level log_level in
   B00_cli.B00_std.setup tty_cap log_level ~log_spawns:Log.Debug;
   Log.if_error ~use:1 @@
-  Result.bind (versions ()) @@ fun versions ->
-  Result.bind (odig_html ()) @@ fun (htmldir, htmldir_contents) ->
+  let* versions = versions () in
+  let* htmldir, htmldir_contents = odig_html () in
   Log.app (fun m ->
       m "Publishing %a" (Fmt.tty [`Fg `Green] Fpath.pp_quoted) htmldir);
-  Result.bind (odig_theme_list ()) @@ fun themes ->
+  let* themes = odig_theme_list () in
   Result.join @@
   Os.Dir.with_tmp @@ fun dir ->
-  Result.bind (link_themes dir htmldir_contents themes) @@ fun theme_updates ->
+  let* theme_updates = link_themes dir htmldir_contents themes in
   let udoc = B00_github.Pages.update ~src:(Some htmldir) (Fpath.v "doc") in
   let updates = B00_github.Pages.nojekyll :: udoc :: theme_updates in
-  Result.bind (B00_vcs.get ()) @@ fun repo ->
+  let* repo = B00_vcs.get () in
   let msg = Fmt.str "Update sample output with %s." versions in
   let amend = not new_commit and force = true in
-  let pub =
+  let* updated =
     B00_github.Pages.commit_updates repo ~remote ~branch ~amend ~force ~msg
       updates
   in
-  Result.bind pub @@ fun updated ->
   Log.app begin fun m ->
       m "[%a] %a %a"
         (Fmt.tty_string [`Fg `Green]) "DONE" pp_updated updated

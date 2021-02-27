@@ -284,18 +284,20 @@ let pkg_list
     in
     El.header ~at:At.[class' "odoc-preamble"] contents
   in
-  let toc =
-    let packages_by_tag_li = match tag_index with
-    | false -> El.splice []
-    | true -> El.li [El.a ~at:At.[href "#by-tag"] [El.txt "Packages by tag"]]
-    in
-    El.nav ~at:At.[class' "odoc-toc"] [
-      El.ul [
-        El.li [El.a ~at:At.[href stdlib_link]
-                 [El.txt "OCaml standard library"]];
-        El.li [El.a ~at:At.[href manual_href] [El.txt "OCaml manual"]];
-        El.li [El.a ~at:At.[href "#by-name"] [El.txt "Packages by name"]];
-        packages_by_tag_li; ]]
+  let toc = match raw_index_intro with
+  | Some _ -> El.void
+  | None ->
+      let packages_by_tag_li = match tag_index with
+      | false -> El.splice []
+      | true -> El.li [El.a ~at:At.[href "#by-tag"] [El.txt "Packages by tag"]]
+      in
+      El.nav ~at:At.[class' "odoc-toc"] [
+        El.ul [
+          El.li [El.a ~at:At.[href stdlib_link]
+                   [El.txt "OCaml standard library"]];
+          El.li [El.a ~at:At.[href manual_href] [El.txt "OCaml manual"]];
+          El.li [El.a ~at:At.[href "#by-name"] [El.txt "Packages by name"]];
+          packages_by_tag_li; ]]
   in
   let style_href = "_odoc-theme/odoc.css" in
   let page_title = match index_title with

@@ -144,7 +144,9 @@ to another machine make sure you follow the symlinks.
 To publish the documentation for a list of packages [$PKGS] write an
 [intro.mld] file that briefly documents the purpose of the
 documentation set, it will be used as a preamble on the package list
-page. Continue with:
+page. You can also define your own table of contents in a `nav` tag
+classified with `odoc-toc` (there will be no table of contents
+otherwise). Continue with:
 
 {v
 export PKGS=...

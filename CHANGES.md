@@ -1,3 +1,8 @@
+
+
+- `--index-intro` option. If you defined a table of contents in the
+  fragment you must reclassify it from `toc` to `odoc-toc`.
+
 v0.0.6 2021-02-11 La Forclaz (VS)
 ---------------------------------
 

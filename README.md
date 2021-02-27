@@ -47,15 +47,19 @@ documentation cases.
 The different themes distributed with `odig` can be seen on the sample
 at the following addresses.
 
+* https://b0-system.github.io/odig/doc/
+* https://b0-system.github.io/odig/doc@odig.default/
 * https://b0-system.github.io/odig/doc@odig.dark/
 * https://b0-system.github.io/odig/doc@odig.light/
+* https://b0-system.github.io/odig/doc@odig.gruvbox/
 * https://b0-system.github.io/odig/doc@odig.gruvbox.dark/
 * https://b0-system.github.io/odig/doc@odig.gruvbox.light/
+* https://b0-system.github.io/odig/doc@odig.solarized/
 * https://b0-system.github.io/odig/doc@odig.solarized.dark/
 * https://b0-system.github.io/odig/doc@odig.solarized.light/
 * https://b0-system.github.io/odig/doc@odoc.default/
 
 Note that for technical reasons the OCaml manual under these addresses
-is always themed according to `odig.light`. This is not what happens
+is always themed according to `odig.default`. This is not what happens
 if you use `odig` for yourself, the manual will render according to
 your theme's color scheme.

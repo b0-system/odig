@@ -50,9 +50,9 @@ let odoc_gen conf
 
 let browse_cmd conf background browser field pkg_names =
   Log.if_error ~use:Exit.no_such_name @@
-  Result.bind (find_pkgs conf pkg_names) @@ fun pkgs ->
+  let* pkgs = find_pkgs conf pkg_names in
   Log.if_error' ~use:Exit.some_error @@
-  Result.bind (B00_www_browser.find ~browser ()) @@ fun browser ->
+  let* browser = B00_www_browser.find ~browser () in
   let get_uris = match field with
   | `Homepage -> Opam.homepage
   | `Issues -> Opam.bug_reports
@@ -79,30 +79,29 @@ let cache_cmd conf = function
       m "Deleting %a, this may take some time..."
         (Fmt.tty [`Fg `Green] Fpath.pp_quoted) dir
     end;
-    let del = Os.Path.delete ~recurse:true dir in
-    Log.if_error ~use:Exit.some_error (Result.bind del @@ fun _ -> Ok 0)
+    Log.if_error ~use:Exit.some_error @@
+    let* _del = Os.Path.delete ~recurse:true dir in
+    Ok 0
 | `Trim ->
     let b0_cache_dir = Conf.b0_cache_dir conf in
     Log.if_error ~use:Exit.some_error @@
-    Result.bind (Os.Dir.exists b0_cache_dir) @@ function
-    | false -> Ok 0
-    | true ->
-        let pct = 50 and max_byte_size = max_int in
-        Result.bind (B000.File_cache.create b0_cache_dir) @@ fun c ->
-        Result.bind (B000.File_cache.trim_size c ~max_byte_size ~pct) @@
-        fun () -> Ok 0
+    let* exists = Os.Dir.exists b0_cache_dir in
+    if not exists then Ok 0 else
+    let pct = 50 and max_byte_size = max_int in
+    let* c = B000.File_cache.create b0_cache_dir in
+    let* () = B000.File_cache.trim_size c ~max_byte_size ~pct in
+    Ok 0
 
 let doc_cmd conf background browser pkg_names update no_update show_files =
   let exists f = Os.File.exists f |> Log.if_error ~use:false in
-  let pkgs = match pkg_names with
+  Log.if_error ~use:Exit.no_such_name @@
+  let* pkgs = match pkg_names with
   | [] -> Ok []
   | ns -> find_pkgs conf pkg_names
   in
-  Log.if_error ~use:Exit.no_such_name @@
-  Result.bind pkgs @@ fun pkgs ->
   Log.if_error' ~use:Exit.some_error @@
-  Result.bind (B00_www_browser.find ~browser ()) @@ fun browser ->
-  let prepare_files = match pkgs with
+  let* browser = B00_www_browser.find ~browser () in
+  let* files = match pkgs with
   | [] ->
       let root_index = Fpath.(Conf.html_dir conf / "index.html") in
       begin match exists root_index with
@@ -112,10 +111,11 @@ let doc_cmd conf background browser pkg_names update no_update show_files =
           let pkgs = Conf.pkgs conf in
           let index_title = None and index_intro = None and index_toc = None in
           let force = false and pkg_deps = true and tag_index = true in
-          Result.bind
-            (odoc_gen conf ~force ~index_title ~index_intro ~index_toc
-               ~pkg_deps ~tag_index pkgs)
-          @@ fun () -> Ok [root_index]
+          let* () =
+            odoc_gen conf ~force ~index_title ~index_intro ~index_toc
+              ~pkg_deps ~tag_index pkgs
+          in
+          Ok [root_index]
       end
   | pkgs ->
       let index p = Fpath.(Conf.html_dir conf / Pkg.name p / "index.html") in
@@ -130,12 +130,12 @@ let doc_cmd conf background browser pkg_names update no_update show_files =
       | _ ->
           let index_title = None and index_intro = None and index_toc = None in
           let force = false and pkg_deps = true and tag_index = true in
-          Result.bind
-            (odoc_gen conf ~force ~index_title ~index_intro ~index_toc
-               ~pkg_deps ~tag_index pkgs)
-          @@ fun () -> Ok files
+          let* () =
+            odoc_gen conf ~force ~index_title ~index_intro ~index_toc
+              ~pkg_deps ~tag_index pkgs
+          in
+          Ok files
   in
-  Result.bind prepare_files @@ fun files ->
   let does_not_exist = List.find_all (fun f -> not (exists f)) files in
   match does_not_exist with
   | [] when show_files ->
@@ -158,11 +158,11 @@ let doc_cmd conf background browser pkg_names update no_update show_files =
 let log_cmd conf no_pager format kind op_selector =
   Log.if_error ~use:Exit.some_error @@
   let don't = no_pager || format = `Trace_event in
-  Result.bind (B00_pager.find ~don't ()) @@ fun pager ->
-  Result.bind (B00_pager.page_stdout pager) @@ fun () ->
+  let* pager = B00_pager.find ~don't () in
+  let* () = B00_pager.page_stdout pager in
   let log_file = Conf.b0_log_file conf in
-  Result.bind (B00_cli.Memo.Log.read log_file) @@ fun l ->
-  B00_cli.Memo.Log.out Fmt.stdout format kind op_selector ~path:log_file l;
+  let* log = B00_cli.Memo.Log.read log_file in
+  B00_cli.Memo.Log.out Fmt.stdout format kind op_selector ~path:log_file log;
   Ok 0
 
 let odoc_cmd
@@ -193,30 +193,30 @@ let odoc_theme_cmd conf out_fmt action theme read_conf =
   in
   let get_theme conf read_conf =
     Log.if_error ~level:Log.Error ~use:Exit.some_error @@
-    let n = match read_conf with
+    let* name = match read_conf with
     | false -> Ok (Conf.odoc_theme conf)
     | true ->
-      Result.bind (B00_odoc.Theme.get_user_preference ()) @@ fun n ->
-      Ok (Option.value ~default:B00_odoc.Theme.odig_default n)
+        let* name = B00_odoc.Theme.get_user_preference () in
+        Ok (Option.value ~default:B00_odoc.Theme.odig_default name)
     in
-    Result.bind n @@ fun n -> Fmt.pr "%s@." n; Ok 0
+    Fmt.pr "%s@." name; Ok 0
   in
   let set_theme conf theme =
     let ts = B00_odoc.Theme.of_dir (Conf.share_dir conf) in
     let theme = match theme with None -> Conf.odoc_theme conf | Some t -> t in
     Log.if_error ~level:Log.Error ~use:Exit.no_such_name @@
-    Result.bind (B00_odoc.Theme.find ~fallback:None theme ts) @@ fun t ->
+    let* t = B00_odoc.Theme.find ~fallback:None theme ts in
     Log.if_error' ~use:Exit.some_error @@
-    Result.bind (Odig_odoc.install_theme conf (Some t)) @@ fun () ->
+    let* () = Odig_odoc.install_theme conf (Some t) in
     let name = Some (B00_odoc.Theme.name t) in
-    Result.bind (B00_odoc.Theme.set_user_preference name) @@
-    fun () -> Ok 0
+    let* () = B00_odoc.Theme.set_user_preference name in
+    Ok 0
   in
   let path conf theme =
     let ts = B00_odoc.Theme.of_dir (Conf.share_dir conf) in
     let theme = match theme with None -> Conf.odoc_theme conf | Some t -> t in
     Log.if_error ~level:Log.Error ~use:Exit.no_such_name @@
-    Result.bind (B00_odoc.Theme.find ~fallback:None theme ts) @@ fun t ->
+    let* t = B00_odoc.Theme.find ~fallback:None theme ts in
     Fmt.pr "%a@." Fpath.pp_unquoted (B00_odoc.Theme.path t); Ok 0
   in
   match action with
@@ -227,10 +227,10 @@ let odoc_theme_cmd conf out_fmt action theme read_conf =
 
 let pkg_cmd conf no_pager out_fmt pkg_names =
   Log.if_error ~use:Exit.no_such_name @@
-  Result.bind (find_pkgs conf pkg_names) @@ fun pkgs ->
+  let* pkgs = find_pkgs conf pkg_names in
   Log.if_error' ~use:Exit.some_error @@
-  Result.bind (B00_pager.find ~don't:no_pager ()) @@ fun pager ->
-  Result.bind (B00_pager.page_stdout pager) @@ fun () ->
+  let* pager = B00_pager.find ~don't:no_pager () in
+  let* () = B00_pager.page_stdout pager in
   let pp_pkgs = match out_fmt with
   | `Short -> (fun ppf () -> (Fmt.list Pkg.pp_name) ppf pkgs)
   | `Normal ->
@@ -252,10 +252,10 @@ let pkg_cmd conf no_pager out_fmt pkg_names =
 
 let show_cmd conf no_pager out_fmt show_empty field pkg_names =
   Log.if_error ~use:Exit.no_such_name @@
-  Result.bind (find_pkgs conf pkg_names) @@ fun pkgs ->
+  let* pkgs = find_pkgs conf pkg_names in
   Log.if_error' ~use:Exit.some_error @@
-  Result.bind (B00_pager.find ~don't:no_pager ()) @@ fun pager ->
-  Result.bind (B00_pager.page_stdout pager) @@ fun () ->
+  let* pager = B00_pager.find ~don't:no_pager () in
+  let* () = B00_pager.page_stdout pager in
   let pp_field field out_fmt show_empty = match out_fmt with
   | `Short | `Normal ->
       (fun ppf (p, i) -> match Pkg_info.get field i with
@@ -276,13 +276,14 @@ let show_cmd conf no_pager out_fmt show_empty field pkg_names =
 
 let show_files_cmd conf no_pager pkg_names get_files =
   Log.if_error ~use:Exit.no_such_name @@
-  Result.bind (find_pkgs conf pkg_names) @@ fun pkgs ->
+  let* pkgs = find_pkgs conf pkg_names in
   Log.if_error' ~use:Exit.some_error @@
-  Result.bind (B00_pager.find ~don't:no_pager ()) @@ fun pager ->
+  let* pager = B00_pager.find ~don't:no_pager () in
   let doc_dir = Conf.doc_dir conf in
   let doc_dirs = List.map (fun p -> p, (Doc_dir.of_pkg ~doc_dir p)) pkgs in
   let files = List.concat (List.map (fun (p, i) -> get_files i) doc_dirs) in
-  Result.bind (B00_pager.page_files pager files) @@ fun () -> Ok 0
+  let* () = B00_pager.page_files pager files in
+  Ok 0
 
 (* Command line interface *)
 

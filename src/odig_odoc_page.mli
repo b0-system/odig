@@ -28,7 +28,8 @@ val pkgs_with_html_docs : Conf.t -> Pkg.t list
 
 val pkg_list :
   Conf.t -> index_title:string option -> raw_index_intro:string option ->
-  tag_index:bool -> ocaml_manual_uri:string option -> Pkg.t list -> string
+  raw_index_toc:string option -> tag_index:bool ->
+  ocaml_manual_uri:string option -> Pkg.t list -> string
 (** [pkg_list c ~index_title ~raw_index_intro ~tag_index ~ocaml_manual_uri pkgs]
     is an HTML page package list for the packages [pkgs].
     {ul
@@ -36,6 +37,9 @@ val pkg_list :
        packages; if unspecified one is automatically generated.}
     {- [raw_index_intro] is the HTML markup that is inserted before the
        list of packages; if unspecified one is automatically
+       generated.}
+    {- [raw_index_toc] is the HTML markup that is inserted in the toc
+       list of packages page; if unspecified one is automatically
        generated.}
     {- [tag_index] if [true] a package tag is added to the page after
        the list of packages by name.}

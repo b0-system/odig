@@ -229,10 +229,11 @@ a.anchor
 
 .odoc-spec { padding-bottom: var(--size-half-line); }
 .spec-doc { margin-top:0; padding-left: 1ch; }
+.odoc-include .spec-doc { padding-left: 0ch; }
 .spec-doc *:first-child { margin-top: 0 }
 
 /* Indent on wrap */
-.include summary, .odoc-spec .spec, td.extension, td.field, td.constructor
+.spec, td.extension, td.field, td.constructor
 { padding-left: 4ch; text-indent: -4ch }
 td.record { padding-left: 6ch }
 
@@ -250,6 +251,8 @@ td.record { padding-left: 6ch }
 
 td.extension > a.anchor, td.field > a.anchor, td.constructor > a.anchor,
 .spec > a.anchor { padding-right: 0.5ch; padding-left: 2ch; }
+
+.odoc-include summary { cursor: pointer }
 
 /* Package, module and @tag lists
 

@@ -245,7 +245,9 @@ let pkgs_with_html_docs conf =
   List.sort Pkg.compare pkgs
 
 let pkg_list
-    conf ~index_title ~raw_index_intro ~tag_index ~ocaml_manual_uri pkgs =
+    conf ~index_title ~raw_index_intro ~raw_index_toc ~tag_index
+    ~ocaml_manual_uri pkgs
+  =
   (* XXX for now it's easier to do it this way. In the future we should
      rather use the ocamldoc language. Either by using
      https://github.com/ocaml/odoc/issues/94 or `--fragment`. So
@@ -284,20 +286,23 @@ let pkg_list
     in
     El.header ~at:At.[class' "odoc-preamble"] contents
   in
-  let toc = match raw_index_intro with
-  | Some _ -> El.void
-  | None ->
-      let packages_by_tag_li = match tag_index with
-      | false -> El.splice []
-      | true -> El.li [El.a ~at:At.[href "#by-tag"] [El.txt "Packages by tag"]]
-      in
-      El.nav ~at:At.[class' "odoc-toc"] [
+  let toc =
+    let contents = match raw_index_toc with
+    | Some toc -> El.raw toc
+    | None ->
+        let packages_by_tag_li = match tag_index with
+        | false -> El.splice []
+        | true ->
+            El.li [El.a ~at:At.[href "#by-tag"] [El.txt "Packages by tag"]]
+        in
         El.ul [
           El.li [El.a ~at:At.[href stdlib_link]
                    [El.txt "OCaml standard library"]];
           El.li [El.a ~at:At.[href manual_href] [El.txt "OCaml manual"]];
           El.li [El.a ~at:At.[href "#by-name"] [El.txt "Packages by name"]];
-          packages_by_tag_li; ]]
+          packages_by_tag_li; ]
+    in
+    El.nav ~at:At.[class' "odoc-toc"] [contents]
   in
   let style_href = "_odoc-theme/odoc.css" in
   let page_title = match index_title with

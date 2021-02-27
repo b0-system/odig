@@ -91,12 +91,15 @@ type builder =
     theme : B00_odoc.Theme.t option;
     index_title : string option;
     index_intro : Fpath.t option;
+    index_toc : Fpath.t option;
     pkg_deps : bool;
     tag_index : bool;
     cobjs_by_modname : Doc_cobj.t list String.Map.t;
     r : resolver; }
 
-let builder m conf ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
+let builder
+    m conf ~index_title ~index_intro ~index_toc ~pkg_deps ~tag_index pkgs_todo
+  =
   let cache_dir = Conf.cache_dir conf in
   let odoc_dir = Fpath.(cache_dir / "odoc") in
   let html_dir = Conf.html_dir conf in
@@ -109,8 +112,8 @@ let builder m conf ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
   let cobj_deps = Fpath.Map.empty in
   let pkgs_todo = Pkg.Set.of_list pkgs_todo in
   let pkgs_seen = Pkg.Set.empty in
-  { m; conf; odoc_dir; html_dir; theme; index_title; index_intro; pkg_deps;
-    tag_index; cobjs_by_modname;
+  { m; conf; odoc_dir; html_dir; theme; index_title; index_intro; index_toc;
+    pkg_deps; tag_index; cobjs_by_modname;
     r = { cobjs_by_digest; cobj_deps; pkgs_todo; pkgs_seen } }
 
 let require_pkg b pkg =
@@ -351,18 +354,24 @@ let pkg_to_html b pkg =
   link_odoc_doc_dir b pkg pkg_info;
   Fut.return ()
 
-let index_intro_to_html b = match b.index_intro with
+let index_frag_to_html b frag ~o = match frag with
 | None -> Fut.return None
 | Some mld ->
     let mld = Fpath.(Conf.cwd b.conf // mld) in
     let is_odoc _ _ f acc = if Fpath.has_ext ".odoc" f then f :: acc else acc in
     let odoc_deps = Os.Dir.fold_files ~recurse:true is_odoc b.odoc_dir [] in
     let odoc_deps = Memo.fail_if_error b.m odoc_deps in
-    let o = Fpath.(b.odoc_dir / "index-header.html") in
+    let o = Fpath.(b.odoc_dir / o) in
     Memo.file_ready b.m mld;
     B00_odoc.Html_fragment.cmd b.m ~odoc_deps mld ~o;
-    let* index_header = Memo.read b.m o in
-    Fut.return (Some index_header)
+    let* res = Memo.read b.m o in
+    Fut.return (Some res)
+
+let index_intro_to_html b =
+  index_frag_to_html b b.index_intro "index-header.html"
+
+let index_toc_to_html b =
+  index_frag_to_html b b.index_toc "index-toc.html"
 
 let write_pkgs_index b ~ocaml_manual_uri =
   let add_pkg_data pkg_infos acc p = match Pkg.Map.find p pkg_infos with
@@ -375,6 +384,7 @@ let write_pkgs_index b ~ocaml_manual_uri =
       version ++ synopsis ++ tags ++ acc
   in
   let* raw_index_intro = index_intro_to_html b in
+  let* raw_index_toc = index_toc_to_html b in
   let pkg_infos = Conf.pkg_infos b.conf in
   let pkgs = Odig_odoc_page.pkgs_with_html_docs b.conf in
   let stamp = match raw_index_intro with None -> [] | Some s -> [s] in
@@ -387,7 +397,8 @@ let write_pkgs_index b ~ocaml_manual_uri =
   let index = Fpath.(b.html_dir / "index.html") in
   let index_title = b.index_title in
   (Memo.write b.m ~stamp index @@ fun () ->
-   Ok (Odig_odoc_page.pkg_list b.conf ~index_title ~raw_index_intro
+   Ok (Odig_odoc_page.pkg_list
+         b.conf ~index_title ~raw_index_intro ~raw_index_toc
          ~tag_index:b.tag_index ~ocaml_manual_uri pkgs));
   Fut.return ()
 
@@ -437,10 +448,14 @@ let write_log_file c memo =
   Log.if_error ~use:() @@
   B00_cli.Memo.Log.(write (Conf.b0_log_file c) (of_memo memo))
 
-let gen c ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo =
+let gen
+    c ~force ~index_title ~index_intro ~index_toc ~pkg_deps ~tag_index
+    pkgs_todo
+  =
   Result.bind (Conf.memo c) @@ fun m ->
   let b =
-    builder m c ~index_title ~index_intro ~pkg_deps ~tag_index pkgs_todo
+    builder
+      m c ~index_title ~index_intro ~index_toc ~pkg_deps ~tag_index pkgs_todo
   in
   Os.Exit.on_sigint ~hook:(fun () -> write_log_file c m) @@ fun () ->
   Memo.run_proc m (fun () -> build b);

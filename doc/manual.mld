@@ -144,9 +144,10 @@ to another machine make sure you follow the symlinks.
 To publish the documentation for a list of packages [$PKGS] write an
 [intro.mld] file that briefly documents the purpose of the
 documentation set, it will be used as a preamble on the package list
-page. You can also define your own table of contents in a `nav` tag
-classified with `odoc-toc` (there will be no table of contents
-otherwise). Continue with:
+page. You can also define your own table of contents on this page in a
+[toc.mld] file whose content will end up in the [nav.odoc-toc]
+element; otherwise a default table of content is generated. Continue
+with:
 
 {v
 export PKGS=...
@@ -154,6 +155,7 @@ opam switch create .
 opam install odig $PKGS
 odig odoc -v --odoc-theme=$MYTHEME \
              --index-title='My docset' --index-intro=intro.mld \
+             --index-toc=toc.mld \
              --no-pkg-deps $PKGS
 v}
 

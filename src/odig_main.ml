@@ -4,6 +4,7 @@
   ---------------------------------------------------------------------------*)
 
 open B00_std
+open Result.Syntax
 open Odig_support
 
 (* Exit codes *)
@@ -38,9 +39,12 @@ let find_pkgs conf = function
         in
         Error (String.concat "\n" (List.fold_left add_error [] miss))
 
-let odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs =
+let odoc_gen conf
+    ~force ~index_title ~index_intro ~index_toc ~pkg_deps ~tag_index pkgs
+  =
   Log.app (fun m -> m "Updating documentation, this may take some time...");
-  Odig_odoc.gen conf ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs
+  Odig_odoc.gen
+    conf ~force ~index_title ~index_intro ~index_toc ~pkg_deps ~tag_index pkgs
 
 (* Commands *)
 
@@ -106,11 +110,11 @@ let doc_cmd conf background browser pkg_names update no_update show_files =
       | false when no_update -> Error "No doc found. Try with 'odig doc -u'."
       | _ ->
           let pkgs = Conf.pkgs conf in
-          let index_title = None and index_intro = None in
+          let index_title = None and index_intro = None and index_toc = None in
           let force = false and pkg_deps = true and tag_index = true in
           Result.bind
-            (odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps
-               ~tag_index pkgs)
+            (odoc_gen conf ~force ~index_title ~index_intro ~index_toc
+               ~pkg_deps ~tag_index pkgs)
           @@ fun () -> Ok [root_index]
       end
   | pkgs ->
@@ -124,11 +128,11 @@ let doc_cmd conf background browser pkg_names update no_update show_files =
             Fmt.(list Fpath.pp_quoted) files
             Fmt.(list Pkg.pp_name) pkgs
       | _ ->
-          let index_title = None and index_intro = None in
+          let index_title = None and index_intro = None and index_toc = None in
           let force = false and pkg_deps = true and tag_index = true in
           Result.bind
-            (odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps
-               ~tag_index pkgs)
+            (odoc_gen conf ~force ~index_title ~index_intro ~index_toc
+               ~pkg_deps ~tag_index pkgs)
           @@ fun () -> Ok files
   in
   Result.bind prepare_files @@ fun files ->
@@ -162,16 +166,19 @@ let log_cmd conf no_pager format kind op_selector =
   Ok 0
 
 let odoc_cmd
-    conf _odoc pkg_names index_title index_intro force no_pkg_deps no_tag_index
+    conf _odoc pkg_names index_title index_intro index_toc force no_pkg_deps
+    no_tag_index
   =
   let pkg_deps = not no_pkg_deps in
   let tag_index = not no_tag_index in
   Log.if_error ~use:Exit.no_such_name @@
-  Result.bind (find_pkgs conf pkg_names) @@ fun pkgs ->
+  let* pkgs = find_pkgs conf pkg_names in
   Log.if_error' ~use:Exit.some_error @@
-  Result.bind
-    (odoc_gen conf ~force ~index_title ~index_intro ~pkg_deps ~tag_index pkgs)
-  @@ fun () -> Ok 0
+  let* () =
+    odoc_gen conf
+      ~force ~index_title ~index_intro ~index_toc ~pkg_deps ~tag_index pkgs
+  in
+  Ok 0
 
 let odoc_theme_cmd conf out_fmt action theme read_conf =
   let list_themes conf out_fmt =
@@ -520,6 +527,13 @@ let odoc_cmd =
     let some_path = Arg.some B00_cli.fpath in
     Arg.(value & opt some_path None & info ["index-intro"] ~docv:"MLDFILE" ~doc)
   in
+  let index_toc =
+    let doc = "$(docv) is the .mld file to use to define the contents of the
+               table of contents on the package list page."
+    in
+    let some_path = Arg.some B00_cli.fpath in
+    Arg.(value & opt some_path None & info ["index-toc"] ~docv:"MLDFILE" ~doc)
+  in
   let no_pkg_deps =
     let doc = "Restrict documentation generation to the packages mentioned \
                on the command line, their dependencies are not automatically \
@@ -533,7 +547,7 @@ let odoc_cmd =
     Arg.(value & flag & info ["no-tag-index"] ~doc)
   in
   Term.(const odoc_cmd $ conf $ odoc $ pkgs_pos $ index_title $ index_intro $
-        force $ no_pkg_deps $ no_tag_index),
+        index_toc $ force $ no_pkg_deps $ no_tag_index),
   Term.info "odoc" ~doc ~sdocs ~exits ~man ~man_xrefs
 
 let odoc_theme_cmd =

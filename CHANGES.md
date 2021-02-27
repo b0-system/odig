@@ -2,8 +2,10 @@
 
 - `--index-intro` option. Fix option no longer interpreting 
   relative files w.r.t. the cwd.
-- `--index-intro` option. If you defined a table of contents in the
-  fragment you must reclassify it from `toc` to `odoc-toc`.
+- Add `--index-toc` option, to specify the package index table of
+  content.  If you used to define a table of contents in the
+  `--index-intro` fragment you now need to define it via this
+  option. The contents goes into the `odoc-toc` `nav` element.
 
 v0.0.6 2021-02-11 La Forclaz (VS)
 ---------------------------------

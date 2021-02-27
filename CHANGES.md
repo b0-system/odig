@@ -1,5 +1,7 @@
 
 
+- `--index-intro` option. Fix option no longer interpreting 
+  relative files w.r.t. the cwd.
 - `--index-intro` option. If you defined a table of contents in the
   fragment you must reclassify it from `toc` to `odoc-toc`.
 

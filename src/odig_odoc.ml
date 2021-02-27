@@ -354,6 +354,7 @@ let pkg_to_html b pkg =
 let index_intro_to_html b = match b.index_intro with
 | None -> Fut.return None
 | Some mld ->
+    let mld = Fpath.(Conf.cwd b.conf // mld) in
     let is_odoc _ _ f acc = if Fpath.has_ext ".odoc" f then f :: acc else acc in
     let odoc_deps = Os.Dir.fold_files ~recurse:true is_odoc b.odoc_dir [] in
     let odoc_deps = Memo.fail_if_error b.m odoc_deps in

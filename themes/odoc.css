@@ -146,12 +146,14 @@ small { font-size: var(--size-font-small); }
 
 sup { vertical-align: super; }
 sub { vertical-align: sub; }
-sup, sub { font-size : calc(1em * var(--size-font-tiny-ratio));
-           line-height: 0; margin-left: 0.2ex; }
+sup, sub
+{ font-size : calc(1em * var(--size-font-tiny-ratio));
+  line-height: 0; margin-left: 0.2ex; }
 
-img { display: block;
-      margin-top: var(--size-half-line);
-      margin-bottom: var(--size-half-line); }
+img
+{ display: block;
+  margin-top: var(--size-half-line);
+  margin-bottom: var(--size-half-line); }
 
 /* Code and code highlighting */
 
@@ -160,20 +162,21 @@ code, pre
   font-weight: 400;
   font-size: calc(1em * var(--size-font-mono-ratio));
   color: var(--color-code-fg);
-  overflow-wrap: break-word;
-}
+  overflow-wrap: break-word; }
 
 pre code { font-size: inherit } /* don't apply transform twice... */
 a code { color: inherit }
 h1 code, h2 code, h3 code, h4 code, h5 code, h6 code { text-transform: none; }
 
-pre { background: var(--color-code-block-bg);
-      padding-left: 0.8ch; padding-right: 0.8ch;
-      margin-left: -0.8ch; margin-right: -0.8ch;
-      padding-top: 1ch; padding-bottom: 1ch;
-      white-space: pre-wrap;
-      overflow-wrap: break-word; }
+pre
+{ background: var(--color-code-block-bg);
+  padding-left: 0.8ch; padding-right: 0.8ch;
+  margin-left: -0.8ch; margin-right: -0.8ch;
+  padding-top: 1ch; padding-bottom: 1ch;
+  white-space: pre-wrap;
+  overflow-wrap: break-word; }
 
+.arrow { white-space: nowrap }
 .keyword , .hljs-keyword { color : var(--color-code-keyword); }
 .hljs-type { color : var(--color-code-type-id); }
 .hljs-string { color : var(--color-code-string); }
@@ -223,9 +226,7 @@ a.anchor
 
 .odoc-toc ul ul li { margin-left: 0; padding-left: 0; }
 
-/* Module structure items
-
-   The classification is quite messy around here. */
+/* Module structure items */
 
 .odoc-spec { padding-bottom: var(--size-half-line); }
 .spec-doc { margin-top:0; padding-left: 1ch; }
@@ -233,24 +234,26 @@ a.anchor
 .spec-doc *:first-child { margin-top: 0 }
 
 /* Indent on wrap */
-.spec, td.extension, td.field, td.constructor
-{ padding-left: 4ch; text-indent: -4ch }
-td.record { padding-left: 6ch }
+.spec, .spec td:first-child { padding-left: 4ch; text-indent: -4ch }
+.spec td.field { padding-left: 6ch }
+
+.spec .def-doc { user-select:none; webkit-user-select:none }
+.spec .def-doc:hover { user-select:auto; webkit-user-select:auto }
 
 /* But we don't do it for types for now because of variants and
    records. This makes :target highlight be off. And poses
    other problems (e.g. need to indent back the last ] or }.
    A better markup strategy should be found here. */
-.spec.type, .spec.extension { padding-left: 0; text-indent: 0 }
+.spec.type { padding-left: 0; text-indent: 0 }
 .spec.type > a.anchor
 { padding-left: 1ch; padding-right: 1ch; /* values from a.anchor */ }
 
-.odoc-spec table { margin-top: 0 }
-.odoc-spec .doc { padding-left: 1ch; }
-.odoc-spec .doc *:first-child { margin-top: 0 }
+.spec td > a.anchor, .spec > a.anchor
+{ padding-right: 0.5ch; padding-left: 2ch; }
 
-td.extension > a.anchor, td.field > a.anchor, td.constructor > a.anchor,
-.spec > a.anchor { padding-right: 0.5ch; padding-left: 2ch; }
+.odoc-spec table { margin-top: 0 }
+.odoc-spec .def-doc { padding-left: 1ch; }
+.odoc-spec .def-doc *:first-child { margin-top: 0 }
 
 .odoc-include summary { cursor: pointer }
 
@@ -264,16 +267,17 @@ td.extension > a.anchor, td.field > a.anchor, td.constructor > a.anchor,
 .modules li a.anchor, .packages li a.anchor
 { padding-right: 0.5ch; padding-left: 2ch; }
 
-.packages .synopsis, .modules .synopsis { padding-left: 1ch; }
-.packages .version { font-size: var(--size-font-micro); }
-.at-tags .at-tag { text-transform : capitalize }
+.synopsis { padding-left: 1ch; }
+.version { font-size: var(--size-font-micro); }
+.at-tag { text-transform : capitalize }
 
 /* Package page */
 
 h1 .version, h1 nav { font-size: var(--size-font); line-height:0 }
-h1 nav { display: inline-block;
-         font-family: var(--font-body);
-         text-transform: capitalize; }
+h1 nav
+{ display: inline-block;
+  font-family: var(--font-body);
+  text-transform: capitalize; }
 
 .package.info td:first-child { padding-right: 2ch; min-width: 13ch}
 .package.info ul { list-style-type: none; display: inline; margin:0; padding:0}

@@ -26,7 +26,6 @@ table { border-collapse: collapse; border-spacing: 0; }
 :root { --font-headings: "PT-Sans-Caption";
         --font-body: "PT-Sans";
         --font-mono: "DejaVu-SansMono";
-
         --size-font: 0.96875rem;
         --size-font-micro: calc(0.675 * var(--size-font));
         --size-font-tiny-ratio: 0.75;
@@ -36,9 +35,11 @@ table { border-collapse: collapse; border-spacing: 0; }
         --size-font-big:   calc(1.5 * var(--size-font));
         --size-font-huge:  calc(1.75 * var(--size-font));
         --size-font-mono-ratio: 0.87097;
+        --size-font-mono-ratio: 0.865;
         --size-line-ratio: 1.5;
         --size-line: calc(var(--size-line-ratio) * var(--size-font));
-        --size-half-line: calc(0.5 * var(--size-line)); }
+        --size-half-line: calc(0.5 * var(--size-line));
+        --size-fourth-line: calc(0.25 * var(--size-line)); }
 
 .odoc { background-color: var(--color-bg);
         color: var(--color-fg);
@@ -50,7 +51,7 @@ table { border-collapse: collapse; border-spacing: 0; }
         display: grid;
         margin: 0 auto;
         max-width: 130ch;
-        grid-template-columns: minmax(50ch,76ch) minmax(25ch,1fr);
+        grid-template-columns: minmax(50ch,76ch) minmax(23ch,1fr);
         grid-column-gap: calc(2 * var(--size-line));
         grid-template-areas: "nav nav"
                              "header toc"
@@ -63,7 +64,7 @@ table { border-collapse: collapse; border-spacing: 0; }
 .odoc-content { grid-area: content; margin: 0 }
 .odoc-toc
 { grid-area: toc;
-  margin-top: calc(1 * var(--size-line));
+  margin-top: var(--size-line);
   border-top: solid thin var(--color-rule); }
 
 /* Media adjustments */
@@ -111,16 +112,36 @@ table { border-collapse: collapse; border-spacing: 0; }
     --color-broken-link: #f71414; }
 }
 
-/* Horizontal rules. The way to do it is not so nice, e.g. for
-   anchoring it makes huge blobs on heading linking. It would be
-   better to emit hr in the markup and display:none them if you don't
-   want them. */
+/* Block level markup */
+
+header > * + *, div > * + *, details > * + *
+{ margin-top: var(--size-half-line); }
+
+ul + * , ol + * { margin-top: 0; }
+ul, ol { margin-top: var(--size-fourth-line);
+         margin-bottom: var(--size-fourth-line);
+         list-style-position: outside; }
+
+li *:first-child, li ol, li ul { margin-top: 0; }
+
+ul { list-style-type: square; }
+ul > li { margin-left: 2.25ch; }
+ol > li { margin-left: 2ch; }
+ol li::marker
+{ font-family: var(--font-headings), sans-serif;
+  font-size: var(--size-font-small); }
+
+img
+{ display: block;
+  margin-top: var(--size-half-line);
+  margin-bottom: var(--size-half-line); }
+
+/* Headings and horizontal rulers */
 
 h1, h2, .odoc-content > *:first-child
 { border-top: solid thin var(--color-rule);
-  padding-top: calc(0.75 * var(--size-line)); }
-
-/* Basic markup */
+  padding-top: calc(0.75 * var(--size-line));
+  margin-top: var(--size-line); }
 
 h1, h2, h3, h4, h5, h6
 { font-family: var(--font-headings), sans-serif;
@@ -133,12 +154,7 @@ h1 { font-size: var(--size-font-huge); }
 h2 { font-size: var(--size-font-big); }
 h3 { font-size: var(--size-font-large); }
 
-div, nav, p, ol, ul, dl, pre, table { margin-top: var(--size-half-line); }
-
-ul, ol { list-style-position: outside }
-ul { list-style-type: square }
-ul > li { margin-left: 2.25ch; }
-ol > li { margin-left: 2ch; }
+/* Phrasing content */
 
 em { font-style: italic }
 b, strong { font-weight: 700 }
@@ -150,11 +166,6 @@ sup, sub
 { font-size : calc(1em * var(--size-font-tiny-ratio));
   line-height: 0; margin-left: 0.2ex; }
 
-img
-{ display: block;
-  margin-top: var(--size-half-line);
-  margin-bottom: var(--size-half-line); }
-
 /* Code and code highlighting */
 
 code, pre
@@ -162,7 +173,7 @@ code, pre
   font-weight: 400;
   font-size: calc(1em * var(--size-font-mono-ratio));
   color: var(--color-code-fg);
-  overflow-wrap: break-word; }
+  overflow-wrap: anywhere; }
 
 pre code { font-size: inherit } /* don't apply transform twice... */
 a code { color: inherit }
@@ -228,17 +239,18 @@ a.anchor
 
 /* Module structure items */
 
-.odoc-spec { padding-bottom: var(--size-half-line); }
+.odoc-spec { padding-bottom: var(--size-fourth-line); }
+.spec { margin-top: 0; }
 .spec-doc { margin-top:0; padding-left: 1ch; }
-.odoc-include .spec-doc { padding-left: 0ch; }
-.spec-doc *:first-child { margin-top: 0 }
+.spec-doc > *:first-child { margin-top: 0 }
 
 /* Indent on wrap */
 .spec, .spec td:first-child { padding-left: 4ch; text-indent: -4ch }
 .spec td.field { padding-left: 6ch }
 
-.spec .def-doc { user-select:none; webkit-user-select:none }
-.spec .def-doc:hover { user-select:auto; webkit-user-select:auto }
+.spec .def-doc .comment-delim + * { margin-top: 0 }
+.spec .def-doc .comment-delim /* make them invisible yet copy-pastable */
+{ position: absolute; width: 1px; height: 1px; overflow: hidden; }
 
 /* But we don't do it for types for now because of variants and
    records. This makes :target highlight be off. And poses

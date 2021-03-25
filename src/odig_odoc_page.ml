@@ -254,12 +254,12 @@ let pkg_list
      that we don't have to guess the way package links are formed. *)
   let doc_head ~style_href page_title = (* a basic head *)
     El.head [
-      El.meta ~at:At.[charset "utf-8"];
-      El.meta ~at:At.[name "generator"; content "odig %%VERSION%%"];
+      El.meta ~at:At.[charset "utf-8"] ();
+      El.meta ~at:At.[name "generator"; content "odig %%VERSION%%"] ();
       El.meta ~at:At.[name "viewport";
-                   content "width=device-width, initial-scale=1.0"];
+                      content "width=device-width, initial-scale=1.0"] ();
       El.link ~at:At.[rel "stylesheet"; type' "text/css"; media "screen, print";
-                      href style_href; ];
+                      href style_href; ] ();
       El.title [El.txt page_title]]
   in
   let stdlib_link = stdlib_link conf in

@@ -81,7 +81,8 @@ type resolver =
   { mutable cobjs_by_digest : Doc_cobj.t list Digest.Map.t;
     mutable cobj_deps : (B00_odoc.Compile.Dep.t list Fut.t) Fpath.Map.t;
     mutable pkgs_todo : Pkg.Set.t;
-    mutable pkgs_seen : Pkg.Set.t; }
+    mutable pkgs_seen : Pkg.Set.t;
+    mutable clear_pkg_odoc_dir : unit Fut.t Pkg.Map.t; }
 
 type builder =
   { m : Memo.t;
@@ -112,18 +113,30 @@ let builder
   let cobj_deps = Fpath.Map.empty in
   let pkgs_todo = Pkg.Set.of_list pkgs_todo in
   let pkgs_seen = Pkg.Set.empty in
+  let clear_pkg_odoc_dir = Pkg.Map.empty in
   { m; conf; odoc_dir; html_dir; theme; index_title; index_intro; index_toc;
     pkg_deps; tag_index; cobjs_by_modname;
-    r = { cobjs_by_digest; cobj_deps; pkgs_todo; pkgs_seen } }
+    r = { cobjs_by_digest; cobj_deps; pkgs_todo; pkgs_seen;
+          clear_pkg_odoc_dir } }
+
+let pkg_assets_dir = "_assets"
+let pkg_html_dir b pkg = Fpath.(b.html_dir / Pkg.name pkg)
+let pkg_odoc_dir b pkg = Fpath.(b.odoc_dir / Pkg.name pkg)
+
+let clear_pkg_odoc_dir b m pkg =
+  match Pkg.Map.find_opt pkg b.r.clear_pkg_odoc_dir with
+  | Some cleared -> cleared
+  | None ->
+      let cleared, set = Fut.create () in
+      b.r.clear_pkg_odoc_dir <- Pkg.Map.add pkg cleared b.r.clear_pkg_odoc_dir;
+      let pkg_odoc_dir = pkg_odoc_dir b pkg in
+      Fut.await (Memo.delete m pkg_odoc_dir) set;
+      cleared
 
 let require_pkg b pkg =
   if Pkg.Set.mem pkg b.r.pkgs_seen || Pkg.Set.mem pkg b.r.pkgs_todo then () else
   (Log.debug (fun m -> m "Package request %a" Pkg.pp pkg);
    b.r.pkgs_todo <- Pkg.Set.add pkg b.r.pkgs_todo)
-
-let pkg_assets_dir = "_assets"
-let pkg_html_dir b pkg = Fpath.(b.html_dir / Pkg.name pkg)
-let pkg_odoc_dir b pkg = Fpath.(b.odoc_dir / Pkg.name pkg)
 
 let odoc_file_for_cobj b cobj =
   let pkg = Doc_cobj.pkg cobj in
@@ -149,7 +162,9 @@ let require_cobj_deps b cobj = (* Also used to find the digest of cobj *)
   match Fpath.Map.find_opt (Doc_cobj.path cobj) b.r.cobj_deps with
   | Some deps -> deps
   | None ->
-      let m = Memo.with_mark b.m (Pkg.name (Doc_cobj.pkg cobj)) in
+      let pkg = Doc_cobj.pkg cobj in
+      let m = Memo.with_mark b.m (Pkg.name pkg) in
+      let* () = clear_pkg_odoc_dir b m pkg in
       let fut_deps, set_deps = Fut.create () in
       let odoc_file = odoc_file_for_cobj b cobj in
       let deps_file = Fpath.(odoc_file + ".deps") in
@@ -332,7 +347,6 @@ let pkg_to_html b pkg =
   let pkg_html_dir = pkg_html_dir b pkg in
   let pkg_odoc_dir = pkg_odoc_dir b pkg in
   let* () = Memo.delete b.m pkg_html_dir in
-  let* () = Memo.delete b.m pkg_odoc_dir in
   let odocs = List.map (cobj_to_odoc b) cobjs in
   let mld_odocs = mlds_to_odoc b pkg pkg_info odocs mlds in
   let odoc_files = List.rev_append odocs mld_odocs in

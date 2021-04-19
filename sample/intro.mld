@@ -1,8 +1,9 @@
-{0:sample OCaml 4.11.1 sample package documentation}
+{0:sample OCaml OCAML_VERSION sample package documentation}
 
 Browse {{:#by-name}by name}, {{:#by-tag}by tag},
 the {{:ocaml/Stdlib/index.html#modules}standard library}
 and the {{:ocaml-manual/index.html}OCaml manual}.
 
-{%html:<p><small>Odig showcase package sample.</small></p>
+{%html:<p><small>Odig showcase package sample using odoc ODOC_VERSION
+and odig ODIG_VERSION</small></p>
 %}

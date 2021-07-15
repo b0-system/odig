@@ -1,0 +1,38 @@
+{0 Cmdlet manual}
+
+This manual shows how to deal with B0 cmdlets and create your own.
+
+{1:basics Basics}
+
+Basic operations on cmdlets are provided by the [b0 cmdlet] command.
+{[
+b0 cmdlet list  # List cmdlets
+]}
+
+{1:tutorial Making your own}
+
+Let's make a simple cmdlet that invokes a script at the root of your project:
+
+Yaddada root vs scope
+
+{[
+let run_script ~script env args =
+  let scope_dir = B0_cmdlet.Env.scope_dir env in
+  let script = Fpath.(scope_dir // script) in
+  let cwd = Option.value ~default:scope_dir cwd in
+  Os.Exit.exec ~cwd script Cmd.(path script %% args)
+
+let mycmd =
+  B0_cmdlet.v "mycmd" ~doc:"Run mycmd" @@
+  run_script ~script:(Fpath.v "scripts/mycmd")
+]}
+
+Even though you should rewrite all these scripts as OCaml cmdlets a
+direct short cut for the above boilerplate is provided.  Use
+{!B0_cmdlet.exec}:
+
+{[
+let mycmd =
+  B0_cmdlet.v "mycmd" ~doc:"Run mycmd" @@
+  B0_cmdlet.exec (Fpath.v "scripts/mycmd")
+]}

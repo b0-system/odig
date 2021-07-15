@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="generator" content="hevea 2.35">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<link rel="stylesheet" type="text/css" href="manual.css">
+<title>8.15 Generative functors</title>
+</head>
+<body>
+<a href="extensiblevariants.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="extn.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="extensionsyntax.html"><img src="next_motif.svg" alt="Next"></a>
+<hr>
+<h2 class="section" id="s:generative-functors"><a class="section-anchor" href="#s:generative-functors" aria-hidden="true">﻿</a>8.15 Generative functors</h2>
+<p>(Introduced in OCaml 4.02)</p><div class="syntax"><table class="display dcenter"><tr class="c020"><td class="dcell"><table class="c001 cellpading0"><tr><td class="c019">
+<a class="syntax" href="modules.html#module-expr"><span class="c011">module-expr</span></a></td><td class="c016">::=</td><td class="c018">
+...
+ </td></tr>
+<tr><td class="c019">&nbsp;</td><td class="c016">∣</td><td class="c018"> <span class="c005">functor</span> <span class="c005">()</span> <span class="c005">-&gt;</span> <a class="syntax" href="modules.html#module-expr"><span class="c011">module-expr</span></a>
+ </td></tr>
+<tr><td class="c019">&nbsp;</td><td class="c016">∣</td><td class="c018"> <a class="syntax" href="modules.html#module-expr"><span class="c011">module-expr</span></a> <span class="c005">()</span>
+ </td></tr>
+<tr><td class="c019">&nbsp;</td></tr>
+<tr><td class="c019">
+<a class="syntax" href="modules.html#definition"><span class="c011">definition</span></a></td><td class="c016">::=</td><td class="c018">
+...
+ </td></tr>
+<tr><td class="c019">&nbsp;</td><td class="c016">∣</td><td class="c018"> <span class="c005">module</span> <a class="syntax" href="names.html#module-name"><span class="c011">module-name</span></a>  { <span class="c005">(</span> <a class="syntax" href="names.html#module-name"><span class="c011">module-name</span></a> <span class="c005">:</span>  <a class="syntax" href="modtypes.html#module-type"><span class="c011">module-type</span></a> <span class="c005">)</span> ∣  <span class="c005">()</span> }
+[ <span class="c005">:</span> <a class="syntax" href="modtypes.html#module-type"><span class="c011">module-type</span></a> ]  <span class="c005">=</span>  <a class="syntax" href="modules.html#module-expr"><span class="c011">module-expr</span></a>
+ </td></tr>
+<tr><td class="c019">&nbsp;</td></tr>
+<tr><td class="c019">
+<a class="syntax" href="modtypes.html#module-type"><span class="c011">module-type</span></a></td><td class="c016">::=</td><td class="c018">
+...
+ </td></tr>
+<tr><td class="c019">&nbsp;</td><td class="c016">∣</td><td class="c018"> <span class="c005">functor</span> <span class="c005">()</span> <span class="c005">-&gt;</span> <a class="syntax" href="modtypes.html#module-type"><span class="c011">module-type</span></a>
+ </td></tr>
+<tr><td class="c019">&nbsp;</td></tr>
+<tr><td class="c019">
+<a class="syntax" href="modtypes.html#specification"><span class="c011">specification</span></a></td><td class="c016">::=</td><td class="c018">
+...
+ </td></tr>
+<tr><td class="c019">&nbsp;</td><td class="c016">∣</td><td class="c018"> <span class="c005">module</span> <a class="syntax" href="names.html#module-name"><span class="c011">module-name</span></a>  { <span class="c005">(</span> <a class="syntax" href="names.html#module-name"><span class="c011">module-name</span></a> <span class="c005">:</span>  <a class="syntax" href="modtypes.html#module-type"><span class="c011">module-type</span></a> <span class="c005">)</span> ∣  <span class="c005">()</span> }
+<span class="c005">:</span> <a class="syntax" href="modtypes.html#module-type"><span class="c011">module-type</span></a>
+ </td></tr>
+<tr><td class="c019">&nbsp;</td></tr>
+</table></td></tr>
+</table></div><p>A generative functor takes a unit <span class="c004">()</span> argument.
+In order to use it, one must necessarily apply it to this unit argument,
+ensuring that all type components in the result of the functor behave
+in a generative way, <em>i.e.</em> they are different from types obtained
+by other applications of the same functor.
+This is equivalent to taking an argument of signature <span class="c004">sig end</span>, and always
+applying to <span class="c004">struct end</span>, but not to some defined module (in the
+latter case, applying twice to the same module would return identical
+types).</p><p>As a side-effect of this generativity, one is allowed to unpack
+first-class modules in the body of generative functors.</p>
+<hr>
+<a href="extensiblevariants.html"><img src="previous_motif.svg" alt="Previous"></a>
+<a href="extn.html"><img src="contents_motif.svg" alt="Up"></a>
+<a href="extensionsyntax.html"><img src="next_motif.svg" alt="Next"></a>
+</body>
+</html>

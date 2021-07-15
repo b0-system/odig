@@ -1,0 +1,52 @@
+{0 Brzo {%html: <span class="version">79d316a5</span>%}}
+
+Brzo is a build tool to quickly turn source files of various languages
+into executable programs and documents.
+
+Consult the {{!page-manual}manual} and its
+{{!page-manual.intro}tutorial introduction}.
+
+{1:quick_start Quick start}
+
+A few invocations to get you started.
+
+{v
+> touch BRZO
+> cat > echo.ml <<EOCAML
+let echo oc ss = output_string oc (String.concat " " ss ^ "\n")
+let () = echo stdout (List.tl (Array.to_list Sys.argv))
+EOCAML
+> brzo -- 'Quick!'
+'Quick!'
+> brzo ocaml --html -- 'Quick!'   # See your browser console.
+> brzo --doc
+v}
+
+More in the {{!page-manual}manual}.
+
+{1:api API}
+
+This is an unstable API subject to change even between minor versions
+of the tool. Use at your own risk.
+
+{!modules:
+Brzo
+Brzo_domain
+Brzo_domain_list
+Brzo_tie_conf
+Brzo_outcome
+Brzo_b0_c
+Brzo_b0_js_of_ocaml
+Brzo_b0_latex
+Brzo_b0_ocaml
+Brzo_b0_ocamlpath
+Brzo_b0_opam
+Brzo_c
+Brzo_cmark
+Brzo_latex
+Brzo_read_cmi
+Brzo_ocaml_conf
+Brzo_ocaml_cmi
+Brzo_ocaml_be
+Brzo_ocaml
+}

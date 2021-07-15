@@ -1,0 +1,250 @@
+{0:top Using [odoc]}
+
+This manual describes the features that are available and recommended for users
+to write great documentation using [odoc].
+
++ {{:#cookbook} Cookbook}
++ {{:#interfaces} Documenting your interfaces}
++ {{:#doc-pages} Writing documentation pages}
++ {{:#examples} Examples of great [odoc] usage}
+
+{1:cookbook Cookbook}
+
+{2 Sections and headings}
+
+Both API references and documentation pages can be split into sections that can
+be introduced with level-1 headings. Each section can also have subsections
+(level-2) and subsubsections (level-3).
+
+Additionally paragraphs can be annotated with level-4 or level-5 headings.
+Note that paragraph headings are {e not} be included in the generated table of
+contents and thus should be used to introduce examples, comments or other
+complementary notes.
+
+
+{1:interfaces Documenting your interfaces}
+
+Odoc is built to produce documentation for your {e libraries}, and the unit of
+organisation is the {e module}. Documentation is written by putting special
+{{!comments} comments} into the source of the {e module} or {e module
+interface}, and correctly placing these is critical to producing good output.
+Odoc expects the documentation to be structured in a logical way, and will work
+best if the following conventions are applied.
+
+The overall structure is that modules start with a {{!preamble} preamble} or
+'Lead Section' that serves as an overview of the most important information
+about module. This is followed by the content of the module, organised into {e
+sections} and {e subsections}, the structure of which will be used to populate
+a {e table of contents} which will be structurally placed immediately after the
+preamble.
+
+The first paragraph of the preamble will be treated as the module {{!synopsis}
+synopsis}, and will be used as a short description of the module when it
+appears in a list of modules elsewhere in the documentation of the library.
+
+{2 Comments}
+
+Documentation comments are delimited with [(** ] (exactly two [*]) and [*)] and
+can be attached to a declaration or be floating in a signature.
+{{:https://caml.inria.fr/pub/docs/manual-ocaml/doccomments.html}This is defined
+by OCaml.} It is also possible to attach documentation comments to individual
+record fields, constructors, function arguments, class items, etc..
+
+{[
+(** This is the top-comment. It documents the whole module and will be used to
+    derive the preamble and the synopsis. *)
+
+type t
+(** This comment is attached to [t]. *)
+
+(** This comment is "floating", it can be used to define sections.
+
+    {1 This is a heading} *)
+
+(* ... *)
+]}
+
+The documentation can be formatted, Odoc accepts the same markup language as
+{{:https://caml.inria.fr/pub/docs/manual-ocaml/ocamldoc.html#s%3Aocamldoc-comments}
+ocamldoc} with some exceptions, see {!page-interface.Changes}.
+
+{2 Top-comment}
+
+The top-comment is the first item of a signature, if it is a documentation
+comment. For example, in an [.mli] file:
+
+{[
+(** This is the top-comment of the current module. *)
+
+module M : sig
+  (** This is the top-comment of [M]. *)
+
+  (* ... *)
+end
+
+module type T = sig
+  (** This is the top-comment of [T]. *)
+
+  (* ... *)
+end
+
+class c =
+  object
+    (** This is the top-comment of [c]. *)
+
+    (* ... *)
+  end
+]}
+
+As an exception, [open] items are allowed to be placed before the top-comment.
+For example:
+
+{[
+(* Copyright header *)
+
+open Base
+
+(** This is the top-comment *)
+
+(* ... *)
+]}
+
+Note that the top-comment can't be attached to a declaration, for example:
+
+{[
+(** This is {e not} the top-comment because it's attached to [t]. *)
+type t
+]}
+
+{2 Preamble}
+
+The preamble is composed of the comment attached to a declaration and the
+top-comment of the corresponding signature, if there is one.
+It is special only because it will be placed in the [header] part of the page,
+just before the TOC (if any), and is used to compute the {e synopsis}.
+
+{[
+(** This is the comment attached to the declaration. This paragraph will be the
+    first of the preamble. *)
+module M : sig
+  (** This is the top-comment of the expansion. This paragraph will be the
+      second of the preamble. *)
+
+  (* ... *)
+end
+]}
+
+The preamble stops at the first heading, the rest is moved into the [content]
+part of the page. For example, the next two snippets will {e render} the same
+way:
+
+{[
+module M : sig
+  (** Preamble.
+
+      {1 Heading}
+
+      This paragraph is not part of the preamble. *)
+end
+]}
+
+{[
+module M : sig
+  (** Preamble. *)
+
+  (** {1 Heading}
+
+      This paragraph is not part of the preamble. *)
+end
+]}
+
+Note: A comment attached to a declaration shouldn't contain any heading.
+
+{2 Synopsis}
+
+The synopsis of a module (a module type, a class, etc..) is the first
+paragraph of the {!preamble}, {e if} the preamble starts with a paragraph.
+
+It is rendered after the corresponding declaration and in [{!modules:...}]
+lists.
+
+Note that the synopsis is computed on top of the {e preamble}, in these two
+examples, the synopsis is the same:
+
+{[
+(** This paragraph is the synopsis of the module [M].
+
+    This paragraph is no longer the synopsis and won't be rendered in the
+    current page near the declaration of [M]. This paragraph will be part of
+    [M]'s preamble. *)
+module M : sig
+  (* ... *)
+end
+]}
+
+{[
+module M : sig
+  (** This paragraph is the synopsis of the module [M]. *)
+
+  (* ... *)
+end
+]}
+
+{1:doc-pages Writing documentation pages}
+
+Files with the [.mld] extension are called {e documentation pages} and should
+be used to complement API references with tutorials or guides. They are
+particularly suitable for OCaml and Reason because cross-references to
+definitions, both in the current package and for external packages, are
+supported.
+
+{2 Markup}
+
+Similarly to interface files, the familiar
+{{:https://caml.inria.fr/pub/docs/manual-ocaml/ocamldoc.html#sec351} ocamldoc}
+syntax can be used in pages. A documentation page can be seen as a single
+regular docstring in a separate file.
+
+{2 Page title}
+
+When defining a documentation page make sure to supply a page title as one is
+not generated by default (unlike for API reference documents where the module
+or module type name is used). The level-0 heading must be used for that
+purpose. For example:
+
+{[
+{0 My page}
+...
+]}
+
+Only one title is allowed per page, the following heading levels should be in
+the range from 1 to 5 (inclusive). Don't worry, [odoc] will generate a warning
+if you forget accidentally include multiple titles.
+
+{2 Usage}
+
+The recommended way to setup documentation pages for your project is by using
+the Dune build system. It will automatically find and generate HTML for all
+[mld] files in your project. See
+{{:https://jbuilder.readthedocs.io/en/latest/documentation.html#documentation-stanza}
+Dune's configuration instructions} for more details.
+
+{2 Referencing pages}
+
+Currently the generated HTML pages are not be automatically referenced in the
+index page, you must manually add links to point to the pages in your document.
+
+For example, if you have a page called [my_page.mld], you can create a
+link to it with [{{!page-my_page}My page}] in your [index.mld] or
+anywhere else in your documentation.
+
+{2 Manual usage}
+
+Generic [odoc] build instructions apply to documentation pages. You can compile
+[mld] files manually with [odoc compile] (this is described in details in
+{{:system-integrations.html#manual-usage} Invoking [odoc] manually}).
+
+
+{1:examples Examples of great [odoc] usage}
+
+...

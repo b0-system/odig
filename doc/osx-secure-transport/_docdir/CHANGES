@@ -1,7 +1,0 @@
-0.1.1 (12-09-2018)
-======
-* Fix build when bytes <> string
-
-0.1.0 (02-02-2017)
-======
-* Initial release.

@@ -1,0 +1,161 @@
+{0:b0 B0 {%html: <span class="version">v0.0.2-12-g2e7fa30e</span>%}}
+
+{b WARNING.} This package is unstable and work in progress, do not depend
+on it.
+
+B0 describes software construction and deployments using modular and
+customizable definitions written in OCaml.
+
+B0 is built on top of the B00 build library which provides arbitrary
+build abstraction with reliable, efficient incremental rebuilds.
+
+{1:manuals Manuals}
+
+For B0 users.
+
+{ul
+{- The {{!page-manual}B0 manual} is a conceptual overview of the
+   B0 system and B0 files. It is recommended reading.}
+{- The {{!page-unit_manual}build unit manual} describes how to
+   create your own build units.}
+{- The {{!page-cmdlet_manual}cmdlet manual} describes how to define
+   your own cmdlets.}
+{- The {{!page-b00_manual}B00 manual} describes the B00 build library.}
+{- The {{!page-release}B0 release manual} describes B0 support
+   for releasing software.}}
+
+For B0 users of specific tools.
+
+{ul
+{- The {{!page-opam}B0 [opam] manual} describes the [opam] support
+   to generate opam package files and publish them in repositories.}}
+
+For B0 programmers.
+
+{ul
+{- The {{!page-driver_dev}B0 driver development manual} describes
+   how to make your own drivers to operate on B0 files.}
+{- The {{!page-todo}TODO} page}
+{- {{!page-old_manual}Old manual fragments} and TODO which will eventually
+   disapear.}
+{- The {{!page-rationale}rationale} of B0, written a long time ago but
+   still relevant}}
+
+{1:b00_libs B00}
+
+B00 is the build model used by B0. It can be used for its own good to
+devise domain specific build system – see for example the [brzo] or
+[odig] tools.
+
+The {{!b00_std}[b0.b00.std]} and {{!b00_kit}[b0.b00.kit]} libraries also
+provide sharp tools for quick "scripts" and command line tools even if you
+are not using {{!b00}[b0.b00]}.
+
+{2:b00_std Library [b0.b00.std]}
+
+The [b0.b00.std] library has a few things that should be in the stdlib
+and a few others that should not be but are useful for B0 and B00
+based programs.
+
+{!modules: B00_std}
+
+{2:b00 Library [b0.b00]}
+
+The build library.
+
+{!modules: B000 B000_conv B00}
+
+{2:b00_kit Library [b0.b00.kit]}
+
+Toolkit for working with B00 and B0. A few things do not depend on the
+[b0.b00] library but are useful to have under your hand.
+
+{3:io IO and file formats}
+
+{!modules:
+B00_base64
+B00_fexts
+B00_findex
+B00_htmlg
+B00_http
+B00_lines
+B00_serialk_json
+B00_serialk_sexp
+B00_serialk_text
+B00_trace
+}
+
+{3:build_dev Dev tools and info}
+
+{!modules:
+B00_cmark
+B00_github
+B00_jsoo
+B00_ocaml
+B00_odoc
+B00_os
+B00_vcs
+B00_rsync
+}
+
+{3:ui UI fragments}
+
+{!modules:
+B00_cli
+}
+
+{3:viewers_editors Viewers and editors}
+
+{!modules:
+B00_editor
+B00_pager
+B00_pdf_viewer
+B00_www_browser
+}
+
+{1:b0 B0}
+
+B0 is the system for describing software construction and deployments
+via {{!page-manual.b0_file}B0 files}.
+
+{2:b0 Library [b0]}
+
+{!modules:
+B0_build
+B0_def
+B0_dir
+B0_meta
+B0_cli
+}
+
+{3:def B0 definitions}
+
+{!modules:
+B0_cmdlet
+B0_pack
+B0_unit
+}
+
+{3:b0_files B0 files}
+
+Only needed if you want to process B0 files your own own way.
+See the {{!page-driver_dev}B0 driver development manual}.
+
+{!modules:
+B0_file
+B0_driver
+}
+
+{2:b0_kit Library [b0.kit]}
+
+Toolkit for writing your B0 files.
+
+{!modules:
+B0_kit
+B0_jsoo
+B0_ocaml
+B0_ocaml_eco
+B0_opam
+B0_release
+B0_srcs
+}

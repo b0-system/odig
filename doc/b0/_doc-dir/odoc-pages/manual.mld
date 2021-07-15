@@ -1,0 +1,502 @@
+{0 B0 manual}
+
+This manual provides a conceptual overview of the B0 system and
+explains the basic mechanics of B0 files and their definitions. See
+{{!page-index.manuals}here} for other topics.
+
+{1:intro Introduction}
+
+B0 aims at liberating the programmer from the essential but tedious
+and brittle bureaucracy that surrounds the programming activity. It
+provides a system with a decent description language to devise modular
+and custom solutions to software construction and deployment problems.
+
+B0 describes:
+
+{ul
+{- Build environments.}
+{- Software configuration, build and testing.}
+{- Source or binary deployments.}
+{- Development life-cycle procedures.}}
+
+These descriptions are made in {e B0 files} which we describe
+next.
+
+{1:b0_file B0 files}
+
+A B0 file is a syntactically valid OCaml file possibly prefixed by a
+few directives. The OCaml code creates definitions to describe the
+software by using the versioned {!B0_kit} API and possibly other
+third-party OCaml libraries.
+
+A B0 file is named [B0.ml] and is usually found at the root of the
+software project's source tree it describes.
+
+The following is a simple [B0.ml] file that declares an executable to
+build from the OCaml [src/hello.ml] source and that uses the
+[cmdliner] OCaml library.
+
+{[
+open B0_kit.V000
+
+let cmdliner = B0_ocaml.libname "cmdliner"
+let hello =
+  let srcs = [`File "src/hello.ml"] in
+  let requires = [cmdliner] in
+  B0_ocaml.exe "hello" ~doc:"Greeting tool" ~srcs ~requires
+]}
+
+The definitions of B0 files are consulted and processed by {e
+drivers}. The [b0] and [d0] tools distributed with B0 are examples of
+drivers. An API is provided to create custom driver, details can
+be found in the {{!page-driver_dev}B0 driver development manual}.
+
+{2:root_b0_file Root B0 file}
+
+The B0 file executed by a driver is called the {e root B0 file}. When
+a driver like [b0] is invoked in a current working directory [cwd],
+the root B0 file is the {e first} [B0.ml] file found starting at the
+[cwd] and moving upwards in parent directories.
+
+The root B0 file can also be specified explicitely via the [--b0-file]
+option or the [B0_FILE] environment variable. The [b0 file] command
+allows to find out which root B0 file is determined by [b0] and
+provides a few actions on it:
+
+{v
+b0 file path    # Show the absolute path to the root B0 file
+b0 file edit    # Edit the root B0 file.
+b0 file --help  # See all actions available on the B0 file
+v}
+
+{2:root_dir Root and [_b0] directory}
+
+The {e root directory} is the directory in which the
+{{!root_b0_file}root B0 file} is found. The [b0 root] command
+shows that directly:
+
+{v
+b0 root  # Show the absolute path to the root directory, effectively
+         # this is: dirname $(b0 file path)
+v}
+
+Most of the time the root directory is the root of a project's source
+tree. However as we will see below, a B0 file can gather multiple
+project definitions by {{!inclusion}including} other B0 files. In
+this case the root directory may be unrelated to the directory of
+these B0 files and may well be empty.
+
+The root directory is where the scratchable {e [_b0] directory} used
+by drivers to operate and store their results gets created by
+default. The location of the [_b0] directory can also be specified
+explicitely via the [--b0-dir] option or the [B0_DIR] environment
+variable. [_b0] directories should be ignored by version control
+systems:
+
+{v
+echo _b0 >> .gitignore  # Let git ignore the _b0 directory
+echo _b0 >> .hgignore   # Let hg ignore the _b0 directory
+v}
+
+{2:rel_paths Relative file paths}
+
+Unless otherwise indicated relative file paths specified in
+definitions and directives of a specific B0 file are {e always}
+relative to the directory of that B0 file.
+
+In the B0 file example we gave above the [src/hello.ml] file is
+relative to the directory of the B0 file in which we wrote
+the definition.
+
+{2:inclusion Including B0 files}
+
+The {{!directive_include}[@@@B0.include]} directive provides a
+mecanism to compose B0 files. The intent of B0 file inclusion is to be
+able to aggregate independent software (sub)systems or to vendor
+dependencies. Include directives must be specified {e at the
+start} of a B0 file, before comments or OCaml code.
+
+For example the following [B0.ml] file includes the definitions of two
+other B0 files:
+
+{[
+[@@@B0.include "that" "../that-lib/B0.ml"]
+[@@@B0.include "projects/proj/B0.ml"]
+]}
+
+{3:scope Scopes}
+
+An included B0 file defines a named {e scope} to which its definitions
+are added. Scope names are either specified explicitely or
+automatically derived from the directory name of the B0 file. In the
+example above the scope names are, in order, [that] and [proj].
+
+From the B0 file that includes, the syntax to access a definition
+named [d] in a scope [s] is [s.d].
+
+Scope names must be unique in a given B0 file and must not contain
+['.']  characters. Definitions made in libraries are in their own
+library scope which is prefixed by [.].
+
+{b XXX} Idea: let local toplevel scopes and global scope clash
+and use [.bla] to disambiguate if that is the case (and let . denote
+the root scope).
+
+{3:access Access control and isolation}
+
+At definition time a B0 file can only access definitions that are in
+its own scope or in the scope of the files it [@B00.include]s and
+recursively. This means that in any B0 file:
+
+{[
+let all_units = B0_unit.list () (* get all units defined so far *)
+]}
+
+the value [all_units] depends only on the definitions and includes of
+the B0 file itself, however included it may itself be.
+
+In the example above the two included B0 files cannot refer to the
+names of the other directly at definition time. However at build time
+their definitions may interact indirectly via metadata and build logic
+name resolution procedures which have access to the global scope, see
+{!vendoring}.
+
+Syntactically, the {e OCaml} scope of included files is not accessible
+and always fully isolated: both includer and includee cannot access
+each other's OCaml identifiers. You can think of them as being wrapped
+in their own [module _ : sig end] module.
+
+{3:vendoring Dependency vendoring}
+
+Support for build dependency vendoring depends on the name resolutions
+procedure of the build logic you are using, there is no specific
+support for it in B0 except for the inclusion mecanism which allows
+to gather definitions from other B0 projects.
+
+If the build logic you use is able to look in the definitions of the
+root B0 file for dependencies and use these instead of those found in the
+build environment then vendoring is simply a matter of
+[@@@B0.includ]ing the definitions of the dependencies to your B0 file.
+
+A typical setup is to have at the root of a project:
+
+{v
+B0.ml
+vendor/dep1/
+vendor/dep2/
+src/
+v}
+
+and to start your project's [B0.ml] file with:
+
+{[
+[@@@B0.include "vendor/dep1/B0.ml"]
+[@@@B0.include "vendor/dep2/B0.ml"]
+...
+]}
+
+Since dependencies may have vendored dependencies themselves,
+coherence issues may arise. You may have to define new consistent and
+locked {{!packs}build packs} in the root B0 file in order to exclude
+conflicting dependencies.
+
+{b XXX} What about introducing [@@@B0.exclude] directives to exclude
+scopes (by name).
+
+{2:libs Using libraries}
+
+B0 is a modular and extensible system. It is {e expected} for
+third-parties to define build and deployment logics and distribute
+them as libraries.
+
+Any OCaml library available in the [OCAMLPATH] can be used in a B0
+file by requiring it via the {{!directive_require}#require}
+directive. [#require] directives must be specified {e at the start} of
+the file, before comments or OCaml code.
+
+For example:
+
+{[
+#require "mylib"
+]}
+
+instructs to lookup library [mylib] in the [OCAMLPATH] and use
+it to compile the B0 file.
+
+{2:custom_defs Custom local descriptions}
+
+Project specific descriptions and build logics should not clutter your
+B0 files. It's a good idea to put these in their own file an simply
+import the source in the B0 file via the the
+{{!directive_mod_use}#mod_use} directive.
+
+[#mod_use] directives must be specified {e at the start} of the file
+before comments or OCaml code and they can't define B0 definitions,
+only functions that produce them. {b TODO} sort out scope/allow defs or not.
+
+By convention these definitions should be in a [B0] directory
+alongside the [B0.ml] file. For example here we have support for
+[that-tool] in [B0/that_tool.ml].
+
+{[
+#mod_use "B0/that_tool.ml"
+
+let hello =
+  let doc = "hello exe produced by that-tool" in
+  let srcs = ["src/bla.tt"] in
+  That_tool.exe ~name:"hello" ~doc ~srcs
+]}
+
+The [#mod_use] directive simply creates a module with that file name
+and the contents of the file spliced in there. If present a
+corresponding [B0/that_tool.mli] file constrains the interface of that
+module accordingly.
+
+{2:boot B0 file bootstrap}
+
+A B0 file is an OCaml source and may need {{!libs}additional} OCaml
+libraries. This means it needs an OCaml compiler in the user [PATH]
+and the [#require]d libraries in the [OCAMLPATH].
+
+Making sure these libraries are available is the purpose of B0 file
+boostrapping. The {{!directive_boot}[@@@B0.boot]} directive allows to
+specify a system to run in order to install the B0 file prerequisites.
+
+For example the following directive:
+
+{[
+[@@@B0.boot "opam" "my-logic>=1.0.0"]
+]}
+
+indicates the B0 file needs the [my-logic] package to be installed
+with version greater or equal than 1.0.0. The syntax for opam package
+names and constraints follows that of the [opam install] command.
+
+This declaration allows to install the B0 file prerequisites by invoking:
+
+{[
+b0 file boot --opam
+]}
+
+{1:definitions B0 file definitions}
+
+This section provides a high-level view of the definitions made in B0
+files to describe the software.
+
+B0 definitions are named and {e static}. The latter means they need to
+be defined during the initialisation of the B0 file. This allows
+end-user to query and act upon them from the command line or other
+user interfaces.
+
+{2:meta Metadata}
+
+All definitions in B0 have a metadata dictionary of type {!B0_meta.t}
+attached. Metadata is used to drive build logics, deployments and
+custom procedures.
+
+The type {!B0_meta.t} is a simple type-safe heterogenous value map. A
+few {{!B0_meta.std}standard keys} are provided, consider using these
+before defining your own. Also consult {!B0_kit} and libraries of
+build logic which may define more.
+
+{2:units Build units}
+
+A build unit gathers sets of related low-level build operations
+(e.g. tool spawns). Typical build units are sequences of commands that
+build a library, an executable, etc.
+
+Build units structure builds in well identified fragments, they form
+the smallest unit of build that can be be requested for building by
+the user.
+
+They are given a build directory in [_b0] according to the build
+environment and their name where they should – but are not required –
+to output their results.
+
+Read the {{:page-build_unit_manual}build unit manual}.
+
+{2:packs Build packs}
+
+A build pack gathers a set of {{!units}build units}. Build packs have
+no formal operational functionality in the system. It is just a way to
+list build units under a name and perform coarse grained actions on
+them. Note that a build unit can belong to more than one pack.
+
+Here are example of pack usage in the system:
+
+{ul
+{- Define convenience subsets, possibly locked, of units to build.
+   These builds can then be easily triggered via the [-p] option
+   of [b0 build].}
+{- Define metadata and build units to create a distribution package. For
+   example opam package files can be generated from build packs,
+   see the {{!page-opam}B0 [opam] manual}.}
+{- Define build prerequisites for actions and deployments}}
+
+{3:default_pack The [default] pack}
+
+The [default] pack defines the build units that are built when a bare
+[b0 build] is invoked.
+
+{2:envs Build environments}
+
+{3:default_env The [default] environment}
+{3:user_env The [user] environment}
+
+{2:cmdlets Cmdlets}
+
+Cmdlets are convenience named commands you can define and directely
+invoke via
+{[
+b0 cmd NAME -- ...
+]}
+If your development practice needs a bit of shell scripting here and
+there, consider rewriting them in a decent programming language as cmdlets.
+
+Read the {{:page-cmdlet_manual}cmdlet manual}.
+
+{1:editor_support Editor support}
+
+{2:emacs Emacs}
+
+The logic below guesses a compilation command the first time you invoke
+compilation mode depending on the current buffer file.
+
+{v
+(require 'compile)
+
+(defun guess-compile-command ()
+  "Guess a compilation command from the buffer file"
+  (if buffer-file-name
+      (cond
+       ((locate-dominating-file buffer-file-name "B0.ml") "b0 ")
+       ((locate-dominating-file buffer-file-name "dune-project")
+        "dune build ")
+       ((locate-dominating-file buffer-file-name "Makefile") "make ")
+       ((locate-dominating-file buffer-file-name "BRZO") "brzo -b ")
+       (t
+        (concat "brzo --root " (file-name-directory buffer-file-name) " -b ")))
+    ""))
+
+(setq compile-command '(guess-compile-command))
+v}
+
+{1:b0_file_reference B0 file reference}
+
+The following parts can be distinguished in a B0 file:
+
+{ol
+{- The initial sequence of directives. Before any comment
+   or OCaml construct.}
+{- The OCaml unit implementation.}}
+
+The order is important. Directives that are mentioned after the OCaml
+unit implementation starts are either silently ignored ([@@@B0.*]
+directives) or produce compilation errors ([#*] directives).
+
+{2:b0_file_syntax Syntax}
+
+A B0 file is white space (no comments) separated directives followed
+by an
+{{:http://caml.inria.fr/pub/docs/manual-ocaml-4.09/compunit.html#unit-implementation}OCaml
+unit implementation}.
+
+Using an {{:https://tools.ietf.org/html/rfc5234}RFC 5234} grammar this
+reads as:
+
+{v
+b0_file    = *(ws directive) ws unit-implementation
+directive  = dir-boot / dir-inc / dir-req
+dir-boot   = "[@@@B0.boot" *(ws dstring) ws "]"
+dir-inc    = "[@@@B0.include" *(ws dstring) ws "]"
+dir-req    = "#require" ws dstring
+dir-moduse = "#mod_use" ws dstring
+dstring    = %x22 dchar *dchar %x22
+dchar      = escape / cont / ws / %x21 / %x23-%x5B / %x5D-%x7E / %x80-xFF
+escape     = %x5C (%x20 / %x22 / %x5C)
+cont       = %x5C nl ws
+ws         = *(%x20 / %x09 / %x0A / %x0B / %x0C / %x0D)
+nl         = %x0A / %x0D / %x0D %x0A
+unit-implementation = ... ; See the syntax in the OCaml manual
+v}
+
+{2:directive_boot Directive [@@@B0.boot]}
+
+The syntax of the [@@@B0.boot] directive is:
+
+{[
+[@@@B0.boot "SYSTEM" "ARG"... ]
+]}
+
+At the moment the only known value for ["SYSTEM"] is ["opam"] and its
+argument names are packages constraints using the same syntax as the
+[opam install] command:
+
+{[
+[@@@B0.boot "opam" "PKG"... ]
+]}
+
+This indicates the [opam] package [PKG] need to be installed in order
+to compile the B0 file.
+
+{2:directive_include Directive [@@@B0.include]}
+
+The syntax of the [@@@B0.include] directive is one of:
+
+{[
+[@@@B0.include "PATH"]
+[@@@B0.include "NAME" "PATH"]
+]}
+
+The semantics is to include in the B0 file the definitions of
+the B0 file at ["PATH"] in a scope named ["NAME"]. If ["NAME"] is
+is not specified the directory name of the included B0 file is used.
+
+["NAME"] must be unique among the B0 files included in the file and must
+not contain ['.'] characters.
+
+{2:directive_require Directive [#require]}
+
+The syntax of the [#require] directive is:
+
+{[
+#require "LIB"
+]}
+
+The semantics is to compile and link the B0 file against library
+[LIB], looked up in the [OCAMLPATH]. At the moment library [LIB]'s
+dependencies must be manually [#required] aswell.
+
+{2:directive_mod_use Directive [#mod_use]}
+
+The syntax of the [#mod_use] directive is:
+
+{[
+#mod_use "PATH"
+]}
+
+The semantics is to define a module with the contents of [PATH] at
+that location. The name of the module is defined by
+{{!B00_ocaml.Mod.Name.mangled}mangling} the file name of [PATH].
+
+For example assuming the [PATH] is [B0/file.ml], the directive expands to:
+
+{[
+module File = struct
+#1 "B0/file.ml"
+(* contents of B0/file.ml *)
+end
+]}
+
+If [PATH] has a corresponding [.mli] file in the same directory the
+directive expands to:
+
+{[
+module File : sig
+#line 1 "B0/file.mli"
+(* contents of B0/file.mli *)
+end = struct
+#line 1 "B0/file.ml"
+(* contents of B0/file.ml *)
+end
+]}

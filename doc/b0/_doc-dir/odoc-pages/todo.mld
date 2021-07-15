@@ -1,0 +1,85 @@
+{0:design_todo Design considerations and todo}
+
+{1:design_b0_file B0 file}
+
+{ul
+{- [B0.ml] file finding. Should we stop at the last B0.ml file upwards ?
+   This would be nice if you operate in a vendored dir. But this also
+   avoid problems like I do a checkout e.g. in a scratch directory in
+   [_b0] to build it. On the other hand we have [--b0-file] for these cases.}
+{- Should a [@@@B0.version] be added ? Think harder about
+   it an especially with respect to [B0_kit.V000] versioning. and
+   coherence with [@@@B0.include]s. Also we could require to specify
+   say [#require "b0.kit.v000"]. Write down a few properties
+   we would like to have w.r.t. opam and/or inclusion and end-user
+   support.}
+{- Scope name for libraries the [lib] think may not be that
+   good and rather confusing. Maybe devise a specific notation
+   to access library definitions and allow dots in their name.
+   (["/my.def.bla"])}}
+
+{1:design_b0 B0 library}
+
+{2:unit_meta Unit dynamic meta}
+
+For now we used ['a Fut B0_beta.key].
+{ul
+{- See how it goes fares for sync. Push/pull.}
+{- What about serializing them so that it can be read
+   by `b0 unit get` ?}}
+
+{2:unit_action Unit actions}
+
+The current implementations raises a few questions. It will need to be
+refined, see {!B0_unit.type-action}.
+
+{ul
+{- action/cmdlet overlap}
+{- Should we have the action as a meta key ?}
+{- The action needs to be run or be aware of the deployement environment.}
+{- Maybe we don't need to be given the build and simply let the unit's
+   dynamic meta have whatever is needed.}
+{- If we get a fast up-to-date check. How to we get the dynamic meta.
+   (serialize ?).}
+{- Should actions be definitions to apply on units ? Seems to
+   get into testing territory.}}
+
+{1:design_b0_tool [b0] tool}
+
+{ul
+{- [b0 build] consider [-x|-u] ordering ? }}
+
+{1:conventions Build API conventions}
+
+{ul
+{- Should [?meta] be the initial or override an initial meta done by
+   the combinator. initial ensures [get]s do not blow, but it could
+   be nice to be able to override auto-derivations}}
+
+{2:fragments Build fragments}
+
+At the B0 level we need to expose build fragments. It seems the build
+procedures of units is a good candidate but for now it's a bit unconvient
+to do that. We need to clarify the configuration store and dynamic
+metadata see {!unit_meta}.
+
+For now as a temporary hack we add the [wrap] parameter to units.
+
+{1:b00 B00}
+
+The signature of {!B00.Memo.write} looks wrong you want a fut. E.g.
+we don't want to the [Fut.sync] here.
+
+{[
+let crunch_file m file ~in_dir =
+  let open Fut.Syntax in
+  let mn = B00_ocaml.Mod.Name.of_mangled_filename (Fpath.basename file) in
+  let out = Fpath.(in_dir / String.Ascii.uncapitalize mn + ".ml") in
+  B00.Memo.write m out ~reads:[file] begin fun () ->
+  (* FIXME b0 the sig of write is wrong *)
+  let data = Fut.sync (B00.Memo.read m file) in
+  Ok (B00_ocaml.Crunch.string_to_string ~id:"file" ~data)
+  end;
+  Fut.return out
+
+]}

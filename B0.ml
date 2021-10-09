@@ -42,7 +42,7 @@ let default =
     |> add description_tags
       ["build"; "dev"; "doc"; "meta"; "packaging"; "org:erratique";
        "org:b0-system"]
-    |> add licenses ["ISC"; "PT-Sans-fonts"; "DejaVu-fonts"]
+    |> add licenses ["ISC"; "LicenseRef-ParaType-Free-Font-License"; "LicenseRef-DejaVu-fonts"]
     |> add repo "git+https://erratique.ch/repos/odig.git"
     |> add issues "https://github.com/b0-system/odig/issues"
     |> add B0_opam.Meta.build

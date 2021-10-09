@@ -1,4 +1,5 @@
 opam-version: "2.0"
+name: "odig"
 synopsis: """Lookup documentation of installed OCaml packages"""
 maintainer: ["Daniel Bünzli <daniel.buenzl i@erratique.ch>"]
 authors: ["The odig programmers"]
@@ -6,7 +7,7 @@ homepage: "https://erratique.ch/software/odig"
 doc: "https://erratique.ch/software/odig/doc"
 dev-repo: "git+https://erratique.ch/repos/odig.git"
 bug-reports: "https://github.com/b0-system/odig/issues"
-license: ["ISC" "PT-Sans-fonts" "DejaVu-fonts"]
+license: ["ISC" "ParaType-Free-Font-License" "DejaVu-fonts"]
 tags: ["build" "dev" "doc" "meta" "packaging" "org:erratique"
        "org:b0-system"]
 depends: ["ocaml" {>= "4.08"}

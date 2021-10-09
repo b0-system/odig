@@ -53,8 +53,8 @@ let default =
         "ocamlbuild", {|build|};
         "topkg", {|build & >= "1.0.3"|};
         "cmdliner", {|>= "1.0.0"|};
-        "odoc", {|> "1.5.2" |};
-        "b0", {|= "0.0.2"|}; ]
+        "odoc", {|>= "2.0.0" |};
+        "b0", {|= "0.0.3"|}; ]
     |> tag B0_opam.tag
   in
   B0_pack.v "default" ~doc:"The odig project" ~meta ~locked:true units

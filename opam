@@ -7,7 +7,8 @@ homepage: "https://erratique.ch/software/odig"
 doc: "https://erratique.ch/software/odig/doc"
 dev-repo: "git+https://erratique.ch/repos/odig.git"
 bug-reports: "https://github.com/b0-system/odig/issues"
-license: ["ISC" "ParaType-Free-Font-License" "DejaVu-fonts"]
+license: ["ISC" "LicenseRef-ParaType-Free-Font-License"
+          "LicenseRef-DejaVu-fonts"]
 tags: ["build" "dev" "doc" "meta" "packaging" "org:erratique"
        "org:b0-system"]
 depends: ["ocaml" {>= "4.08"}
@@ -15,8 +16,8 @@ depends: ["ocaml" {>= "4.08"}
           "ocamlbuild" {build}
           "topkg" {build & >= "1.0.3"}
           "cmdliner" {>= "1.0.0"}
-          "odoc" {> "1.5.2" }
-          "b0" {= "0.0.2"}]
+          "odoc" {>= "2.0.0" }
+          "b0" {= "0.0.3"}]
 build: [["ocaml" "pkg/pkg.ml" "build" "--dev-pkg" "%{dev}%"]]
 description: """
 odig is a command line tool to lookup documentation of installed OCaml

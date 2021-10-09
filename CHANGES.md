@@ -1,5 +1,7 @@
+v0.0.7 2021-10-09 Zagreb
+------------------------
 
-
+- Stylesheet support for odoc 2.0.0.
 - `--index-intro` option. Fix option no longer interpreting 
   relative files w.r.t. the cwd.
 - Add `--index-toc` option, to specify the package index table of

@@ -463,7 +463,7 @@ let write_log_file c memo =
   B00_cli.Memo.Log.(write (Conf.b0_log_file c) (of_memo memo))
 
 let gen
-    c ~force ~index_title ~index_intro ~index_toc ~pkg_deps ~tag_index
+    c ~index_title ~index_intro ~index_toc ~pkg_deps ~tag_index
     pkgs_todo
   =
   Result.bind (Conf.memo c) @@ fun m ->

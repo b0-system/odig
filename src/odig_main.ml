@@ -44,7 +44,7 @@ let odoc_gen conf
   =
   Log.app (fun m -> m "Updating documentation, this may take some time...");
   Odig_odoc.gen
-    conf ~force ~index_title ~index_intro ~index_toc ~pkg_deps ~tag_index pkgs
+    conf ~index_title ~index_intro ~index_toc ~pkg_deps ~tag_index pkgs
 
 (* Commands *)
 

@@ -1,3 +1,10 @@
+
+
+
+
+- Exit code 3 is now reported as 123.
+
+
 v0.0.7 2021-10-09 Zagreb
 ------------------------
 

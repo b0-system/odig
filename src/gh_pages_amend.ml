@@ -110,11 +110,11 @@ let main () =
       `S Manpage.s_bugs;
       `P "Report them, see $(i,%%PKG_HOMEPAGE%%) for contact information." ];
     in
-    Term.(const publish_cmd $ tty_cap $ log_level $ new_commit $ remote $
-          branch $ msg $ preserve_symlinks $ cname_file $ src $ dst),
-    Term.info "gh-pages-amend" ~version:"%%VERSION%%" ~doc ~man
+    Cmd.v (Cmd.info "gh-pages-amend" ~version:"%%VERSION%%" ~doc ~man)
+      Term.(const publish_cmd $ tty_cap $ log_level $ new_commit $ remote $
+            branch $ msg $ preserve_symlinks $ cname_file $ src $ dst)
   in
-  Term.exit_status @@ Term.eval cmd
+  exit (Cmd.eval' cmd)
 
 let () = if !Sys.interactive then () else main ()
 

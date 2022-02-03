@@ -288,7 +288,7 @@ module Doc_dir = struct
     | Some doc_dir ->
         let add_file _ base file (cs, ls, rs as acc) =
           let base = String.uppercase_ascii base in
-          let is_pre pre = String.starts_with pre base in
+          let is_pre prefix = String.starts_with ~prefix base in
           if is_pre "CHANGE" || is_pre "HISTORY" || is_pre "NEWS"
           then (file :: cs), ls, rs else
           if is_pre "LICENSE" then cs, (file :: ls), rs else
@@ -472,7 +472,7 @@ module Conf = struct
     let pkgs = lazy (Pkg.of_dir lib_dir) in
     let pkg_infos = Lazy.from_fun @@ fun () ->
       let add acc (p, i) = Pkg.Map.add p i acc in
-      let pkg_infos = Pkg_info.query doc_dir (Lazy.force pkgs) in
+      let pkg_infos = Pkg_info.query ~doc_dir (Lazy.force pkgs) in
       List.fold_left add Pkg.Map.empty pkg_infos
     in
     { b0_cache_dir; b0_log_file; cache_dir; cwd; doc_dir; html_dir; jobs;

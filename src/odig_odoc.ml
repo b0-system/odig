@@ -382,10 +382,10 @@ let index_frag_to_html b frag ~o = match frag with
     Fut.return (Some res)
 
 let index_intro_to_html b =
-  index_frag_to_html b b.index_intro "index-header.html"
+  index_frag_to_html b b.index_intro ~o:"index-header.html"
 
 let index_toc_to_html b =
-  index_frag_to_html b b.index_toc "index-toc.html"
+  index_frag_to_html b b.index_toc ~o:"index-toc.html"
 
 let write_pkgs_index b ~ocaml_manual_uri =
   let add_pkg_data pkg_infos acc p = match Pkg.Map.find p pkg_infos with

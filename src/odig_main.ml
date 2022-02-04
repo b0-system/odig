@@ -180,51 +180,6 @@ let odoc_cmd
   in
   Ok 0
 
-let odoc_theme_cmd conf out_fmt action theme read_conf =
-  let list_themes conf out_fmt =
-    match B00_odoc.Theme.of_dir (Conf.share_dir conf) with
-    | [] -> 0
-    | ts ->
-        let pp_theme = function
-        | `Short -> B00_odoc.Theme.pp_name
-        | `Normal | `Long -> B00_odoc.Theme.pp
-        in
-        Fmt.pr "@[<v>%a@]@." (Fmt.list (pp_theme out_fmt)) ts; 0
-  in
-  let get_theme conf read_conf =
-    Log.if_error ~level:Log.Error ~use:Exit.some_error @@
-    let* name = match read_conf with
-    | false -> Ok (Conf.odoc_theme conf)
-    | true ->
-        let* name = B00_odoc.Theme.get_user_preference () in
-        Ok (Option.value ~default:B00_odoc.Theme.odig_default name)
-    in
-    Fmt.pr "%s@." name; Ok 0
-  in
-  let set_theme conf theme =
-    let ts = B00_odoc.Theme.of_dir (Conf.share_dir conf) in
-    let theme = match theme with None -> Conf.odoc_theme conf | Some t -> t in
-    Log.if_error ~level:Log.Error ~use:Exit.no_such_name @@
-    let* t = B00_odoc.Theme.find ~fallback:None theme ts in
-    Log.if_error' ~use:Exit.some_error @@
-    let* () = Odig_odoc.install_theme conf (Some t) in
-    let name = Some (B00_odoc.Theme.name t) in
-    let* () = B00_odoc.Theme.set_user_preference name in
-    Ok 0
-  in
-  let path conf theme =
-    let ts = B00_odoc.Theme.of_dir (Conf.share_dir conf) in
-    let theme = match theme with None -> Conf.odoc_theme conf | Some t -> t in
-    Log.if_error ~level:Log.Error ~use:Exit.no_such_name @@
-    let* t = B00_odoc.Theme.find ~fallback:None theme ts in
-    Fmt.pr "%a@." Fpath.pp_unquoted (B00_odoc.Theme.path t); Ok 0
-  in
-  match action with
-  | `List -> list_themes conf out_fmt
-  | `Get -> get_theme conf read_conf
-  | `Set -> set_theme conf theme
-  | `Path -> path conf theme
-
 let pkg_cmd conf no_pager out_fmt pkg_names =
   Log.if_error ~use:Exit.no_such_name @@
   let* pkgs = find_pkgs conf pkg_names in
@@ -285,6 +240,45 @@ let show_files_cmd conf no_pager pkg_names get_files =
   let* () = B00_pager.page_files pager files in
   Ok 0
 
+
+let theme_list_cmd conf out_fmt =
+  match B00_odoc.Theme.of_dir (Conf.share_dir conf) with
+  | [] -> 0
+  | ts ->
+      let pp_theme = function
+      | `Short -> B00_odoc.Theme.pp_name
+      | `Normal | `Long -> B00_odoc.Theme.pp
+      in
+      Fmt.pr "@[<v>%a@]@." (Fmt.list (pp_theme out_fmt)) ts; 0
+
+let theme_get_cmd conf read_conf =
+  Log.if_error ~level:Log.Error ~use:Exit.some_error @@
+  let* name = match read_conf with
+  | false -> Ok (Conf.odoc_theme conf)
+  | true ->
+      let* name = B00_odoc.Theme.get_user_preference () in
+      Ok (Option.value ~default:B00_odoc.Theme.odig_default name)
+  in
+  Fmt.pr "%s@." name; Ok 0
+
+let theme_set_cmd conf theme =
+  let ts = B00_odoc.Theme.of_dir (Conf.share_dir conf) in
+  let theme = match theme with None -> Conf.odoc_theme conf | Some t -> t in
+  Log.if_error ~level:Log.Error ~use:Exit.no_such_name @@
+  let* t = B00_odoc.Theme.find ~fallback:None theme ts in
+  Log.if_error' ~use:Exit.some_error @@
+  let* () = Odig_odoc.install_theme conf (Some t) in
+  let name = Some (B00_odoc.Theme.name t) in
+  let* () = B00_odoc.Theme.set_user_preference name in
+  Ok 0
+
+let theme_path_cmd conf theme =
+  let ts = B00_odoc.Theme.of_dir (Conf.share_dir conf) in
+  let theme = match theme with None -> Conf.odoc_theme conf | Some t -> t in
+  Log.if_error ~level:Log.Error ~use:Exit.no_such_name @@
+  let* t = B00_odoc.Theme.find ~fallback:None theme ts in
+  Fmt.pr "%a@." Fpath.pp_unquoted (B00_odoc.Theme.path t); Ok 0
+
 (* Command line interface *)
 
 open Cmdliner
@@ -294,11 +288,12 @@ open Cmdliner
 let exits =
   Cmd.Exit.info Exit.no_such_name
     ~doc:"a specified entity name cannot be found." ::
-  Cmd.Exit.info Exit.err_uri ~doc:"a URI cannot be shown in a browser." ::
+  Cmd.Exit.info Exit.err_uri ~doc:"an URI cannot be shown in a browser." ::
   Cmd.Exit.defaults
 
-let details = B00_cli.Arg.output_details ()
+let format = B00_cli.Arg.output_format ()
 let conf =
+  let absent = "see below" in
   let path = B00_cli.fpath in
   let docs = Manpage.s_common_options in
   let docv = "PATH" in
@@ -315,23 +310,25 @@ let conf =
   let b0_log_file =
     let env = Cmd.Env.info Env.b0_log_file in
     let doc_none = "$(b,.log) in odig cache directory" in
-    B00_cli.Memo.log_file ~doc_none ~env ()
+    B00_cli.Memo.log_file ~docs ~doc_none ~env ()
   in
   let cache_dir =
     let doc = doc "Cache" "var/cache/odig" in
     let env = Cmd.Env.info Env.cache_dir in
-    Arg.(value & opt (some path) None & info ["cache-dir"] ~doc ~docs ~env
-           ~docv)
+    Arg.(value & opt (some path) None &
+         info ["cache-dir"] ~absent ~doc ~docs ~env ~docv)
   in
   let doc_dir =
     let doc = doc "Documentation" "doc" in
     let env = Cmd.Env.info Env.doc_dir in
-    Arg.(value & opt (some path) None & info ["doc-dir"] ~doc ~docs ~env ~docv)
+    Arg.(value & opt (some path) None &
+         info ["doc-dir"] ~absent ~doc ~docs ~env ~docv)
   in
   let lib_dir =
     let doc = doc "Library" "lib" in
     let env = Cmd.Env.info Env.lib_dir in
-    Arg.(value & opt (some path) None & info ["lib-dir"] ~doc ~docs ~env ~docv)
+    Arg.(value & opt (some path) None &
+         info ["lib-dir"] ~absent ~doc ~docs ~env ~docv)
   in
   let odoc_theme =
     let doc =
@@ -346,8 +343,8 @@ let conf =
   let share_dir =
     let doc = doc "Share" "share" in
     let env = Cmd.Env.info Env.share_dir in
-    Arg.(value & opt (some path) None & info ["share-dir"] ~doc ~docs ~env
-           ~docv)
+    Arg.(value & opt (some path) None &
+         info ["share-dir"] ~absent ~doc ~docs ~env ~docv)
   in
   let jobs = B00_cli.Memo.jobs ~docs ~env:(Cmd.Env.info "ODIG_JOBS") () in
   let tty_cap = B00_cli.B00_std.tty_cap ~env:(Cmd.Env.info Env.color) () in
@@ -381,7 +378,6 @@ let no_pager = B00_pager.don't ()
 let show_files_cmd ?cmd ~kind get_files =
   let cname = match cmd with None -> kind | Some cmd -> cmd in
   let doc = Fmt.str "Show package %s files" kind in
-  let sdocs = Manpage.s_common_options in
   let envs = B00_pager.envs () in
   let man =
     [ `S "DESCRIPTION";
@@ -392,12 +388,14 @@ let show_files_cmd ?cmd ~kind get_files =
       `P "To output the file paths rather than their content use $(mname) \
           $(b,show)." ]
   in
-  Cmd.v (Cmd.info cname ~doc ~sdocs ~envs ~exits ~man)
+  Cmd.v (Cmd.info cname ~doc ~envs ~exits ~man)
     Term.(const show_files_cmd $ conf $ no_pager $ pkgs_pos $ const get_files)
 
-(* Commands *)
+let subcmd ?(exits = exits) ?(envs = []) name ~doc ~descr term =
+  let man = [`S Manpage.s_description; descr] in
+  Cmd.v (Cmd.info name ~doc ~exits ~envs ~man) term
 
-let sdocs = Manpage.s_common_options
+(* Commands *)
 
 let browse_cmd =
   let doc = "Open package metadata URIs in your browser" in
@@ -415,33 +413,35 @@ let browse_cmd =
     let action = Arg.enum field in
     Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"FIELD")
   in
-  Cmd.v (Cmd.info "browse" ~doc ~sdocs ~exits ~man)
-  Term.(const browse_cmd $ conf $ background $ browser $ field $
-        pkgs_pos1_nonempty)
+  Cmd.v (Cmd.info "browse" ~doc ~exits ~man)
+    Term.(const browse_cmd $ conf $ background $ browser $ field $
+          pkgs_pos1_nonempty)
 
 let cache_cmd =
   let doc = "Operate on the odig cache" in
   let man = [
-    `S Manpage.s_synopsis;
-    `P "$(mname) $(tname) $(i,ACTION) [$(i,OPTION)]...";
     `S Manpage.s_description;
-    `P "The $(tname) command operates on the odig cache. See the available
-        actions below.";
-    `S "ACTIONS";
-    `I ("$(b,path)", "Display the path to the cache");
-    `I ("$(b,clear)", "Clear the cache");
-    `I ("$(b,trim)", "Trim the b0 cache (doesn't affect generated docs)"); ]
+    `P "The $(tname) command operates on the odig cache."]
   in
-  let action =
-    let action = [ "path", `Path; "clear", `Clear; "trim", `Trim ] in
-    let doc = Fmt.str "The action to perform. $(docv) must be one of %s."
-        (Arg.doc_alts_enum action)
+  let clear_cmd =
+    let doc = "Clear the cache" in
+    let descr = `P "$(tname) clears the cache." in
+    subcmd "clear" ~doc ~descr Term.(const cache_cmd $ conf $ const `Clear)
+  in
+  let path_cmd =
+    let doc = "Show cache directory path" in
+    let descr = `P "$(tname) outputs the path to the cache directory." in
+    subcmd "path" ~doc ~descr Term.(const cache_cmd $ conf $ const `Path)
+  in
+  let trim_cmd =
+    let doc = "Trim cache (does not affect generated docs)" in
+    let descr = `P "$(mname) trims the cache without affecting generated \
+                    documentation."
     in
-    let action = Arg.enum action in
-    Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"ACTION")
+    subcmd "trim" ~doc ~descr Term.(const cache_cmd $ conf $ const `Trim)
   in
-  Cmd.v (Cmd.info "cache" ~doc ~sdocs ~exits ~man)
-    Term.(const cache_cmd $ conf $ action)
+  let subcmds = [clear_cmd; path_cmd; trim_cmd] in
+  Cmd.group (Cmd.info "cache" ~doc ~exits ~man) subcmds
 
 let changes_cmd =
   show_files_cmd ~cmd:"changes" ~kind:"change log" Doc_dir.changes_files
@@ -459,7 +459,7 @@ let conf_cmd =
         to the binary's install directory. See the options $(b,--lib-dir),
         $(b,--doc-dir), $(b,--share-dir) and $(b,--cache-dir) for details."; ]
   in
-  Cmd.v (Cmd.info "conf" ~doc ~sdocs ~exits ~man)
+  Cmd.v (Cmd.info "conf" ~doc ~exits ~man)
     Term.(const conf_cmd $ conf)
 
 let doc_cmd =
@@ -489,7 +489,7 @@ let doc_cmd =
     in
     Arg.(value & flag & info ["f"; "show-files"] ~doc)
   in
-  Cmd.v (Cmd.info "doc" ~doc ~sdocs ~exits ~man ~man_xrefs)
+  Cmd.v (Cmd.info "doc" ~doc ~exits ~man ~man_xrefs)
     Term.(const doc_cmd $ conf $ background $ browser $ pkgs_pos $ update $
           no_update $ show_files)
 
@@ -543,82 +543,89 @@ let odoc_cmd =
     let doc = "Do not generate the tag index on the package list page." in
     Arg.(value & flag & info ["no-tag-index"] ~doc)
   in
-  Cmd.v (Cmd.info "odoc" ~doc ~sdocs ~exits ~man)
+  Cmd.v (Cmd.info "odoc" ~doc ~exits ~man)
     Term.(const odoc_cmd $ conf $ odoc $ pkgs_pos $ index_title $ index_intro $
           index_toc $ force $ no_pkg_deps $ no_tag_index)
 
 let odoc_theme_cmd =
+  let theme =
+    let doc = "Theme name." and docv = "THEME" in
+    let absent = "value of $(b,odig odoc-theme get)" in
+    Arg.(value & pos 0 (some string) None & info [] ~absent ~doc ~docv)
+  in
+  let get_cmd =
+    let doc = "Get the theme used on documentation generation" in
+    let descr = `Blocks [
+        `P "$(mname) shows the theme used on documentation generation.";
+        `P "This is either, in order, the value of the $(b,--odoc-theme) \
+            option, the value of the $(b,ODIG_ODOC_THEME) environment \
+            variable, the stripped contents of the \
+            $(b,~/.config/odig/odoc-theme) file or $(b,odig.default)";
+        `P "Use $(b,--config) to get the value from \
+            the configuration file; $(b,odig.default) is returned if there is
+            not such file."; ]
+    in
+    let read_conf =
+      let doc =
+        "Show the value written in $(b,~/.config/odig/odoc-theme) \
+         or $(b,odig.default) if there is no such file."
+      in
+      Arg.(value & flag & info ["conf"] ~doc)
+    in
+    subcmd "get" ~doc ~descr Term.(const theme_get_cmd $ conf $ read_conf)
+  in
+  let list_term = Term.(const theme_list_cmd $ conf $ format) in
+  let list_cmd =
+    let doc = "List available themes (default command)" in
+    let descr = `P "$(tname) lists available themes." in
+    subcmd "list" ~doc ~descr list_term
+  in
+  let path_cmd =
+    let doc = "Show theme directory" in
+    let descr = `P "$(tname) shows the directory of $(i,THEME)"
+    in
+    subcmd "path" ~doc ~descr Term.(const theme_path_cmd $ conf $ theme)
+  in
+  let set_cmd =
+    let doc = "Set theme used on documentation generation" in
+    let descr =
+      `P "$(tname) changes the theme used on documentation generation
+         to $(i,THEME) and persists the choice in \
+          $(b,~/.config/odig/odoc-theme).";
+    in
+    subcmd "set" ~doc ~descr Term.(const theme_set_cmd $ conf $ theme)
+  in
+  let subcmds = [get_cmd; list_cmd; path_cmd; set_cmd] in
   let doc = "Manage themes for odoc API and manual documentation." in
   let man = [
-    `S Manpage.s_synopsis;
-    `P "$(mname) $(tname) $(i,ACTION) [$(i,OPTION)]...";
     `S Manpage.s_description;
-    `P "$(tname) lists and sets the theme used by odoc documentation.";
+    `P "$(tname) lists and sets the theme used by odoc documentation. The \
+        default command is $(tname) $(b,list).";
     `P "See the packaging conventions in $(b,odig doc) $(mname) for the \
         theme install structure.";
-    `S "ACTIONS";
-    `I ("$(b,list)", "List available themes.");
-    `I ("$(b,get) [$(b,--config)]", "Show the theme to use on documentation \
-        generation. This is either, in order, the value of the \
-        $(b,--odoc-theme) option,
-        or the value of the $(b,ODIG_ODOC_THEME) environment variable, or the
-        stripped contents of the $(b,~/.config/odig/odoc-theme) file
-        or $(b,odig.default). Use $(b,--config) to get the value from
-        the configuration file; $(b,odig.default) is returned if there is
-        not such file.");
-    `I ("$(b,set) [$(b,THEME)]",
-        "Change the theme of generated doc to $(b,THEME) and persist the \
-         choice to $(b,~/.config/odig/odoc-theme). If $(b,THEME) is \
-         unspecified use the theme returned by $(b,get).");
-    `I ("$(b,path) [$(b,THEME)]", "Show path to theme $(b,THEME). If
-         $(b,THEME) is unspecfied use the theme returned by $(b,get)."); ]
+    `S Manpage.s_options;
+    `S B00_cli.s_output_format_options;
+  ]
   in
-  let action =
-    let action =
-      [ "list", `List; "get", `Get; "set", `Set; "path", `Path;]
-    in
-    let doc = Fmt.str "The action to perform. $(docv) must be one of %s."
-        (Arg.doc_alts_enum action)
-    in
-    let action = Arg.enum action in
-    Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"ACTION")
-  in
-  let theme =
-    let doc = "Theme name." in
-    Arg.(value & pos 1 (some string) None & info [] ~doc ~docv:"THEME")
-  in
-  let read_conf =
-    let doc =
-      "On $(b,get), return the value written in \
-       $(b,~/.config/odig/odoc-theme) or $(b,odig.default) if there is no \
-       such file."
-    in
-    Arg.(value & flag & info ["conf"] ~doc)
-  in
-  Cmd.v (Cmd.info "odoc-theme" ~doc ~sdocs ~exits ~man)
-    Term.(const odoc_theme_cmd $ conf $ details $ action $ theme $ read_conf)
+  Cmd.group (Cmd.info "odoc-theme" ~doc ~exits ~man)
+    ~default:list_term subcmds
 
 let log_cmd =
   let doc = "Show odoc build log" in
-  let docs_format = "OUTPUT FORMAT" in
-  let docs_details = "OUTPUT DETAILS" in
-  let docs_selection = "OPTIONS FOR SELECTING OPERATIONS" in
   let envs = B00_pager.envs () in
   let man = [
     `S Manpage.s_description;
     `P "The $(tname) command shows odoc build operations.";
-    `Blocks B00_cli.Op.query_man;
-    `S docs_format;
-    `S docs_details;
-    `S docs_selection; ]
+    `S Manpage.s_options;
+    `S B00_cli.s_output_format_options;
+    `S B00_cli.Op.s_selection_options;
+    `Blocks B00_cli.Op.query_man ]
   in
-  Cmd.v (Cmd.info "log" ~doc ~sdocs ~exits ~envs ~man)
+  Cmd.v (Cmd.info "log" ~doc ~exits ~envs ~man)
     Term.(const log_cmd $ conf $ no_pager $
-          B00_cli.Memo.Log.out_format_cli ~docs:docs_format () $
-          B00_cli.Arg.output_details ~docs:docs_details () $
-          B00_cli.Op.query_cli ~docs:docs_selection ())
+          B00_cli.Memo.Log.out_format_cli () $ format $ B00_cli.Op.query_cli ())
 
-let pkg_term = Term.(const pkg_cmd $ conf $ no_pager $ details $ pkgs_pos)
+let pkg_term = Term.(const pkg_cmd $ conf $ no_pager $ format $ pkgs_pos)
 let pkg_cmd =
   let doc = "Show packages (default command)" in
   let envs = B00_pager.envs () in
@@ -627,9 +634,12 @@ let pkg_cmd =
     `P "The $(tname) command shows packages known to odig. If no packages
         are specified, all packages are shown.";
     `P "See the packaging conventions in $(b,odig doc) $(mname) for the package
-        install structure.";]
+        install structure.";
+    `S Manpage.s_commands;
+    `S Manpage.s_options;
+    `S B00_cli.s_output_format_options; ]
   in
-  Cmd.v (Cmd.info "pkg" ~doc ~sdocs ~envs ~exits ~man) pkg_term
+  Cmd.v (Cmd.info "pkg" ~doc ~envs ~exits ~man) pkg_term
 
 let readme_cmd = show_files_cmd ~kind:"readme" Doc_dir.readme_files
 let show_cmd =
@@ -642,7 +652,9 @@ let show_cmd =
     `P "Outputs a single non-empty value per line; to output empty
         value use the $(b,--show-empty) option.";
     `P "To preceed values by the name of the package they apply to, use
-        the $(b,--long) option."; ]
+        the $(b,--long) option.";
+    `S Manpage.s_options;
+    `S B00_cli.s_output_format_options; ]
   in
   let field =
     let field = Odig_support.Pkg_info.field_names in
@@ -655,8 +667,8 @@ let show_cmd =
     let doc = "Show empty fields." in
     Arg.(value & flag & info ["e"; "show-empty"] ~doc)
   in
-  Cmd.v (Cmd.info "show" ~doc ~sdocs ~envs ~exits ~man)
-    Term.(const show_cmd $ conf $ no_pager $ details $ show_empty $ field $
+  Cmd.v (Cmd.info "show" ~doc ~envs ~exits ~man)
+    Term.(const show_cmd $ conf $ no_pager $ format $ show_empty $ field $
           pkgs_pos1)
 
 let subs =
@@ -673,13 +685,15 @@ let odig =
     `P "See $(b,odig doc) $(mname) for a tutorial and more details."; `Noblank;
     `P "See $(mname) $(b,conf --help) for information about $(mname) \
         configuration.";
+    `S Manpage.s_options;
+    `S B00_cli.s_output_format_options;
     `S Manpage.s_see_also;
     `P "Consult $(b,odig doc odig) for a tutorial, packaging conventions and
          more details.";
     `S Manpage.s_bugs;
     `P "Report them, see $(i,%%PKG_HOMEPAGE%%) for contact information." ];
   in
-  Cmd.group (Cmd.info "odig" ~version:"%%VERSION%%" ~doc ~sdocs ~exits ~man)
+  Cmd.group (Cmd.info "odig" ~version:"%%VERSION%%" ~doc ~exits ~man)
     ~default:pkg_term subs
 
 let main () =

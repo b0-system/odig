@@ -1,7 +1,7 @@
+v0.0.8 2022-02-09 La Forclaz (VS)
+---------------------------------
 
-
-
-
+- Support Cmdliner 1.1.0.
 - Exit code 3 is now reported as 123.
 
 

@@ -1,4 +1,0 @@
-* POSIXAT
-
-Posixat is a small library that binds the various *at posix
-functions. None of these functions are implemented on Windows.

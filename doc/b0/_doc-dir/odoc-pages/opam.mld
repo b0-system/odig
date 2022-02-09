@@ -1,0 +1,245 @@
+{0 [opam] support manual}
+
+{!B0_opam} has support for {{:http://opam.ocaml.org/}[opam]}, the
+OCaml package manager. It provides a convention to represent [opam]
+packages in [B0] and cmdlets for [opam] package file generation and
+automated package publication on the OCaml [opam] repository.
+
+{1:representation Package representation}
+
+[opam] packages are represented in [B0] by {{!page-manual.packs}build
+packs} tagged with the {!B0_opam.tag}. The name of the defined [opam]
+package is the basename of the pack or the value of the
+{!B0_opam.Meta.name} metadata key; see {!B0_opam.pkg_name_of_pack} for
+the full details.
+
+The metadata of the [opam] package is defined by the pack's
+{{!B0_meta.std}standard} and {{!B0_opam.Meta}[opam] specific} metadata
+key values. The map between metadata key and opam fields is described
+in {!B0_opam.File.pkg_of_meta}. Some keys are derived by
+{!B0_opam.Meta.pkg_of_pack} if unspecified.
+
+The pack {e should} contain exactly the build units that must be built
+by the [opam] package, this allows {!B0_opam.Meta.pkg_of_pack} to
+automatically infer some of the fields (e.g. [build:] or [depends:]).
+
+Here's an example:
+{[
+let mypkg =
+  let meta =
+    let open B0_meta in
+    empty
+    |> tag B0_opam.tag
+    |> add authors ["The mylib programmers"]
+    |> add maintainers ["mylib@example.org"]
+    |> add homepage "https://example.org/software/mylib"
+    |> add online_doc "https://example.org/software/mylib/doc"
+    |> add license ["MIT"]
+    |> add repo "git+https://example.org/repos/mylib.git"
+    |> add issues "https://github.com/mylib/mylib/issues"
+    |> add B0_opam.Meta.depends [
+       "ocaml", {|>= "4.10.0" |} ]
+  in
+  B0_pack.v "mypkg" ~doc:"opam package mypkg" ~meta ~locked:true @@
+  B0_unit.list () (* You likely want to be more refined than that *)
+]}
+
+The [opam] packages defined in a B0 root along with the pack in which
+they are defined can be listed with the [.opam.list] cmdlet.
+
+{v
+b0 cmd -- .opam.list           # List opam packages in the B0 root
+b0 cmd -- .opam.list --help    # See more options
+v}
+
+{1:file_generation Package file generation}
+
+The [opam] file for a package is generated from its pack metadata via
+{!B0_opam.Meta.pkg_of_pack} and {!B0_opam.File.pkg_of_meta}.
+
+The [.opam.file] cmdlet outputs the generated files in various ways.
+
+{v
+b0 cmd -- .opam.file mypkg             # opam file for mypkg on stdout
+b0 cmd -- .opam.file                   # All packages, on stdout
+b0 cmd -- .opam.file -d /tmp/opam/     # Write them to /tmp/opam
+b0 cmd -- .opam.file --in-scope-dir    # Write them in their scopes
+b0 cmd -- .opam.file --help            # See more options
+v}
+
+Note that the generation differs slightly when [opam] files are
+written to stdout, the [name:] field is added; use option [--no-name]
+to prevent that.
+
+{1:publish Package publication}
+
+The [.opam.publish] cmdlet publishes packages on [opam] by making a
+pull request on the OCaml [opam] package repository on GitHub.
+
+{2:github GitHub setup}
+
+In order to be able to make a pull request on the OCaml [opam]
+package repository in the name of your GitHub [$USER] you need
+to:
+
+{ol
+{- Create a personal access token for [$USER] with [repo] permission
+   by following {{:https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token}these instructions}. Paste
+   the token in the file [~/.config/b0/github/$USER.token] and:
+   {v
+    chmod 600 ~/.config/b0/github/$USER.token
+   v}
+   Alternatively you can specify the user and the token
+   in the [B0_GITHUB_{USER,TOKEN}] environment variables.
+   }
+{- Fork the
+   {{:https://github.com/ocaml/opam-repository}OCaml opam repository} so
+   that it becomes available from [https://github.com/$USER/opam-repository].}}
+
+{2:basic Basics}
+
+[opam] package publication happens after the software source archive
+has been released on the WWW. To get help for releasing your software
+with B0 see the {{!page-release}B0 release manual}.
+
+The publication process depends on the current work tree of the VCSes
+that are in your B0 root as follows:
+
+{ul
+{- The current metadata of the packs defining [opam] packages is used
+   to generate the [opam] package files to publish. See {!file_generation}.}
+{- The last reachable annotated tags of the VCSes in charge of the packs
+   defining [opam] packages define the published versions; unless they are
+   explictely specified on the command line. See {!det_version}.}
+{- The first section of the current changelog files are used to derive
+   release notes added to the pull request. See {!det_release_notes}}}
+
+Multiple package releases and incompatibilites with existing packages
+can be stated via a single pull request. For example:
+
+{v
+b0 cmd -- .opam.publish p1 p2 p3.2.0.1 -i otherpackage
+v}
+
+publishes the [opam] packages [p1] and [p2] at a version determined by
+the VCSes in charge of the packs that define them, [p3] at version
+[2.0.1] and states that all versions of [otherpackage] are
+incompatible with these new versions – for those that exist in its
+dependencies.
+
+Effectively it does the following. For each [opam] package [p]
+given on the command line it:
+
+{ol
+{- {{!det_version}Determines} the package version.}
+{- {{!det_archive_url}Determines} the URL of the package's
+   release archive to download.}
+{- Downloads the archive and checksums it via the [shasum] tool.}
+{- {{!file_generation}Generates} a versioned opam package file along
+   with a checksumed [url:] field to the archive.}
+{- {{!det_release_notes}Determines} release notes for the package;
+   for adding information on the pull request.}}
+
+If everything worked well it continues with:
+
+{ol
+{- Clones or updates the OCaml [opam] repository to the shallow
+   and bare repository [~/.caches/opam-repository.git] (the
+   {{!B00_std.Os.Dir.cache}XDG spec} is honoured).}
+{- Creates a branch for the publication, adds a commit with
+   the generated files and constraints on incompatible packages.}
+{- Pushes the branch on your fork of the OCaml [opam] repository on GitHub.}
+{- Opens a pull request for the branch on the OCaml [opam]
+   repository on GitHub.}}
+
+Invoking the cmdlet with [--check-only] outputs on stdout the various
+bits that are being derived and performs various checks; e.g. it lints
+[opam] files and HTTP HEADs archives to checks that they are not 404.
+
+{2:det_version Version determination}
+
+The version number of a package can be specified explicitely on the
+command line by separating it with a dot from the [opam] package
+name. For example [mypkg.2.0.1] publishes version [2.0.1] of the
+package. If no version number is explicitely given it is defined by
+using {!B0_release.version_of_pack} on its pack.
+
+{2:det_archive_url Release archive URL determination}
+
+The URL to the source archive of the [opam] package is determined by
+its pack and {{!det_version}version} via
+{!B0_release.src_archive_url_of_pack}.
+
+Note that the archive name defaults to the pack name when
+unspecified. If you want to define multiple packages for the same
+source archive you will need to define the
+{!B0_release.Meta.src_archive_name} appropriately.
+
+For example suppose that in addition to [mypkg] you publish on [opam]
+a separate package [mypkg-unix] which compiles the [Unix] library
+support from the same source achive as [mypkg]. In the metadata of the
+pack defining the package [mypkg-unix] you can add:
+
+{[
+let mypkg = ...
+let mypkg_unix =
+  let meta =
+    let open B0_meta in
+    empty
+    ...
+    |> add B0_release.Meta.src_archive_name (B0_pack.basename mypkg)
+  in
+  B0_pack.v "mypkg-unix" ~meta @@ mypkg_unix_units
+]}
+
+{2:det_release_notes Release notes determination}
+
+The release notes of the [opam] package are determined by looking for
+a file [CHANGES.md] in the scope directory of its pack and picking up
+the first section. See {!B0_release.changes_file_of_pack} and
+{!B0_release.changes_latest_of_file}.
+
+Packages sharing the same release notes are aggregated in the
+pull request.
+
+{2:incompatibilities Stating incompatibilities}
+
+{b FIXME.} We need {{:https://github.com/ocaml/opam/issues/3077}this}
+in [opam-admin] to make that a reality. For now the best way is to
+make a separate request manually to state the incompatibilities and
+have it merged before your pull request and/or manually tweak the
+automated pull request.
+
+If you know that some existing [opam] package [PKG] of the repository
+fails because of the new releases. You can state the incompatibility
+with the repeatable [-i PKG[.version]] option. This will add an upper
+bound on [PKG] as needed.
+
+For example the following publishes a new [mypkg] and states that all
+versions of [otherpack] and the version 2.1.0 of [thispack] are
+incompatible with it – provided [mypkg] is in their dependencies:
+
+{v
+b0 cmd -- .opam.publish mypkg -i otherpack -i thispack.2.1.0
+v}
+
+If you discover the incompatibilites only once the pull request has
+been made, repeat the same [.opam.publish] invocation with more [-i]
+options, this will update the pull request.
+
+{2:problems Dealing with pull request issues}
+
+If there are issues with the pull request you can adjust your metadata
+and invoke again the same [.opam.publish] command. As long as the same
+set of [opam] packages with the same version end-up being published
+this updates the existing pull request.
+
+In particular gradually {{!incompatibilities}stating incompatibilites}
+will update the pull request.
+
+{1:cookbook Cookbook}
+
+{2:multiple_packages Multiple packages from the same source archive}
+
+If you want to define multiple packages from a single archive tarball
+follow the instructions in {!det_archive_url}.

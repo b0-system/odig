@@ -1,4 +1,0 @@
-* Parsexp_io - S-expression loader
-  
-=Parsexp_io= contains helpers for loading S-expressions from files and
-converting them. It uses the [[https://github.com/janestreet/parsexp][Parsexp]] library.

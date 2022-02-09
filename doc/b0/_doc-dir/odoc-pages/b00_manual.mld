@@ -1,0 +1,409 @@
+{0 B00 manual}
+
+{1:howto Howto model}
+
+{ul
+{- Start with thin build tool bindings. Model just a spawn. Make options
+   for what allows you to model correctly the tool file outputs.
+   (see e.g. the OCaml tool that need various bit of info to correctly
+   model what will happen)}}
+
+{1:design Design considerations}
+
+{2:kernel_extract Kernel extraction from B0}
+
+Concepts kept:
+
+{ul
+{- Treat build operations as pure functions that affect the file system
+   and memoize their results.}
+{- Parallelize build operations by synchronizing on the files they
+   read and writes.}
+{- Tight control over tool lookup and build environment.}}
+
+Concepts dropped and to be seen how we can recover them at a higher level:
+
+{ul
+{- Build aims for cross compilation (build/host OS distinction). This
+   should be capturable as two separate {!B00.Memo}s.}
+{- Build units (named sets of build operation with metadata),
+   {!B000.Op.group} where now introduced though but they have
+   only have UI semantics.}
+{- Build operation synchronisation, only files for now, we had
+   unit-level. Did introduce {!B00.Memo.Fut} for odig.}
+{- Build configuration.}
+{- Build unit/config definition localisation (multiple B0.ml files)}
+{- Build directory structuring}
+{- Forced clean builds. The {!B000.Trash} has been reintroduced
+   now, but it can be used selectively. See also {!rems} discussion.}
+{- Build metadata, unit and file level, packages.}}
+
+{2:todo TODO and resolve}
+
+{ul
+{- Memo.spawn redirections, consider supporting all the options
+   of {!B0_std.Os.Cmd.spawn}}
+{- The concept of response file in {!B00.Tool} should likely appear at
+   the {!B000.Op.module-Spawn} level aswell so that we can simply have the
+   sequence of {!B000.Op.t} value for a potential build log
+   (otherwise {!B000.Op.Spawn.args}
+   becomes the line with the response file which is not meanigfull)}}
+
+{2:rems Handling removals}
+
+Knowing files before the build starts doesn't fit the build model,
+besides removals is under the responsability of `Memo` clients
+(e.g. for now `odig` doesn't deal with it). The approach currently
+taken is the first one below. The second one could be considered but
+hampers correctness.
+
+{ol
+{- Clean builds. Usually builds are performed in a dedicated
+   directory, always delete the previous directory at the beginning
+   of the build and restart from scratch. Deleting is slow and should not
+   impede the build, hence the {!B00.Memo.trash} that simply renames
+   to a trash directory and the asynchronous deletion at the end of the build.}
+{- Diffing. If we know which files were generated in the previous run
+   (easy to get from the build build log), we can remove stale artefacts
+   after the new run has been completed (and do a clean build if you lost
+   the info). This may however lead to incorrect builds (`-I` problems)
+   where tool may pickup stale artefacts}}
+
+{b Note.} Somehow a good description of 1. is "nix your build runs".
+
+{b Note.} Now that we do longer use hard links we would have
+to hash. So what follows below likely becomes impractical.
+
+A middle ground between the two could be the following. Currently we
+trash paths in a dedicated directory and delete it asynchronously at
+the end of the build as this may be slow. However we could track
+the renames to the path directory. When we revive from the cache
+to a given path one can check if the path exists in the trash with
+the same inode number, if it does we can rename it from there
+to the build rather than create a new link.
+
+The nice thing of this approach is that at the end of the build we get
+in the trash exactly the things that really need to be deleted, rather
+than delete all the build all of the time (note that this is still
+more than say a `make` based build system because those overwrites paths).
+
+{2:unpredictable_writes Dealing with unpredictable written file paths}
+
+The system supports well tools with predictable file path writes. These
+tools either write to statically known file paths or allow to
+determine them by invoking another tool (e.g. [odoc
+{compile,html}-targets]). However the system should also be made to
+support tools with unpredictable file path writes because those are
+not uncommon.
+
+A tool with predictable writes is invoked as follows:
+
+{[
+Memo.spawn ~reads ~writes @@ tool cmd
+]}
+
+That is we know the written file paths before the tool gets to execute
+and we indicate them in [writes]. This serves three purposes:
+
+{ol
+{- If the spawn is uncached, [writes] indicates the ordered list of file paths
+   whose {e contents} (output) is captured {e after} the operation executed
+   and ends up being associated to the spawn's hash (input).}
+{- If the spawn is cached, we use the spawn's hash (input) to retrieve
+   the list of ordered file contents (outputs) and copy these to
+   the given file paths, in order.}
+{- It allows the system to declare these files as ready to the
+   scheduler {e after} the tool executed or was revived from the cache.}}
+
+In the first case we don't really need the information beforehand and
+we can determine it after the spawn occured, just before caching, for
+example by scanning the file system (a
+{{!val:B00.Memo.spawn}[post_exec] hook} -- that executes after the
+build operation execution but before cache recording -- can be used
+for that). It's also quite clear the third purpose does not
+fundametally need the information beforehand.
+
+However in the second case, when we want to revive the spawn, armed
+with the hash of the operation we retrieve the file contents, but we
+do not know which file paths need to be bound to the contents, since
+the only thing the file cache stores is an association [hash ->
+contents list]. For tools with predictable file path writes, not
+mandating an actual path to bind to in the cache itself allows to
+revive build operations to different build paths (assuming their
+contents do not depend on their actual path location). This is used
+e.g. to share [.cmi]/[.cmti] file compilation between the doc and exec
+outcomes of [brzo] which happen in different build dirs or for caching
+in larger and larger contexts.
+
+A tentative solution would be to produce an operation
+manifest. e.g. by writing some kind of [manifest] file in the
+[post_exec] hook with all the files that have been produced. The logic
+could then become something along these lines:
+
+{[
+Memo.read manifest @@ function
+| Some writes -> Memo.spawn ~reads ~writes @@ tool cmd
+| None ->
+   let post_exec o = ... (* set writes of op [o] and write [manifest] *) in
+   Memo.spawn ~reads ~post_exec @@ tool cmd
+]}
+
+However this somehow assumes that [manifest] can be persisted across
+builds. That is not impossible to do but it is made difficult by the
+way {{!rems}removals} are handled (clean builds). If we generate that
+file in the post execution hook it will be deleted when we come back
+later to rebuild, so we also need to either cache this file or store
+it in a build dir that is not deleted (but then we might lose the
+manifest info while the operation is still cached which is
+problematic). Another problem is that a name needs to be generated for
+the [manifest] file, a natural name would of course be the operation
+hash itself but in the above logic we need the name before the
+operation is specified and thus before the hash can be computed so
+it's a bit unfit given the way the API is currently designed.
+
+These considerations seem to indicate that a good solution for the
+problem is to extend the {!B000.File_cache} model to allow in some
+cases to also store the relative file paths associated to the file
+contents. That is we conceptually move from a file cache as:
+{[
+key -> contents list
+]}
+to
+{[
+key -> contents list * (Fpath.t list) option
+]}
+This leaves the current support for predictable writes ({!B000.File_cache.add},
+{!B000.File_cache.revive}) unchanged but allows to add the new operations:
+{[
+manifest_add :
+t -> key -> string -> root:Fpath.t -> Fpath.t list -> (bool, string) result
+]}
+which stores the file contents and their corresponding paths relativised
+w.r.t to [root].
+{[
+manifest_revive :
+t -> key -> root:Fpath.t -> ((string * Fpath.t list) option, string) result
+]}
+which revives the relativised file paths by making them absolute with
+respect to [root].
+
+It is even quite simple to devise the system so that a [manifest_add]
+can be {!B000.File_cache.revive}d. But in general these tools with
+unpredictable writes the actual file names hierarchy is meanigful
+(e.g. hyperlinked HTML files) so it may not be that useful.
+
+In any case these two low-level operations make it easy to add support
+for build operations with unpredicable writes at the higher
+level. Basically the support can happen at the generic {!B000.Op} by
+adding a field to store an optional manifest [root]. If that field is
+specified the operation is handled using the new
+{!B000.File_cache.manifest_add} or {!B000.File_cache.manifest_revive}
+functions above, if not we proceed as is currently the case using
+{!B000.File_cache.revive} and {!B000.File_cache.add}.
+
+
+{2:unpredictable_reads Dealing with unpredictable read file paths}
+
+Alternate title dealing with underspecified inputs, prohibitive
+to characterize inputs.
+
+The system supports well tools with predictable file path reads.
+These tools either read from statically known file paths or allow to
+determine (possibly an over-approximation of) them by invoking another
+dependency discovery tool (e.g. [odoc compile-deps]) or discovery
+logic implemented in the memo driver itself. However it may be
+difficult (or undecidable) to characterize which file will be read by
+a tool invocation or characterize precisely what influences a
+dependency discovery tool.
+
+For example if we take [gcc -M] and invoke it on a c file (the output
+is hypothetic):
+
+{[
+> gcc -M unit.c
+unit.h
+/usr/include/stdio.h
+/usr/include/i386/types.h
+]}
+
+In essence the above invocation reports all the recursive include
+files that may influence the compilation of [unit.c]. This is all nice
+we can do:
+
+{[
+Memo.spawn ~reads:["unit.c"] ~writes:["unit.deps"] @@
+gcc "-M" "-MF" "unit.deps" "unit.c";
+let incs = resolve_deps "unit.deps" in
+Memo.spawn ~reads:("unit.c" :: incs) ~writes:["unit.o"] @@
+gcc "-c" "unit.c"
+]}
+
+This properly checks that the cached [unit.o] is accurate but it can't
+check the fact that [unit.deps] is. The problem is that we only
+indicated that ["unit.c"] was influencing [unit.deps] but in fact
+these could change if any of files that was output in [unit.deps]
+changes (it's worse than that in practice, since a new file could be
+added in an include directory and change the result without the files
+of [unit.deps] actually changing but let's assume this is the
+case). We want to write the following {e circular} definition:
+
+{[
+let incs = resolve_deps "unit.deps" in
+Memo.spawn ~reads:("unit.c" :: incs) ~writes:["unit.deps"]
+@@ gcc "-M" "-MF" "unit.deps" "unit.c"
+]}
+
+and even that's not entirely accurate since the problem might be the
+removal of one of the files mentioned in ["unit.deps"]. So the spawn
+would wait forever on it.
+
+With a little bit of work our function [resolve_deps] above we can be
+made to check that the files it mentions still exist and their state
+matches the one existing when [unit.deps] was produced. If the check
+fails then we can reinvoke:
+{[
+Memo.spawn ~reads:["unit.c"] ~writes:["unit.deps"] @@
+gcc "-M" "-MF" "unit.deps" "unit.c";
+]}
+
+but the problem at that point is that [unit.c] itself may not have
+changed, so it will simply be revived from the the cache. The hash of
+that operation doesn't change because we cannot characterize it's
+input before actually running it. We need to be able to force the
+re-execution of this command (e.g. via [force_exec] flag given to
+[Memo.spawn]).
+
+The conceptual model of [B0] relies on the fact that in most of the cases
+it is possible to characterize the inputs and outputs of build operations,
+armed with this, incremental rebuilds is just a mattter of memoizing
+the function [inputs -> outputs].
+
+Now what this shows is that in some of the cases we are able to get
+information after the operation executed that allows us to
+characterize whether a build operation is up-to-date without being
+able to precisely or say reasonably characterize it's actual inputs.
+
+The situation is similar to dealing with
+{{!unpredicatable_writes}unpredicatable written file paths}.
+
+A tool with predicatable reads is invoked as follows:
+{[
+Memo.spawn ~reads ~writes @@ tool cmd
+]}
+That is we know the read file paths before the tool gets to execute
+and we indicate them in [reads]. This serves three purposes:
+{ul
+{- First it helps the scheduler to figure out when the operation can
+   be executed. It waits for all the [reads] to be ready to invoke
+   th
+it's the [reads] we are not able to}}
+
+
+{3:gcc_m Can we characterize precisely [gcc -M]'s input ?}
+
+It should be possible to precisely characterize [gcc -M]'s inputs
+by indexing all include directories in order, hash all the data that
+might be looked up in these. This produced a [stamp] to be
+used with {!Memp.spawn ~stamp}.
+
+
+{2:mutable_iter Mutable writes and fix points}
+
+Some build procedures repeateadly mutate the same file until a
+condition is determined (L{^A}T{_E}X is a notorious example). This
+doesn't cope well with [b0]'s base system which assumes that build
+operations read and write stable files. In particular the model
+assumes:
+
+{ol
+{- Once a file is written, it is {e ready}.}
+{- Once a file is ready, its hash no longer changes.}}
+
+The first assumption is used for scheduling operations, once all the
+files that an operation declares to read are ready, the operation is
+allowed to execute. So if a file is mutated repeatedly, synchronizing
+operations may fire and read files that are not ready or whose state
+is inconsistent.
+
+The second assumption is used internally, for example file path hashes
+are cached. This means that iterating a build operation that reads the
+same mutating file will hash the same and be revived from the cache
+rather than be re-executed.
+
+{3:clean_solution A clean solution}
+
+An easy way to get out of this problem is to distinguish in the file
+read and writes declared by operations ready and unready files. Namely
+a build operation has ready reads, unready reads, ready writes and
+unready writes. With the following semantics:
+
+{ol
+{- Unready reads are assumed to exist, they are not checked for build
+   operation synchronization and always by-pass the hash cache. Their hash
+   is computed at the moment an operation executes (as determined by
+   the readyness of ready reads) and added to
+   the operation stamp.}
+{- Unready writes are cached with the operation's output but not made
+   ready.}}
+
+This was made to work in
+{{:https://github.com/b0-system/b0/commit/67c5f6f23af1782ae4ba57628ebf264b559ebb95}this
+commit} which was later reverted. Internally the needed changes are
+quite simple, but it does complexify the API surface and makes build
+understanding more fiddly – surprise, mutability is difficult. For
+example build logs as they are captured now do not show the finesse of
+mutations. At this point one should ask whether it is worth the cost
+of making the model less obvious to solve a case that remains an
+exception rather than the rule.
+
+
+
+
+
+{1:design_answers Design answers}
+
+A few explanation about design choices we may not remember in the future.
+
+{2:file_mode Why arent't file permission of a read file not part of
+             the build operation stamp ? }
+
+It is clearly something that can influence tool outputs and failures.
+However so can any bit of file metadata (e.g. groups) in general and
+a boundary needs to be drawn. For possible wide area cache sharing
+scenarios it also feels better not to consider, say changes in [other]
+file permissions.
+
+Related to the {{!caching_failures}answer} about caching failures.
+
+{2:caching_failures Why are failed operations not cached ?}
+
+First let's define what caching build operations would likely mean. It
+would mean caching it's metadata bit, i.e. for tool spawns the user
+interface output and the exit code. Caching the actual (likely
+partial) file writes would be difficult to do since the actual file
+system state on tool error may be difficult to characterize.
+
+Caching failed operations may report build errors more quicky for
+example if a build operation is slow in erroring and nothing changed
+as far as its operation stamp indicates.
+
+One problem though is is that the failure may be due to a reason that
+is not captured by the operation stamp. In that case even though the
+problem may be resolved by the user, the operation stamp would not
+change and the operation would be revived as a failure rather than
+re-executed.
+
+To give a concrete example, suppose an operation fails because of the
+file permissions of a file it reads. This file permission is not part
+of the build operation stamp (see {{!file_mode}this answer}). So
+changing the file permission to make the build operation succeed would
+not only revive the old failure, but likely also output a puzzling
+error message unrelated to the current state of the system. The way
+out for the user is long head scratching ended by a clear of the cache
+for that operation. That doesn't feel like a great user experience.
+
+It seems not caching failures leads to a better user experience for b0
+based build systems, at least as long as {{!file_mode}this} remains
+true. Also build failure information should be, most of the time,
+available in the build logs so it may not be necessary to reinvoke a
+long failing operation to get its error back.

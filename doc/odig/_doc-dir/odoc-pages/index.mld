@@ -1,0 +1,25 @@
+{0 Odig {%html: <span class="version">v0.0.7</span>%}}
+
+Odig is a command line tool to lookup documentation of installed OCaml
+packages.
+
+Consult the {{!page-manual}manual} or the {{!page-packaging}packaging
+conventions}.
+
+{1:quick_start Quick start}
+
+A few commands to get you started:
+
+{v
+odig doc           # Show API docs and manuals of installed packages
+odig readme odig   # Consult the readme of odig
+odig changes odig  # Consult the changelog of odig
+odig browse issues odig  # Browse odig's issues.
+v}
+
+{1:api API}
+
+This is an unstable API subject to change even between minor versions
+of the tool. Use at your own risk.
+
+{!modules: Odig_support Odig_odoc Odig_odoc_page}

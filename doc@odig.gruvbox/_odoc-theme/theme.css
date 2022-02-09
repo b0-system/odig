@@ -1,0 +1,36 @@
+/* Theme based on https://github.com/morhetz/gruvbox light */
+:root
+{ --color-bg: #fbf1c7; /* bg0 */
+  --color-bg-highlight: #bdae93; /* bg3 */
+  --color-fg: #655c54; /* fg3 */
+  --color-rule: #ebdbb2; /* bg1 */
+
+  --color-code-block-bg: #ebdbb2; /* bg1 */
+  --color-code-fg: #504945; /* fg2 */
+  --color-code-comment: #7c6f64; /* fg4 */
+  --color-code-keyword: #cc241d; /* red */
+  --color-code-type-id: #689d6a; /* aqua */
+  --color-code-string: #98971a; /* green */
+
+  --color-link: #076678; /* blue */
+  --color-broken-link: #cc241d; /* red */ }
+
+@media (prefers-color-scheme: dark)
+{
+/* Theme based on https://github.com/morhetz/gruvbox dark */
+:root
+{ --color-bg: #282828; /* bg0 */
+  --color-bg-highlight: #665c54; /* bg3 */
+  --color-fg: #bdae93; /* fg3 */
+  --color-rule: #3c3836; /* bg1 */
+
+  --color-code-block-bg: #504945; /* bg2 */
+  --color-code-fg: #d5c4a1; /* fg2 */
+  --color-code-comment: #a89984; /* fg4 */
+  --color-code-keyword: #fb4934; /* red */
+  --color-code-type-id: #8ec07c; /* aqua */
+  --color-code-string: #98971a; /* green */
+
+  --color-link: #83a598; /* blue */
+  --color-broken-link: #cc241d; /* red */ }
+}

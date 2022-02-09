@@ -1,0 +1,14 @@
+{0 Note {%html: <span class="version">v0.0.1</span>%}}
+
+Note is a library for functional reactive programming (FRP). It
+provides support to program with time varying values: declarative
+events and signals.
+
+{b WARNING.} This package is experimental, it's documentation
+is subpar and the interfaces will likely change in the future.
+
+{1:api API}
+
+{!modules:
+Note
+}

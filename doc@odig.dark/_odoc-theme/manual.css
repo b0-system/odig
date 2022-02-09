@@ -4,7 +4,7 @@
 
 /* Copyright (c) 2019 The odig programmers. All rights reserved.
    Distributed under the ISC license, see terms at the end of the file.
-   odig v0.0.3-19-g44a3d1e */
+   odig v0.0.7 */
 
 :root { --font-headings: "PT-Sans-Caption";
         --font-body: "PT-Sans";
@@ -18,7 +18,7 @@
         --size-font-large: calc(1.25 * var(--size-font));
         --size-font-big:   calc(1.5 * var(--size-font));
         --size-font-huge:  calc(1.75 * var(--size-font));
-        --size-font-mono-ratio: 0.9;
+        --size-font-mono-ratio: 0.87097;
         --size-line-ratio: 1.5;
         --size-line: calc(var(--size-line-ratio) * var(--size-font));
         --size-half-line: calc(0.5 * var(--size-line)); }

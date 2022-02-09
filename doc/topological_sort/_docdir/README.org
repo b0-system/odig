@@ -1,4 +1,0 @@
-* Topological_sort
-
-=Topological_sort= is a single-module library that implements a simple
-topological-sort algorithm.

@@ -1,0 +1,78 @@
+{0 Build unit manual}
+
+This manual shows how to deal with B0 build units and create your own.
+
+{1:custom Custom unit tutorial}
+
+We show how to devise a custom unit that compiles a [.ml] file to a
+bytecode executable.
+
+To create a custom unit from scratch it is better not to clutter your
+B0 file too much and develop it in its own file. At the root of your
+project issue:
+
+{[
+mkdir B0
+touch B0/custom.ml
+]}
+
+And {e at the very beginning} of your [B0.ml] file add:
+
+{[
+#mod_use "B0/custom.ml"
+open B0_kit.V000
+]}
+
+You now have the [Custom] module and its definitions available in the
+B0 file. To make sure everything is working propery. Write in [custom.ml]
+
+{[
+let () = print_endline "Hop!" (* In practice, don't do that ! *)
+]}
+
+and test that everything runs properly:
+
+{v
+> b0 --what
+Hop!
+Empty build.
+v}
+
+A build unit is just a build script with static and dynamic metadata
+attached. Best is to start writing the minimal ad-hoc script and only
+gradually abstract over parts of it later to make it customizable
+and eventually turn it into a library if appropriate.
+
+In [B0/custom.ml] erase that silly print statement and start over by
+defining an empty build shell, made of a dummy build procedure and a
+function that produces build units invoking it.
+
+{[
+open B00_kit.V000
+open B00_std
+open Fut.Syntax
+open B00_memo
+
+let exe_proc b =
+  let m = B0_build.memo b in
+  Memo.notify `Warn "Not building, yet.";
+  Fut.return ()
+
+let exe ?doc ?meta ?action n =
+   B0_unit.v ?doc ?meta ?action n exe_proc
+]}
+
+and in [B0.ml] declare your unit:
+
+{[
+let echo = Custom.exe "echo" ~doc:"A tool screaming in the void"
+]}
+
+We now have a unit and a silly build procedure.
+
+{v
+> b0 unit list
+[   ] echo A tool screaming in the void
+> b0
+[WARN] [echo]: Not building, yet.
+v}

@@ -1,0 +1,11 @@
+{0 Qrc {%html: <span class="version">v0.1.0</span>%}}
+
+Qrc encodes your data into QR codes. It has built-in QR matrix
+renderers for SVG, ANSI terminal and text.
+
+{1:api API}
+
+{!modules:
+Qrc
+Qrc_fmt
+}

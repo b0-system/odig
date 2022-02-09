@@ -1,0 +1,996 @@
+{0 Brzo manual}
+
+{e Quick-setting builds – Builds ideas, not scaffolds.}
+
+{1:intro Introduction}
+
+{2:intro_philosophy Philosophy}
+
+[brzo] lets you think about your ideas, not the bureaucracy needed to
+execute them. It is a simple build tool made for exploratory design
+and learning. It is {e unsuitable} for building software distributions.
+
+With this goal in mind [brzo] curtails configuration options and favors
+heuristics and advices over formal configuration.
+
+If you find yourself fighting with the tool or seeking more control it
+likely means your ideas have grown into a project that needs a proper
+build infrastructure. [brzo] should be gleefully ditched at that point.
+
+{2:intro_start Getting started}
+
+In a simple directory structure, a bare [brzo] invocation should
+succeed in building and executing your source files. For example,
+assuming you have [brzo] and an OCaml compiler in your executable path:
+
+{v
+> touch BRZO
+> cat > echo.ml <<EOCAML
+let echo oc ss = output_string oc (String.concat " " ss ^ "\n")
+let () = echo stdout (List.tl (Array.to_list Sys.argv))
+EOCAML
+> brzo -- 'Quick!'
+'Quick!'
+v}
+
+Not very impressive, but illustrates that a bare [brzo] invocation
+goes through the following ordered steps:
+
+{ol
+{- Find the {e root}: starting from the current directory and upwards, stop at
+   the first directory with a [BRZO] file.}
+{- Collect source files in the file hierarchy pinned at the root and
+   determine from their extensions a {e domain}. A domain determines
+   a build logic. It usually corresponds to a particular language.}
+{- Using the domain's build logic, compile the source files to an
+   executable {e outcome artefact}.}
+{- Run the outcome artefact with the provided command line arguments.}}
+
+To understand which root, source files and domain [brzo] determines, the
+following commands can be used:
+
+{v
+brzo root      # show root directory
+brzo sources   # show source files considered
+brzo domain    # show selected domain
+v}
+
+If some directories or files get in the way during source file
+collection you can include and exclude them with the
+[-i] and [-x] options and/or via a {{!brzo_file}[BRZO] file}:
+
+{v
+brzo -x attic   # excludes paths prefixed by 'attic' (relative to the root)
+v}
+
+Play a bit with the [brzo source] command and these flags until you
+get the selection you desire. Relative paths given to these options
+are relative to the root.
+
+The relative order between [-i] and [-x] options is irrelevant, the
+semantics is that all source file paths whose prefix match one of the
+[-i] options are gathered into a set and then all elements whose
+prefix match one of the [-x] option are removed from it. For example
+below the [-i] option is ineffective in both cases:
+
+{v
+brzo -i . -i attic -x attic   # excludes 'attic' prefixed paths
+brzo -i . -x attic -i attic   # also excludes 'attic' prefixed paths
+v}
+
+In general [brzo] tries to be quiet on success so that it doesn't
+interfere with the standard outputs of the outcome action. However if
+you want to have a bit more information on [stderr] about what [brzo]
+is doing, use the [-v] option. Alternatively consult the build log
+after the build with the [log] command.
+
+{v
+brzo -v           # show build steps on stderr
+brzo log          # show build operations of the last build
+brzo log --help   # see more options to explore the build
+v}
+
+[brzo]'s exit code will be that of your outcome program unless [brzo]
+fails in some way before it gets to execute it. In the latter case the
+exit code should be attributed and understood as [brzo]'s one. Exit
+codes of [brzo] and its subcommands are documented in [brzo --help].
+
+To only build the outcome, only perform the outcome action, locate the
+outcome artefact in the file system, delete the outcome build or see
+the outcome configuration, use the following invocations:
+
+{v
+brzo -b               # only build the outcome artefact
+brzo -r -- 'Quick!'   # only run the outcome action (no build)
+brzo --path           # path to the outcome artefact (built or not)
+brzo -d               # delete the outcome build (but not the cache)
+brzo --conf           # show determined configuration
+v}
+
+{2:intro_doc Design documentation}
+
+Domains provide a {e documentation outcome} for designing your
+programs. This outcome builds and shows documentation about the source
+files; most likely using the domain's language documentation tool. It
+can be built and run by invoking:
+
+{v
+brzo --doc   # build and show documentation about source files
+v}
+
+{2:intro_start Selecting domains and outcomes}
+
+You may not always be happy about [brzo]'s automatic {{!domains}domain
+selection}. Or you may want to switch between different domains in the
+same root or use domain specific outcomes and options.
+
+In these cases you can specify the domain as the first argument to
+[brzo] or use a {{!brzo_file}[BRZO] file}.
+
+{v
+brzo ocaml -- 'Grunt!'   # force the use of the OCaml domain
+v}
+
+A domain can provide more options for the default outcomes. For
+example, the OCaml domain has options to compile the (default)
+executable outcome to different targets:
+
+{v
+brzo ocaml --byte -- 'Quick!'    # compile and execute a bytecode program
+brzo ocaml --html -- 'Quick!'    # compile and execute an HTML program
+brzo ocaml --native -- 'Quick!'  # compile and execute a native code program
+brzo ocaml --node -- 'Quick!'    # compile and execute a JavaScript program
+v}
+
+Automatic domain selection provides only two build outcomes: [--exec]
+(default) and [--doc]. A specific domain can provide more
+outcomes. For example the OCaml domain has outcomes to run sources in
+toplevels:
+
+{v
+brzo ocaml --top          # compile and load in the OCaml toplevel
+brzo ocaml --top --html   # compile and load in the HTML OCaml toplevel
+brzo ocaml --utop         # compile and load in utop
+v}
+
+To list {{!domains}available domains}, their outcomes and options use:
+
+{v
+brzo --help          # see the DOMAIN COMMANDS section
+brzo DOMAIN --help   # see the OUTCOMES and OUTCOME OPTIONS section
+v}
+
+{2:intro_clean Cleaning up}
+
+At that point you certainly noticed [brzo] creates a [_b0] directory
+at the brzo root. This directory has the outcome artefacts in their
+build directories usually of the form [_b0/brzo/DOMAIN-OUTCOME], a
+build cache [_b0/.cache] used for incremental builds and the (binary)
+build log [_b0/brzo/.log].
+
+Outcome builds and artefacts can be deleted using the following
+invocations. Note that this does not delete cached build artefacts.
+
+{v
+brzo -d                # delete the build of default executable outcome
+brzo ocaml --html -d   # delete the build of the OCaml HTML program outcome
+brzo delete            # delete all outcomes builds (but not the cache)
+v}
+
+In general unless you hit a build logic bug (please report) it's
+better to refrain from deleting the [_b0] directory – get rid of
+"[make clean]" habits. If you think the cache is taking too much space
+use the [brzo cache] command to manage it:
+
+{v
+brzo cache stats    # show information about the cache
+brzo cache gc       # only keep keys used by the last build
+brzo cache trim     # trim to 50% of the current size
+brzo cache delete   # delete all cache keys (but not the build outcomes)
+v}
+
+But if you {e really} want to get rid of the [_b0] directory issue:
+
+{v
+brzo delete -c   # delete (clean) the _b0 directory
+v}
+
+{2:intro_next Where to go next ?}
+
+Back to your ideas.
+
+[brzo] strives to provide a hassle and scaffolding free build
+experience. If it succeeds you should be able to stop here and simply
+use the tool.
+
+But if you get tired of specifying arguments on the command line you
+may want to read the section about {{!brzo_file}[BRZO] files}. You
+may also want to give a look at {{!editor_support}configuring your
+editor}.
+
+If a [brzo] invocation doesn't succeed or you are puzzled by an
+outcome result, it may be useful to go through the manual section of
+the domain you are using. You will get a better understanding on how
+it works and which domain specific outcomes, options and [BRZO] file
+keys it provides. A short list of links to these sections can be found
+{{!domains}here}.
+
+The {{!overview}conceptual overview} of the next chapter expands
+slightly more formally on the material seen in this introduction.
+
+{1:overview Conceptual overview}
+
+Whenever [brzo] is executed to perform an outcome it proceeds through
+the following steps.
+
+{ol
+{- Find the {{!root}root directory}.}
+{- Collect supported {{!source_files}source files} in the file hierarchy
+   pinned at the root.}
+{- {{!domains}Select} the build domain.}
+{- Using domain and {{!outcomes}outcome} specific logic,
+   build an outcome artefact.}
+{- Perform an {{!actions}action} on the outcome artefact.}}
+
+{2:root Root}
+
+When [brzo] is invoked in a directory [cwd], the root is the first
+directory, starting with [cwd] and moving upwards, that has a
+{{!brzo_file}[BRZO] file}. If none can be found the tool errors.
+
+Alternatively the root directory can be forced without a [BRZO] file
+via the [--root] option or the [BRZO_ROOT] environment
+variable. Invoke [brzo root] to find out which root [brzo] determines.
+
+{2:source_files Source files}
+
+The set of source files collected by [brzo] are the files which are
+deemed useful by any of the domains and whose paths are prefixed by
+the include prefixes specified by the [-i PATH] option and the
+{{!brzo_file_keys}[srcs-i]} [BRZO] file key. They must also not be
+prefixed by any of the exclude prefixes specified by the [-x PATH]
+option and the {{!brzo_file_keys}[srcs-x]} [BRZO] file key. If no [-i]
+or [srcs-x] is specified the root path is implied.
+
+Relative file paths specified in these options are relative to the
+brzo root, not relative to the current working directory or [BRZO]
+file. Note that these are {e prefixes}, globs are not supported.
+
+The relative order between [-i] and [-x] options is irrelevant. The
+semantics is that all source files from the file system whose prefix
+match one of the [-i] options are collected into a set and then any
+element of that set whose prefix match any of the [-x] option is
+removed from it. Paths with dotfile, [_b0], or [_build] {e segments}
+are automatically excluded, this can be overriden by specifying them
+explictely via [-i].
+
+If a [-i] is specified on the command line and there's a corresponding
+path in the [srcs-x] key of the [BRZO] file, then the latter is
+removed. Dually if a [-x] is present on the command line and there's a
+corresponding path in the [srcs-i] key of the [BRZO] file, then the
+latter is removed (but that's by definition of the semantics anyways).
+
+Invoke [brzo source] to find out the final source set and [brzo
+--conf] to find out which includes and excludes are determined from
+the [BRZO] file and the command line.
+
+{2:domains Domains and selection}
+
+Brzo partitions build logics into {e domains}. Domains broadly
+correspond to build logics for a given language, even though those can
+overlap, for example when we build mixed OCaml and C programs.
+
+Unless the domain is explicitely specified on the command line by
+invoking a subcommand like [brzo ocaml] or at the root via a
+{{!brzo_file}[BRZO] file}, brzo selects a domain according to the
+following rules, applied in order:
+
+{ol
+{- {{!ocaml_domain}[ocaml] domain}, if a source file ends with [.ml],
+   [.mli], [.mld], [.mll] or [.mly].}
+{- {{!c_domain}[c] domain}, if a source file ends with [.h] or [.c].}
+{- {{!latex_domain}[latex] domain}, if a source file ends with [.tex], [.sty],
+   [.bib] or [.bibdoi].}
+{- {{!cmark_domain}[cmark] domain}, if a source file ends with [.md].}}
+
+Invoke [brzo domain] to find out which domain [brzo] determines.
+
+{2:outcomes Outcomes}
+
+Each {{!domains}domain} has a number of supported build {e
+outcomes}. An outcome determines a build artefact and an
+{{!actions}action} performed on it.
+
+Every domain defines at least two standard outcomes:
+
+{ul
+{- [--exec], an outcomes that builds and runs the simplest expected
+   executable program for the domain. This is the outcome performed
+   on a [brzo], [brzo --exec], [brzo DOMAIN] or [brzo DOMAIN --exec]
+   invocation.}
+{- [--doc], an outcome that produces and shows documentation for
+   the source files considered for [exec], usually using the language's
+   documentation tool. This is the outcome performed on a [brzo --doc]
+   or [brzo DOMAIN --doc] invocation. For documentation language domains
+   ([cmark], [latex], etc.) this outcome is often aliased to [--exec].}}
+
+Domains may provide additional outcomes. Use [brzo DOMAIN --help] and
+the domain specific sections of this manual {{!domains}listed here} to
+learn about them.
+
+{2:actions Outcome actions}
+
+Most outcome actions fall in one of the following categories.
+
+{3:action_exec Program execution action}
+
+In a program execution action, the action simply runs a built program
+and gives it the arguments you specify on the [brzo] invocation. Use
+[--] to separate execution arguments from those given to [brzo], this
+allows optional arguments to be interpreted by your program and not by
+[brzo]:
+
+{v
+brzo --help      # this is brzo's help
+brzo -- --help   # this is your program's help (if programmed to do so)
+v}
+
+{3:action_browser Browser action}
+
+In a browser action, the action usually opens a local [file:] URI in
+your browser. The browser to use can be specified in the [BROWSER]
+environment variable or via the [--browser] option.
+
+When the outcome is a web of HTML files, the opened URI is the
+directory in which these are rooted. [brzo] then tries to reload a tab
+whose address is rooted in the directory's hierarchy rather than the
+directory itself. The application used to show the URI can be kept in
+the background with the [--background] option.
+
+Sadly, both tab prefix reload and [--background] are subject to severe
+platform limitations, it seems the whole idea of refreshing a tab with
+a given address from the cli is a total blind spot of browser makers –
+get in touch if you know {e lightweight} workarounds.
+
+{3:action_pdf PDF viewer action}
+
+In a PDF viewer action, the action opens a PDF file in a viewer. The
+viewer to use can be specified in the [PDFVIEWER] environment variable
+or via the [--pdf-viewer] option.
+
+{1:editor_support Editor support}
+
+{2:emacs Emacs}
+
+If you want to have [brzo] as a default [compile] command add one of
+the following to your [.emacs]:
+
+{v
+(require 'compile)
+(setq compile-command "brzo -b") ; Globally instead of the default make -k
+
+; Only in a particular mode. Here caml-mode.
+(add-hook 'caml-mode-hook
+  (lambda ()
+    (set (make-local-variable 'compile-command) "brzo -b")))
+v}
+
+{1:brzo_file [BRZO] files}
+
+A [BRZO] file determines a {{!root}root}, allows to guide domain
+specific logic and provides default values. It can be empty just for
+root marking. [BRZO] files can be modified programmatically, see [brzo
+file --help] for more information.
+
+To disable a [BRZO] file at the root use the option [--brzo-file] with
+[/dev/null]; doing this does not affect {{!root}root finding}.
+
+A [BRZO] file is a sequence of {{!B0_serialk_sexp.sexp_syntax}s-expressions}.
+Here's a sample file:
+
+{v
+(domain c)             ; force the default domain to C
+(srcs-i src)           ; limit source file collection to the src directory
+(srcs-x src/attic)     ; exclude source files from src/attic
+(ocaml                 ; OCaml domain specific options
+  (outcome top))       ; force the default outcome to --top
+v}
+
+{2:brzo_file_keys Keys}
+
+Relative file paths in the file are always relative to the root, not
+relative the [BRZO] file location – these may not coincide if the
+[--brzo-file] option is used to specify the [BRZO] file.
+
+The following global keys are defined:
+
+{ul
+{- ({e domain} DOMAIN) use DOMAIN as the default build domain. Overriden by
+   the first positional argument given to [brzo], {{!domains}guessed}
+   by default.}
+{- ({e srcs-i} PATH...) include source files that match given path {e
+   prefixes} (no globs) on the file system. Paths can be removed from
+   the [srcs-i] list from the command line by specifying them via the [-x
+   PATH] option.  If nothing is specified in the [BRZO] file and on the
+   command line, defaults to the {{!root}root} path.}
+{- ({e srcs-x} PATH...) exclude source files that match given path {e
+   prefixes} (no globs). Paths can be removed from the [srcs-x] list from
+   the command line by specifying them with the [-i PATH] option. Paths with
+   dotfile, [_b0] or [_build] segments are automatically excluded,
+   this can be overriden by explicitly including them via [srcs-i] or
+   [-i].}
+{- ({e DOMAIN} ({e KEY} ...) ...) configuration key {e KEY} specific to domain
+   DOMAIN. See the {{!domains}domain} specific documentation for supported
+   keys. The following keys are supported by all domains:
+   {ul
+   {- ({e outcome} OUTCOME), use OUTCOME as the default build outcome.
+      Overriden by domain selection flags given to [brzo], defaults to [exec].
+      The values allowed for this field depends on the domain.}}}}
+
+{1:c_domain C domain}
+
+{2:c_doc Doc outcome}
+
+Build and show documentation about source files using
+{{:http://www.doxygen.nl}Doxygen}.
+
+Let [ROOT] be the root, [R] be its basename, [BUILD] the outcome build
+directory, [P] match file {e paths} and [FILE] be the basename of [P].
+
+{ol
+{- Determine in [ROOT] a {{:http://www.doxygen.nl/manual/config.html}Doxygen
+   configuration file}. This is either, in order:
+   {ol
+   {- The file mentioned via the [--doxyfile] option.}
+   {- The file mentioned in the [BRZO] file key {e c.doxyfile}, see
+      {{!c_brzo_file}here}.}
+   {- The file [ROOT/Doxyfile].}
+   {- Generate a [BUILD/Doxyfile] crafted for HTML output. Dot
+      graphs are included if [dot] is available. This can
+      be disabled using the [--use-dot=false] option or
+      the [BRZO] file key {e c.use-dot}, see {{!c_brzo_file}here}.}}}
+{- Invoke [doxygen] on the configuration file found or generated at
+   the preceeding step with the following overrides:
+   {ol
+   {- [OUTPUT_DIRECTORY] is set to [BUILD/o].}
+   {- [INPUT] is set to the list of files matching [ROOT/P.h],
+      [ROOT/P.c] and [ROOT/P.md].}}}
+{- {{!action_browser}Open directory} [BUILD/o/html/] in a browser.}}
+
+{2:c_brzo_file [BRZO] file keys}
+
+C specific keys are found in the {e c} dictionary. Here's an example
+that indicates that dot should not be used in the doxyfile automatically
+generated by [brzo].
+
+{v
+(c (use-dot false))  ; Dot not generate dot dependency and call graphs
+v}
+
+The available keys are:
+{ul
+{- ({e doxyfile} PATH) use PATH for the [doxygen] configuration file.}
+{- ({e use-dot} BOOL), specify whether the [dot] tool should be used or
+   or not if the [Doxyfile] is automatically generated}}
+
+{1:cmark_domain Cmark domain}
+
+Provides support for handling {{:https://commonmark.org/}CommonMark}
+files via the {{!B0_cmark}cmark} tool.
+
+{2:cmark_exec Exec outcome}
+
+Build a web of HTML programs (HTML, JavaScript, CSS) and media files
+in a directory and open it in the user's browser.
+
+Let [ROOT] be the root, [BUILD] the outcome build directory and [P]
+match file {e paths}. The following steps are taken:
+
+{ol
+{- Any [ROOT/P.ext] source file with [ext] in the set {!B0_fexts.www}
+   extension is copied over verbatim to the corresponding
+   [BUILD/html/P.ext] path.}
+{- Any [ROOT/P.md] file is compiled to a [BUILD/html/P.html] file using the
+   {{!B0_cmark}[cmark]} tool. Any [.js] and [.css] file in [BUILD] is
+   linked in the file. The page title is either the basename of
+   the file without the extension or, if that results in ["index"],
+   the basename of the [.md] file's parent directory.}
+{- {{!action_browser}Open directory} [BUILD] in a browser.}}
+
+{2:cmark_doc Doc outcome}
+
+Aliased to {{!cmark_exec}exec outcome}.
+
+{2:cmark_brzo_file [BRZO] file keys}
+
+The cmark domain has no specific keys.
+
+{1:latex_domain L{^A}T{_E}X domain}
+
+Provides support for handling the
+{{:https://www.latex-project.org}L{^A}T{_E}X} document preparation
+system. The domain uses the
+{{:http://xetex.sourceforge.net/}X{_Ǝ}T{_E}X} toolchain as it handles
+Unicode and UTF-8 out of the box; it is distributed with T{_E}X Live.
+
+{2:latex_exec Exec outcome}
+
+Create a PDF document from the L{^A}T{_E}X sources and open it in a
+PDF viewer.
+
+Let [ROOT] be the root, [R] be the basename of [ROOT], [BUILD] the
+outcome build directory and [P] match file {e paths}. The following
+steps are taken:
+
+{ol
+{- Any [ROOT/P.bibdoi] file is compiled to a [ROOT/P.brzo.bib]
+   {{:https://www.ctan.org/pkg/bibtex}BibT{_E}X} file as described
+   {{!latex_bibdoi}here}. This BibT{_E}X file can be included in your [.tex]
+   files. Do not edit it manually it will be overwritten by [brzo].}
+{- Determine in [ROOT] a main [M.tex] file. This is either, in order:
+   {ol
+   {- The file mentioned via the [--main] option}
+   {- The file mentioned in the [BRZO] file key {e latex.main}, see
+      {{!latex_brzo_file}here}.}
+   {- If there's a single [.tex] file, that file}
+   {- A file whose basename is [main.tex]}
+   {- A file whose basename is [R.tex]}}}
+{- Compile [M.tex] to [BUILD/M.pdf] using [xelatex] until the fix point is
+   reached.}
+{- {{!action_pdf}Open file} [BUILD/M.pdf] in a PDF viewer.}}
+
+{2:latex_doc Doc outcome}
+
+Aliased to {{!latex_exec}exec outcome}.
+
+{2:latex_listing Listing outcome}
+
+Creates a PDF document with some of the source files listed by [brzo
+sources]. The list of supported source extensions is documented in
+[brzo latex --help] under the [--listing] option. Sources are assumed
+to be UTF-8 encoded.
+
+Let [ROOT] be the root, [R] be the basename of [ROOT], [BUILD] the
+outcome build directory and [P] match file {e paths}. The following
+steps are taken:
+
+{ol
+{- Generate a document [BUILD/R-listing.tex] which has one section for
+   each source file [ROOT/P.ext] with [ext] in the supported source
+   extensions. Source files are included using the
+   {{:https://www.ctan.org/pkg/listings}listings} package.}
+{- Compile [BUILD/R-listing.tex] to [BUILD/R-listing.pdf] using [xelatex]
+   until the fix point is reached.}
+{- {{!action_pdf}Open file} [BUILD/R-listing.pdf] in a PDF viewer.}}
+
+{2:latex_brzo_file [BRZO] file keys}
+
+L{^A}T{_E}X specific keys are found in the {e latex}
+dictionary. Here's an example that indicates the main [.tex] file is
+[doc/manual.tex]
+
+{v
+(latex (main doc/manual.tex))
+v}
+
+The available keys are:
+{ul
+{- ({e curl} CMD) use CMD to curl to resolve DOIs}
+{- ({e doi-resolver} URI) use URI to resolve DOIs to BibT{_E}X
+   entries. Defaults to [https://doi.org].}
+{- ({e main} PATH), specify the main [.tex] file to be PATH.}}
+
+{2:latex_bibdoi [.bibdoi] files}
+
+A [.bibdoi] file is a list of {{:https://www.doi.org/}DOI}s written
+as a sequence of {{!B0_sexp.sexp_syntax}s-expression} atoms. Here's
+a sample [.bibdoi] file:
+
+{v
+; Some useful references
+10.1145/365230.365257
+https://doi.org/10.2307/1968337
+v}
+
+As shown above one can specify DOI either by the DOI itself or by an
+URI in which case the DOI number is taken to be the URI path without
+the leading [/].
+
+Each DOI [D] in the file is resolved to a BibT{_E}X entry using the following
+HTTP request:
+
+{v
+curl -LH "Accept: application/x-bibtex; charset=utf-8" https://doi.org/D
+v}
+
+The URI used for the resolving can be {{!latex_brzo_file}changed} in
+the [BRZO] file.
+
+A [P.bibdoi] file defines a corresponding [P.brzo.bib] BibT{_E}X file by
+concatenating the result of resolving each of its DOIs.
+
+{1:ocaml_domain OCaml domain}
+
+Provides support for handling a set of {{:https://ocaml.org}OCaml}, C
+and JavaScript files.
+
+{2:ocaml_exec Exec outcome}
+
+Builds source files to an executable and runs it. There are four
+different outcome targets which define different kind of executables
+and actions:
+
+{ul
+{- [--byte], compile a bytecode executable and run it in the terminal.}
+{- [--html], compile an HTML program and run it in a browser.}
+{- [--native], compile a native code executable and run it in the terminal.}
+{- [--node], compile a JavaScript program and run it in the terminal via
+   [node].}}
+
+Unless the target is explicitely specified [--native] is used if
+[ocamlopt] is available and [--byte] otherwise.
+
+{3:ocaml_exec_native_byte Byte and native code targets}
+
+Let [BUILD] be the outcome build directory.
+
+{ol
+{- Using {{!ocaml_compilation}best-effort compilation} compile sources to
+   objects and link them to a [BUILD/a.out] executable.}
+{- {{!action_exec}Execute} [BUILD/a.out].}}
+
+{3:ocaml_exec_html HTML target}
+
+Let [ROOT] be the root, [BUILD] the outcome build directory
+and [P] match file {e paths}. The following steps are taken:
+
+{ol
+{- Using {{!ocaml_compilation}best-effort compilation} compile sources
+   to objects and link them to a [BUILD/a.out] bytecode executable.}
+{- Using {{:http://ocsigen.org/js_of_ocaml}[js_of_ocaml]} compile
+   [BUILD/a.out] to [BUILD/a.js].}
+{- Compile a shim for the action's environment and arguments to
+   [BUILD/brzo_tty_glue.js]. Action arguments which correspond to
+   files that exist on the file system are crunched to that shim in
+   [js_of_ocaml]'s virtual file system so that they can be read by the
+   HTML program.}
+{- Any [ROOT/P.ext] source file with [ext] in the set
+   {!B0_fexts.www} extension is copied over verbatim to the
+   corresponding [BUILD/P.ext].}
+{- If there is no [BUILD/index.html] file one is generated with any
+   [BUILD/P.js] and [BUILD/P.css] files linked in the file, with
+   [brzo_tty_glue.js] and [a.js] comming last.}
+{- {{!action_browser}Open file} [BUILD/index.html] in a browser.}}
+
+{3:ocaml_exec_html Node target}
+
+Let [ROOT] be the root, [BUILD] the outcome build directory and [P]
+match file {e paths}. The following steps are taken:
+
+{ol
+{- Using {{!ocaml_compilation}best-effort compilation} compile sources
+   to objects and link them to a [BUILD/a.out] bytecode executable.}
+{- Using {{:http://ocsigen.org/js_of_ocaml}[js_of_ocaml]} compile
+   [BUILD/a.out] to [BUILD/a.out.js]}
+{- Any [ROOT/P.js] source file is copied over verbatim to the
+   corresponding [BUILD/P.js] file.}
+{- Using [jsoo_link] link the [BUILD/P.js] files and [BUILD/a.out.js]
+   to [BUILD/a.js].}
+{- {{!action_exec}Execute} [BUILD/a.js] via {{:https://nodejs.org}[node]}.}}
+
+{2:ocaml_doc Doc outcome}
+
+Build and show documentation about source files using [odoc].
+
+Let [ROOT] be the root, [R] be its basename, [BUILD] the outcome build
+directory, [P] match file {e paths} and [FILE] be the basename of [P].
+
+{ol
+{- Using {{!ocaml_compilation}best-effort compilation} produce a
+   [BUILD/cmti/FILE.cmi] files for each [ROOT/P.mli] file. This produces
+   [BUILD/cmti/FILE.cmti] as a side effect which is resolved for local
+   [.odoc] dependencies and compiled to [BUILD/odoc/R/FILE.odoc].}
+{- Compile any [ROOT/P.mld] file to [BUILD/odoc/R/page-FILE.odoc].}
+{- Compile [ROOT/P.md] files to [BUILD/html/_docs/P.html] using the
+   {{!B0_cmark}[cmark]} tool (if available).}
+{- If there is no [index.mld] file produce one which links to the
+   [.mli] module pages, [.mld] pages and the [.md] HTML documents and compile
+   it to [BUILD/odoc/R/page-index.odoc]}
+{- Generate from [.odoc] files the HTML for a package named [R] in
+   [BUILD/html] using the user's odig odoc theme if set.}
+{- {{!action_browser}Open directory} [BUILD/html/R/] in a browser.}}
+
+{2:ocaml_top Top outcome}
+
+Build source files to object files and load them in the OCaml
+toplevel. There are four different outcome targets which define
+different actions:
+
+{ul
+{- [--byte], compile to bytecode and load in [ocaml].}
+{- [--html], compile to JavaScript and load in HTML OCaml toplevel.}
+{- [--native], compile to native code and load in [ocamlnat].}
+{- [--node], unsupported for now.}}
+
+Unless the target is explicitely specified [--native] is used if
+[ocamlnat] is available and [--byte] otherwise.
+
+{3:ocaml_exec_native_byte Byte and native code targets}
+
+Let [ROOT] be the root, [BUILD] the outcome build directory and [P]
+match file {e paths} and [FILE] be the base names of [P].
+
+{ol
+{- Using {{!ocaml_compilation}best-effort compilation} compile sources
+   to objects and gather them in a [BUILD/brzo_top.ext] library archive
+   with [ext] depending on the target.}
+{- {{!action_exec}Execute} [ocaml] or [ocamlnat] with
+   [BUILD/brzo_top.ext], its {{!ocaml_link_deps}link dependencies} and
+   [BUILD] as an include directory. If arguments are specified they
+   are given to the toplevel program invocation.}}
+
+{3:ocaml_top_html HTML target}
+
+Let [ROOT] be the root, [BUILD] the outcome build directory
+and [P] match file {e paths}. The following steps are taken:
+
+{ol
+{- Using {{!ocaml_compilation}best-effort compilation} compile sources
+   to objects and link them to a [BUILD/a.out] bytecode executable.}
+{- Using {{:http://ocsigen.org/js_of_ocaml}[js_of_ocaml]} compile
+   [BUILD/a.out] to [BUILD/a.js].}
+{- TODO}}
+
+{2:ocaml_utop Utop outcome}
+
+Except for the [--native], [--html] and [--node] targets which are not
+supported this behaves like the {{!ocaml_top}top outcome} but loads
+using the {{:https://github.com/ocaml-community/utop}utop} tool rather
+than [ocaml].
+
+{2:ocaml_brzo_file [BRZO] file keys}
+
+OCaml specific keys are found in the {e ocaml} dictionary. Here's an
+example that forces the executable target to [html] and constrains
+library resolution:
+
+{v
+(ocaml
+  (target html)      ; Default to produce an HTML program
+  (libs ptime/jsoo)) ; Force the use the js_of_ocaml support of ptime
+v}
+
+The available keys are:
+
+{ul
+{- ({e target} TARGET), specify either one of {e byte}, {e html},
+   {e native} or {e node}. Overriden
+   by the [--byte], [--html], [--native] or [--node] domain options.}
+{- ({e libs} LIB...) add ordered library search restrictions. A [LIB]
+   is a relative path looked up in the root directories of
+   [OCAMLPATH], see {{!ocaml_external_deps}external dependency}
+   resolution for details.  Libraries specified on the command line
+   via the [--lib LIB] option are added in order at the end of this
+   list.}
+{- ({e lock-libs} BOOL), specify whether dependency search should
+   be restricted to the dependencies mentioned in {e libs}. Overriden by
+   [--lock-libs=BOOL] option.}}
+
+{2:ocaml_compilation Best-effort compilation}
+
+Let [ROOT] be the root, [BUILD] the outcome build directory and [P]
+match file {e paths} and [FILE] be the base names of [P].  The
+following steps are taken:
+
+{ol
+{- Module dependencies of [ROOT/P.{mli,ml}] files are resolved
+   and sources are compiled to objects [BUILD/FILE.ext]
+   in the correct order using {{!ocaml_comp_deps}compilation
+   dependency resolution}.}
+{- [ROOT/P.c] C files are compiled to [BUILD/FILE.o]}
+{- If [ROOT/.merlin] does not exist or exists and starts
+   with ["# Generated by brzo"], write an [ocamlmerlin] file
+   there according to the dependency resolutions that were found.}
+{- According to the outcome proceed to the link phase with all the
+   objects using {{!ocaml_link_deps}link dependency resolution}.}}
+
+Note that the build scheme is flat so you cannot have two same [FILE]
+names in different directories of the source tree. If this happens a
+warning is output and one of the files is arbitrarily dropped.
+
+{2:ocaml_dep_resolution Best-effort dependency resolution}
+
+{3:ocaml_comp_deps Compilation dependencies}
+
+Given an [.ml] or [.mli] file [SRC], the set [CMIS] of [cmi] files that need
+to be visible to compile [SRC] is determined as follows.
+
+{ol
+{- [ocamldep -modules] is run on [SRC] to produce a set of module
+   names [DS] to resolve to [cmi] files. [Stdlib] is added to this
+   set. Modules names [L] that match OCaml sources in the brzo [ROOT] are
+   removed from [DS]. }
+{- For each of the local resolutions [L] found at the preceeding step
+   add [L.cmi] to [CMIS] and wait for its compilation. Get all the
+   module names that are defined in [L.cmi] and remove these from
+   [DS].}
+{- For each remaining unresolved dependency [E] in [DS] perform an
+   {{!ocaml_external_deps}external dependency resolution} for a file
+   named [E.cmi].
+   {ul
+   {- If there a single match add this file to [CMIS]. Get the all the
+      module names that are defined in [E.cmi] and remove these from [DS].}
+   {- If there's no match or more than one match put the resolution of
+      [E] on hold and proceed with subsequent dependencies to see if it might
+      resolve by later resolutions}}
+   Repeat until there is no dependency left or it is not possible to
+   find a [E.cmi] for the remaining ones. In that case if:
+   {ul
+   {- [E.cmi] cannot be found. Then keep the dependency unresolved and proceed.}
+   {- [E.cmi] resolves to more than one file. Fail the build
+      and propose a dependency restriction to resolve the ambiguity.}}}
+{- For all files [E.cmi] that were externally resolved and [L.cmi] files
+   we then lookup their imported interfaces and perform a resolution for
+   these module references and add them to [CMIS] and recursively;
+   otherwise the build may fail because we may be missing type equations.}}
+
+   At the end of this process if there are still remaining unresolved
+   dependencies in [DS] we nevertheless proceed to compile with what
+   we have found.  If that fails we try to spellcheck these unresolved
+   names with existing cmis in library directories and/or propose
+   [opam] packages that could help (if available).
+
+{3:ocaml_link_deps Link dependencies}
+
+The set of [cmi] files used to compile an object may have been over
+approximated by {{!ocaml_comp_deps}compilation dependency
+resolution}. However the OCaml compiler records in the object files
+exactly which ones were used. Therefore we read back the real
+compilation dependencies from the compiled objects.
+
+We then hunt for {e implementations} for these dependencies. We do so by
+performing [cmi] file lookups for them. If the file does not resolve
+locally an {{!ocaml_external_deps}external dependency resolution} is
+performed to find the cmi file. Once found this directory is scanned
+for a library archive that holds a corresponding implementation. If
+none is found the direct subdirectories are also looked up and if that
+fails an "mli-only" module is assumed.
+
+Once an archive is selected this lookup procedure needs to be applied
+on each of the dependencies of the object files it contains and
+recursively so that linking does not fail.
+
+Eventually this results in correctly sorted local objects and external
+archives that can be used for the final link step.
+
+{3:ocaml_external_deps External dependencies and restrictions}
+
+[brzo] assumes external OCaml library archives and objects are
+installed in root directories specified in the [OCAMLPATH] environment
+variable.
+
+If the variable is undefined it defaults to:
+
+{v
+OCAMLPATH=$(opam var lib):$(ocamlc -where)
+OCAMLPATH=$(opam var lib) # if opam is dirs coincide
+OCAMLPATH=$(ocamlc -where) # if opam is available
+v}
+
+and in this case when [ocamlc -where] is used the [brzo] maps
+[ocaml] specially to it.
+
+Filenames (e.g. [module.cmi]) are looked up on a best-effort basis in
+all root directories of [OCAMLPATH] and their subdirectories without
+order. In case such a file is found in multiple directories the build
+fails and [brzo] suggests library search restrictions.
+
+Library search restrictions are specified with ordered [--lib LIB]
+options or in the {{!ocaml_brzo_file}[BRZO] file}. A library [LIB] is
+a relative file path used to order or restrict the search performed in
+the libraries of [OCAMLPATH].
+
+Let [OCAMLPATH=R1:R2] and [LIB1] and [LIB2] be library restrictions
+in that order. A library restriction [LIB1] has two effects:
+
+{ol
+{- First before starting the build [brzo] checks that at least one of
+   [R1/LIB1] or [R2/LIB1] exists. If neither does, the build fails
+   and [LIB1] is spellchecked against existing directories in [R1] and [R2]
+   and/or matched against uninstalled [opam] packages to propose an [opam]
+   install (if available).}
+{- Whenever a filename resolution is ambiguous but has a candidate in an
+   existing library restriction then resolution is forced to that candidate.
+   More precisely the candidate that is prefixed by the {e first} of the
+   following paths is taken:
+   {ol
+   {- [R1/LIB1]}
+   {- [R2/LIB1]}
+   {- [R1/LIB2]}
+   {- [R2/LIB2]}}}}
+
+Unless you have restrictions for all discovered dependencies, new
+installs in root directories of [OCAMLPATH] may introduce new
+ambiguities, resulting in builds ambiguously failing while they were
+previously succeeding. If you want to restrict the search to those
+directories defined as dependency restrictions use the [--lock-libs]
+option (see corresponding key in the {{!ocaml_brzo_file}[BRZO] file}).
+
+For example the [ptime] package provides multiple implementation for
+the [Ptime_clock] module: one for your operating system and another
+one for your browser. This results in an ambiguous resolution when
+[Ptime_clock] is used in a source file. These libraries are
+respectively installed in these directories:
+
+{v
+$(opam var lib)/ptime/jsoo
+$(opam var lib)/ptime/os
+v}
+
+In order to force the usage of the operating system clock library use:
+
+{v
+brzo ocaml --lib ptime/os
+v}
+
+or add the following to the [BRZO] file:
+
+{v
+(ocaml (libs ptime/os))
+v}
+
+If you'd rather compile for the browser use:
+
+{v
+brzo ocaml --html --lib ptime/jsoo
+v}
+
+The [BRZO] file can be edited programmatically and a failing build may
+suggest you to do either of:
+
+{v
+brzo file set ocaml.libs.v[0] ptime/os    # For the OS
+brzo file set ocaml.libs.v[0] ptime/jsoo  # For the browser
+v}
+
+which will insert the library restriction at the beginning of the
+[ocaml.libs] dictionary key.
+
+{3:ocaml_resolution_improvements Comments and limitations}
+
+Here are a few points that should be taken into account or that could
+be improved.
+{ul
+{- Dependency resolution can be made more precise with a more precise
+   [ocamldep]. For example by keeping track of [open]s and the order
+   in which modules are mentioned (see for example
+   {{:https://github.com/Octachron/codept}codept}). This would allow
+   to make module name resolution path based (vs. unqualified) and
+   thus more precise. That was the initial plan but eventually we
+   decided to start with the simpler approach outlined above which we
+   suspect is "good enough". The over approximation is harmless and we
+   get to look what was really resolved in the objects for the link
+   step. We also avoid a potential combinatorial explosion.}
+{- Module names read in [M.cmi] files do not include those available
+   through external module aliases: these would need further [.cmi]
+   files resolution which we avoided for now. We conjecture again this
+   is "good enough". Libraries that do namespacing via modules aliases
+   usually simply entice to open the toplevel namespacing module. As
+   such the module names that are going to be reported by [ocamldep]
+   will be these module names we will read in [M.cmi].}
+{- Dependency wise for compilation, not resolving the external aliase in
+   [M.cmi] to their cmis works as long as those have digested resolutions
+   in the cmi: the stamp of [M.cmi] will change if the digest of the alias
+   changes.}
+{- Module implementation resolution assumes all objects are in archives}
+{- C stubs are located where their archive is.}
+{- Variants. [dune] installs [cmi]s in every variant. Aswell as
+   just above them. `ptime` at the moment does not include the variant
+   independent iface.}
+{- Example of compilation dependency over-approximation: the brzo
+   sources themselves are subject to it: [ocamldep] returns [Fpath] or
+   [Fmt] on some of the sources which we resolve to the [opam]
+   packages [fmt] and [fpath] if they are installed. However once we
+   have compiled when we read back the imported interfaces those are
+   not there because they actually come from [B0_std]. Thus these
+   dependencies are not resoloved or used at link time.}}

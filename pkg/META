@@ -3,7 +3,7 @@ version = "%%VERSION_NUM%%"
 requires = ""
 package "support" (
   description = "Odig support library"
-  requires = "b0.b00.std b0.b00 b0.b00.kit"
+  requires = "b0.std b0.b00 b0.b00.kit"
   version = "%%VERSION_NUM%%"
   archive(byte) = "odig_support.cma"
   archive(native) = "odig_support.cmxa"

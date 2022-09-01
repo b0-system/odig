@@ -3,7 +3,7 @@
    Distributed under the ISC license, see terms at the end of the file.
   ---------------------------------------------------------------------------*)
 
-open B00_std
+open B0_std
 open Result.Syntax
 
 let versions () =
@@ -57,9 +57,9 @@ let pp_updated ppf = function
 | true -> Fmt.string ppf "Published docs on"
 
 let publish tty_cap log_level new_commit remote branch =
-  let tty_cap = B00_cli.B00_std.get_tty_cap tty_cap in
-  let log_level = B00_cli.B00_std.get_log_level log_level in
-  B00_cli.B00_std.setup tty_cap log_level ~log_spawns:Log.Debug;
+  let tty_cap = B00_cli.B0_std.get_tty_cap tty_cap in
+  let log_level = B00_cli.B0_std.get_log_level log_level in
+  B00_cli.B0_std.setup tty_cap log_level ~log_spawns:Log.Debug;
   Log.if_error ~use:1 @@
   let* versions = versions () in
   let* htmldir, htmldir_contents = odig_html () in
@@ -101,8 +101,8 @@ let main () =
       let default = B00_github.Pages.default_branch in
       Arg.(value & opt string default & info ["b"; "branch"] ~doc ~docv)
     in
-    let tty_cap = B00_cli.B00_std.tty_cap () in
-    let log_level = B00_cli.B00_std.log_level () in
+    let tty_cap = B00_cli.B0_std.tty_cap () in
+    let log_level = B00_cli.B0_std.log_level () in
     let doc = "Updates odig's sample output on GitHub pages" in
     Term.(const publish $ tty_cap $ log_level $ new_commit $
           remote $ branch),

@@ -1,10 +1,9 @@
 open B0_kit.V000
-open B00_std
 
 (* OCaml library names *)
 
 let cmdliner = B0_ocaml.libname "cmdliner"
-let b0_b00_std = B0_ocaml.libname "b0.b00.std"
+let b0_std = B0_ocaml.libname "b0.std"
 let b0_b00 = B0_ocaml.libname "b0.b00"
 let b0_b00_kit = B0_ocaml.libname "b0.b00.kit"
 let odig_support = B0_ocaml.libname "odig.support"
@@ -12,18 +11,18 @@ let odig_support = B0_ocaml.libname "odig.support"
 (* Units *)
 
 let odig_support_lib =
-  let requires = [ b0_b00_std; b0_b00; b0_b00_kit ] in
+  let requires = [ b0_std; b0_b00; b0_b00_kit ] in
   let srcs = Fpath.[`Dir (v "src");
                     `X (v "src/gh_pages_amend.ml"); `X (v "src/odig_main.ml")] in
   B0_ocaml.lib odig_support ~doc:"odig support library" ~requires ~srcs
 
 let odig_tool =
-  let requires = [ cmdliner; b0_b00_std; b0_b00; b0_b00_kit; odig_support ] in
+  let requires = [ cmdliner; b0_std; b0_b00; b0_b00_kit; odig_support ] in
   let srcs = Fpath.[`File (v "src/odig_main.ml")] in
   B0_ocaml.exe "odig" ~doc:"odig tool" ~requires ~srcs
 
 let gh_pages_amend =
-  let requires = [ cmdliner; b0_b00_std; b0_b00; b0_b00_kit ] in
+  let requires = [ cmdliner; b0_std; b0_b00; b0_b00_kit ] in
   let srcs = Fpath.[`File (v "src/gh_pages_amend.ml")] in
   let doc = "GitHub pages publication tool" in
   B0_ocaml.exe "gh-pages-amend" ~doc ~requires ~srcs

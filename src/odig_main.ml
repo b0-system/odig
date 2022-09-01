@@ -3,7 +3,7 @@
    Distributed under the ISC license, see terms at the end of the file.
   ---------------------------------------------------------------------------*)
 
-open B00_std
+open B0_std
 open Result.Syntax
 open Odig_support
 
@@ -347,8 +347,8 @@ let conf =
          info ["share-dir"] ~absent ~doc ~docs ~env ~docv)
   in
   let jobs = B00_cli.Memo.jobs ~docs ~env:(Cmd.Env.info "ODIG_JOBS") () in
-  let tty_cap = B00_cli.B00_std.tty_cap ~env:(Cmd.Env.info Env.color) () in
-  let log_level = B00_cli.B00_std.log_level ~env:(Cmd.Env.info Env.verbosity) ()
+  let tty_cap = B00_cli.B0_std.tty_cap ~env:(Cmd.Env.info Env.color) () in
+  let log_level = B00_cli.B0_std.log_level ~env:(Cmd.Env.info Env.verbosity) ()
   in
   let conf
       b0_cache_dir b0_log_file cache_dir doc_dir jobs lib_dir log_level

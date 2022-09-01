@@ -9,7 +9,7 @@
 
 (** {1:support Odig support} *)
 
-open B00_std
+open B0_std
 open B00
 
 (** Digests. *)

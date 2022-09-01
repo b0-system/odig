@@ -3,7 +3,7 @@
    Distributed under the ISC license, see terms at the end of the file.
   ---------------------------------------------------------------------------*)
 
-open B00_std
+open B0_std
 
 module Digest = struct
   include Digest
@@ -524,9 +524,9 @@ module Conf = struct
       ~odoc_theme ~share_dir ~tty_cap ()
     =
     Result.map_error (Fmt.str "conf: %s") @@
-    let tty_cap = B00_cli.B00_std.get_tty_cap tty_cap in
-    let log_level = B00_cli.B00_std.get_log_level log_level in
-    B00_cli.B00_std.setup tty_cap log_level ~log_spawns:Log.Debug;
+    let tty_cap = B00_cli.B0_std.get_tty_cap tty_cap in
+    let log_level = B00_cli.B0_std.get_log_level log_level in
+    B00_cli.B0_std.setup tty_cap log_level ~log_spawns:Log.Debug;
     Result.bind (Os.Dir.cwd ()) @@ fun cwd ->
     Result.bind (Fpath.of_string Sys.executable_name) @@ fun exec ->
     let cache_dir = get_dir ~cwd ~exec (Fpath.v "var/cache/odig") cache_dir in

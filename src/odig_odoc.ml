@@ -4,8 +4,8 @@
   ---------------------------------------------------------------------------*)
 
 open Odig_support
-open B00_std
-open B00_std.Fut.Syntax
+open B0_std
+open B0_std.Fut.Syntax
 open B00
 
 let odig_version = "%%VERSION%%"
@@ -357,7 +357,7 @@ let pkg_to_html b pkg =
   (* XXX html deps is a bit broken make sure we have at least our
      own files as deps maybe related to compiler-deps not working on .mld
      files *)
-  let odoc_deps = Fpath.uniquify (List.rev_append odoc_files odoc_deps_res) in
+  let odoc_deps = Fpath.distinct (List.rev_append odoc_files odoc_deps_res) in
   let theme_uri = match b.theme with
   | Some _ -> Some B00_odoc.Theme.default_uri | None -> None
   in

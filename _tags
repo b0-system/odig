@@ -1,5 +1,5 @@
 true : bin_annot, safe_string
-true : package(b0.b00.std), package(b0.b00), package(b0.b00.kit)
+true : package(b0.std), package(b0.b00), package(b0.b00.kit)
 
 <src> : include
 <src/odig_bin.*> : package(cmdliner unix)

@@ -13,7 +13,7 @@ open Odig_support
 
 val gen :
   Conf.t -> force:bool -> index_title:string option ->
-  index_intro:B00_std.Fpath.t option -> index_toc:B00_std.Fpath.t option ->
+  index_intro:B0_std.Fpath.t option -> index_toc:B0_std.Fpath.t option ->
   pkg_deps:bool -> tag_index:bool ->
   Pkg.t list -> (unit, string) result
 (** [gen c ~force ~index_intro ~pkg_deps ~tag_index pkgs]

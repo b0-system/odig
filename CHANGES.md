@@ -3,6 +3,8 @@ v0.0.9 2023-06-04 Zagreb
 
 - CSS tweaks for record defs.
 - Track b0.
+- `odig doc -f`: do not quote paths (#68).
+
 
 v0.0.8 2022-02-09 La Forclaz (VS)
 ---------------------------------

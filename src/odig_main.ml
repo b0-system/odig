@@ -139,7 +139,7 @@ let doc_cmd conf background browser pkg_names update no_update show_files =
   let does_not_exist = List.find_all (fun f -> not (exists f)) files in
   match does_not_exist with
   | [] when show_files ->
-      Fmt.pr "@[<v>%a@]@." (Fmt.list Fpath.pp_quoted) files; Ok 0
+      Fmt.pr "@[<v>%a@]@." (Fmt.list Fpath.pp_unquoted) files; Ok 0
   | [] ->
       let rec loop exit = function
       | [] -> Ok exit

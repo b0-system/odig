@@ -53,7 +53,7 @@ let default =
         "topkg", {|build & >= "1.0.3"|};
         "cmdliner", {|>= "1.1.0"|};
         "odoc", {|>= "2.0.0" |};
-        "b0", {|= "0.0.4"|}; ]
+        "b0", {|= "0.0.5"|}; ]
     |> tag B0_opam.tag
   in
   B0_pack.v "default" ~doc:"The odig project" ~meta ~locked:true units

@@ -266,9 +266,11 @@ a.anchor
 
 .spec ol { margin:0; list-style-type: none; }
 .spec li { margin-left: 0; padding-left: 4ch; text-indent: -4ch }
+.spec li.record.field { margin-left: 2ch }
 
 .spec .def-doc { display: inline-block }
 .spec .def-doc { padding-left: /* 4 + 3 */ 7ch; }
+.spec .def-doc p { margin-left: -4ch; text-indent: 0 }
 
 .odoc-include summary { cursor: pointer }
 

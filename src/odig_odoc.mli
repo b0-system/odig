@@ -32,7 +32,7 @@ val gen :
        page and package pages hyperlink into it from the package information
        section.}} *)
 
-val install_theme : Conf.t -> B00_odoc.Theme.t option -> (unit, string) result
+val install_theme : Conf.t -> B0_odoc.Theme.t option -> (unit, string) result
 
 (*---------------------------------------------------------------------------
    Copyright (c) 2018 The odig programmers

@@ -5,7 +5,7 @@
 
 open Odig_support
 open B0_std
-open B00_htmlg
+open B0_html
 
 let anchor_href aid = At.href (Fmt.str "#%s" aid)
 let anchor_a aid =

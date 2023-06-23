@@ -4,25 +4,28 @@ open B0_kit.V000
 
 let cmdliner = B0_ocaml.libname "cmdliner"
 let b0_std = B0_ocaml.libname "b0.std"
-let b0_b00 = B0_ocaml.libname "b0.b00"
-let b0_b00_kit = B0_ocaml.libname "b0.b00.kit"
+let b0_memo = B0_ocaml.libname "b0.memo"
+let b0_file = B0_ocaml.libname "b0.file"
+let b0_kit = B0_ocaml.libname "b0.kit"
 let odig_support = B0_ocaml.libname "odig.support"
 
 (* Units *)
 
 let odig_support_lib =
-  let requires = [ b0_std; b0_b00; b0_b00_kit ] in
+  let requires = [ b0_std; b0_memo; b0_file; b0_kit; ] in
   let srcs = Fpath.[`Dir (v "src");
-                    `X (v "src/gh_pages_amend.ml"); `X (v "src/odig_main.ml")] in
+                    `X (v "src/gh_pages_amend.ml");
+                    `X (v "src/odig_main.ml")] in
   B0_ocaml.lib odig_support ~doc:"odig support library" ~requires ~srcs
 
 let odig_tool =
-  let requires = [ cmdliner; b0_std; b0_b00; b0_b00_kit; odig_support ] in
+  let requires =
+    [ cmdliner; b0_std; b0_memo; b0_file; b0_kit; odig_support ] in
   let srcs = Fpath.[`File (v "src/odig_main.ml")] in
-  B0_ocaml.exe "odig" ~doc:"odig tool" ~requires ~srcs
+  B0_ocaml.exe "odig" ~public:true ~doc:"odig tool" ~requires ~srcs
 
 let gh_pages_amend =
-  let requires = [ cmdliner; b0_std; b0_b00; b0_b00_kit ] in
+  let requires = [ cmdliner; b0_std; b0_memo; b0_file; b0_kit ] in
   let srcs = Fpath.[`File (v "src/gh_pages_amend.ml")] in
   let doc = "GitHub pages publication tool" in
   B0_ocaml.exe "gh-pages-amend" ~doc ~requires ~srcs
@@ -44,9 +47,10 @@ let default =
     |> add licenses ["ISC"; "LicenseRef-ParaType-Free-Font-License"; "LicenseRef-DejaVu-fonts"]
     |> add repo "git+https://erratique.ch/repos/odig.git"
     |> add issues "https://github.com/b0-system/odig/issues"
-    |> add B0_opam.Meta.build
+    |> tag B0_opam.tag
+    |> add B0_opam.build
       {|[["ocaml" "pkg/pkg.ml" "build" "--dev-pkg" "%{dev}%"]]|}
-    |> add B0_opam.Meta.depends
+    |> add B0_opam.depends
       [ "ocaml", {|>= "4.08"|};
         "ocamlfind", {|build|};
         "ocamlbuild", {|build|};
@@ -54,6 +58,5 @@ let default =
         "cmdliner", {|>= "1.1.0"|};
         "odoc", {|>= "2.0.0" |};
         "b0", {|= "0.0.5"|}; ]
-    |> tag B0_opam.tag
   in
-  B0_pack.v "default" ~doc:"The odig project" ~meta ~locked:true units
+  B0_pack.make "default" ~doc:"The odig project" ~meta ~locked:true units

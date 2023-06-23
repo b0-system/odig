@@ -10,7 +10,6 @@
 (** {1:support Odig support} *)
 
 open B0_std
-open B00
 
 (** Digests. *)
 module Digest : sig
@@ -326,7 +325,7 @@ module Conf : sig
   val v :
     b0_cache_dir:Fpath.t -> b0_log_file:Fpath.t -> cache_dir:Fpath.t ->
     cwd:Fpath.t -> doc_dir:Fpath.t -> html_dir:Fpath.t -> jobs:int ->
-    lib_dir:Fpath.t -> log_level:Log.level -> odoc_theme:B00_odoc.Theme.name ->
+    lib_dir:Fpath.t -> log_level:Log.level -> odoc_theme:B0_odoc.Theme.name ->
     share_dir:Fpath.t -> tty_cap:Tty.cap -> unit -> t
   (** [v] consructs a configuration with given attributes. See
       the corresponding accessors for details. *)
@@ -356,13 +355,13 @@ module Conf : sig
   (** [html_dir c] is [c]'s HTML directory, where the API docs
       are generated (derived from {!cache_dir}). *)
 
-  val odoc_theme : t -> B00_odoc.Theme.name
+  val odoc_theme : t -> B0_odoc.Theme.name
   (** [odoc_theme c] is [c]'s odoc theme to use. *)
 
   val jobs : t -> int
   (** [jobs c] is the maximum number of spawns. *)
 
-  val memo : t -> (Memo.t, string) result
+  val memo : t -> (B0_memo.t, string) result
   (** [memo conf] is a memoizer for configuration [conf]. *)
 
   val pkgs : t -> Pkg.t list
@@ -386,7 +385,7 @@ module Conf : sig
     b0_cache_dir:Fpath.t option -> b0_log_file:Fpath.t option ->
     cache_dir:Fpath.t option -> doc_dir:Fpath.t option -> jobs:int option ->
     lib_dir:Fpath.t option -> log_level:Log.level option ->
-    odoc_theme:B00_odoc.Theme.name option -> share_dir:Fpath.t option ->
+    odoc_theme:B0_odoc.Theme.name option -> share_dir:Fpath.t option ->
     tty_cap:Tty.cap option option -> unit -> (t, string) result
   (** [setup_with_cli] determines and setups a configuration with the given
       values. These are expected to have been determined by environment

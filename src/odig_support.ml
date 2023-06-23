@@ -21,11 +21,11 @@ module Pkg = struct
   type t = name * Fpath.t
   let name = fst
   let path = snd
-  let pp ppf (n, p) = Fmt.pf ppf "%s %a" n (Fmt.tty [`Faint] Fpath.pp_quoted) p
+  let pp ppf (n, p) = Fmt.pf ppf "%s %a" n (Fmt.tty' [`Faint] Fpath.pp_quoted) p
   let pp_name ppf (n, p) = Fmt.string ppf n
   let pp_version ppf v =
     let v = if v = "" then "?" else v in
-    Fmt.pf ppf "%a" (Fmt.tty_string [`Fg `Green]) v
+    Fmt.pf ppf "%a" (Fmt.tty [`Fg `Green]) v
 
   let equal = ( = )
   let compare = compare
@@ -41,16 +41,18 @@ module Pkg = struct
     Log.time (fun _ m -> m "package list of %a" Fpath.pp_quoted dir) @@
     fun () ->
     let ocaml_pkg () =
-      let ocaml_where = Cmd.(atom "ocamlc" % "-where") in
-      let p = Os.Cmd.run_out ~trim:true ocaml_where |> Result.to_failure in
-      "ocaml", Fpath.of_string p |> Result.to_failure
+      let ocaml_where = Cmd.(arg "ocamlc" % "-where") in
+      let p =
+        Os.Cmd.run_out ~trim:true ocaml_where |> Result.error_to_failure
+      in
+      "ocaml", Fpath.of_string p |> Result.error_to_failure
     in
     try
       let add_pkg _ name dir acc =
         if name <> "ocaml" then (name, dir) :: acc else acc
       in
       let pkgs = Os.Dir.fold_dirs ~recurse:false add_pkg dir [] in
-      let pkgs = pkgs |> Result.to_failure in
+      let pkgs = pkgs |> Result.error_to_failure in
       List.sort compare_by_caseless_name (ocaml_pkg () :: pkgs)
     with Failure e -> Log.err (fun m -> m "package list: %s" e); []
 
@@ -194,13 +196,14 @@ module Opam = struct
     | false -> None
 
   let bin = lazy begin
-    Result.bind (Os.Cmd.get_tool (Fpath.v "opam")) @@ fun opam ->
-    Result.bind (Os.Cmd.run_out ~trim:true Cmd.(path opam % "--version")) @@
-    fun v -> match String.cut_left ~sep:"." (String.trim v) with
+    let open Result.Syntax in
+    let* opam = Os.Cmd.get (Cmd.arg "opam") in
+    let* v = Os.Cmd.run_out ~trim:true Cmd.(opam % "--version") in
+    match String.cut_left ~sep:"." (String.trim v) with
     | Some (maj, _)  when
         maj <> "" && Char.code maj.[0] - 0x30 >= 2 -> Ok opam
     | Some _ | None ->
-        Fmt.error "%a: unsupported version %s" Fpath.pp_quoted opam v
+        Fmt.error "%a: unsupported version %s" Cmd.pp opam v
   end
 
   let fields =
@@ -247,7 +250,7 @@ module Opam = struct
     | Error e -> Log.err (fun m -> m "%s" e); no_data qpkgs
     | Ok opam ->
         if opams = [] then no_data qpkgs else
-        let show = Cmd.(path opam % "show" % "--normalise" % "--no-lint") in
+        let show = Cmd.(opam % "show" % "--normalise" % "--no-lint") in
         let show = Cmd.(show % field_arg %% paths opams) in
         match
           Log.time (fun _ m -> m "opam show") @@ fun () ->
@@ -443,7 +446,7 @@ module Conf = struct
       jobs : int;
       lib_dir : Fpath.t;
       log_level : Log.level;
-      memo : (B00.Memo.t, string) result Lazy.t;
+      memo : (B0_memo.t, string) result Lazy.t;
       odoc_theme : string;
       pkg_infos : Pkg_info.t Pkg.Map.t Lazy.t;
       pkgs : Pkg.t list Lazy.t;
@@ -452,19 +455,19 @@ module Conf = struct
 
   let memo ~cwd ~cache_dir (* b0 not odig *) ~trash_dir ~jobs =
     let feedback =
-      let op_howto ppf o = Fmt.pf ppf "odig log --id %d" (B000.Op.id o) in
+      let op_howto ppf o = Fmt.pf ppf "odig log --id %d" (B0_zero.Op.id o) in
       let show_op = Log.Debug and show_ui = Log.Info and level = Log.level () in
-      B00_cli.Memo.pp_leveled_feedback ~op_howto ~show_op ~show_ui ~level
+      B0_cli.Memo.pp_leveled_feedback ~op_howto ~show_op ~show_ui ~level
         Fmt.stderr
     in
-    B00.Memo.memo ~cwd ~cache_dir ~trash_dir ~jobs ~feedback ()
+    B0_memo.make ~cwd ~cache_dir ~trash_dir ~jobs ~feedback ()
 
   let v
       ~b0_cache_dir ~b0_log_file ~cache_dir ~cwd ~doc_dir ~html_dir ~jobs
       ~lib_dir ~log_level ~odoc_theme ~share_dir ~tty_cap ()
     =
     let trash_dir =
-      B00_cli.Memo.get_trash_dir ~cwd ~b0_dir:cache_dir ~trash_dir:None
+      B0_cli.Memo.get_trash_dir ~cwd ~b0_dir:cache_dir ~trash_dir:None
     in
     let memo =
       lazy (memo ~cwd:cache_dir ~cache_dir:b0_cache_dir ~trash_dir ~jobs)
@@ -516,34 +519,34 @@ module Conf = struct
   let get_odoc_theme = function
   | Some v -> Ok v
   | None ->
-      Result.bind (B00_odoc.Theme.get_user_preference ()) @@ fun n ->
-      Ok (Option.value ~default:B00_odoc.Theme.odig_default n)
+      Result.bind (B0_odoc.Theme.get_user_preference ()) @@ fun n ->
+      Ok (Option.value ~default:B0_odoc.Theme.odig_default n)
 
   let setup_with_cli
       ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~jobs ~lib_dir ~log_level
       ~odoc_theme ~share_dir ~tty_cap ()
     =
     Result.map_error (Fmt.str "conf: %s") @@
-    let tty_cap = B00_cli.B0_std.get_tty_cap tty_cap in
-    let log_level = B00_cli.B0_std.get_log_level log_level in
-    B00_cli.B0_std.setup tty_cap log_level ~log_spawns:Log.Debug;
+    let tty_cap = B0_cli.B0_std.get_tty_cap tty_cap in
+    let log_level = B0_cli.B0_std.get_log_level log_level in
+    B0_cli.B0_std.setup tty_cap log_level ~log_spawns:Log.Debug;
     Result.bind (Os.Dir.cwd ()) @@ fun cwd ->
     Result.bind (Fpath.of_string Sys.executable_name) @@ fun exec ->
     let cache_dir = get_dir ~cwd ~exec (Fpath.v "var/cache/odig") cache_dir in
     let b0_cache_dir =
       let b0_dir = cache_dir and cache_dir = b0_cache_dir in
-      B00_cli.Memo.get_cache_dir ~cwd ~b0_dir ~cache_dir
+      B0_cli.Memo.get_cache_dir ~cwd ~b0_dir ~cache_dir
     in
     let b0_log_file =
       let b0_dir = cache_dir and log_file = b0_log_file in
-      B00_cli.Memo.get_log_file ~cwd ~b0_dir ~log_file
+      B0_cli.Memo.get_log_file ~cwd ~b0_dir ~log_file
     in
     let html_dir = Fpath.(cache_dir / "html") in
     let lib_dir = get_dir ~cwd ~exec (Fpath.v "lib") lib_dir in
     let doc_dir = get_dir ~cwd ~exec (Fpath.v "doc") doc_dir in
     let share_dir = get_dir ~cwd ~exec (Fpath.v "share") share_dir in
     Result.bind (get_odoc_theme odoc_theme) @@ fun odoc_theme ->
-    let jobs = B00_cli.Memo.get_jobs ~jobs in
+    let jobs = B0_cli.Memo.get_jobs ~jobs in
     Ok (v ~b0_cache_dir ~b0_log_file ~cache_dir ~cwd ~doc_dir ~html_dir
           ~jobs ~lib_dir ~log_level ~odoc_theme ~share_dir ~tty_cap ())
 end

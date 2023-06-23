@@ -1,3 +1,8 @@
+
+
+- Track b0. `odig log -e` or `--errors` becomes 
+  `odig log -f` or `--failed`.
+
 v0.0.9 2023-06-04 Zagreb
 ------------------------
 

@@ -17,12 +17,12 @@ let get_msg ~src ~dst = function
 
 let publish ~amend ~msg ~remote ~branch preserve_symlinks cname_file src dst =
   let follow_symlinks = not preserve_symlinks in
-  let dst_upd = B0_github.Pages.update ~follow_symlinks ~src:(Some src) dst in
+  let dst_upd = B0_github.Pages.update ~follow_symlinks (Some src) ~dst in
   let rupdates = [ B0_github.Pages.nojekyll; dst_upd ] in
   let rupdates = match cname_file with
   | None -> rupdates
   | Some f ->
-      B0_github.Pages.update ~src:(Some f) (Fpath.v "CNAME") :: rupdates
+      B0_github.Pages.update (Some f) ~dst:(Fpath.v "CNAME") :: rupdates
   in
   let updates = List.rev rupdates in
   Result.bind (B0_vcs_repo.get ()) @@ fun repo ->

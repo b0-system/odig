@@ -52,7 +52,7 @@ let browse_cmd conf background browser field pkg_names =
   Log.if_error ~use:Exit.no_such_name @@
   let* pkgs = find_pkgs conf pkg_names in
   Log.if_error' ~use:Exit.some_error @@
-  let* browser = B0_web_browser.find ~browser () in
+  let* browser = B0_web_browser.find ?cmd:browser () in
   let get_uris = match field with
   | `Homepage -> Opam.homepage
   | `Issues -> Opam.bug_reports
@@ -100,7 +100,7 @@ let doc_cmd conf background browser pkg_names update no_update show_files =
   | ns -> find_pkgs conf pkg_names
   in
   Log.if_error' ~use:Exit.some_error @@
-  let* browser = B0_web_browser.find ~browser () in
+  let* browser = B0_web_browser.find ?cmd:browser () in
   let* files = match pkgs with
   | [] ->
       let root_index = Fpath.(Conf.html_dir conf / "index.html") in

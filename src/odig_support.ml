@@ -196,13 +196,14 @@ module Opam = struct
     | false -> None
 
   let bin = lazy begin
-    Result.bind (Os.Cmd.get_tool (Fpath.v "opam")) @@ fun opam ->
-    Result.bind (Os.Cmd.run_out ~trim:true Cmd.(path opam % "--version")) @@
-    fun v -> match String.cut_left ~sep:"." (String.trim v) with
+    let open Result.Syntax in
+    let* opam = Os.Cmd.get (Cmd.arg "opam") in
+    let* v = Os.Cmd.run_out ~trim:true Cmd.(opam % "--version") in
+    match String.cut_left ~sep:"." (String.trim v) with
     | Some (maj, _)  when
         maj <> "" && Char.code maj.[0] - 0x30 >= 2 -> Ok opam
     | Some _ | None ->
-        Fmt.error "%a: unsupported version %s" Fpath.pp_quoted opam v
+        Fmt.error "%a: unsupported version %s" Cmd.pp opam v
   end
 
   let fields =
@@ -249,7 +250,7 @@ module Opam = struct
     | Error e -> Log.err (fun m -> m "%s" e); no_data qpkgs
     | Ok opam ->
         if opams = [] then no_data qpkgs else
-        let show = Cmd.(path opam % "show" % "--normalise" % "--no-lint") in
+        let show = Cmd.(opam % "show" % "--normalise" % "--no-lint") in
         let show = Cmd.(show % field_arg %% paths opams) in
         match
           Log.time (fun _ m -> m "opam show") @@ fun () ->

@@ -38,8 +38,8 @@ let write_ocaml_manual_theme conf m theme =
     let css = Fpath.(Conf.doc_dir conf / ocaml_manual_pkg / "manual.css") in
     ignore @@
     let* () = B0_memo.delete m o in
-    B0_memo.file_ready m css;
-    B0_memo.copy m ~src:css o;
+    B0_memo.ready_file m css;
+    B0_memo.copy m css ~dst:o;
     Fut.return ()
   in
   let manual_dir = Fpath.(Conf.html_dir conf / ocaml_manual_pkg) in
@@ -139,10 +139,10 @@ let require_pkg b pkg =
 
 let odoc_file_for_cobj b cobj =
   let pkg = Doc_cobj.pkg cobj in
-  let root = Pkg.path pkg in
-  let dst = pkg_odoc_dir b pkg in
+  let src_root = Pkg.path pkg in
+  let dst_root = pkg_odoc_dir b pkg in
   let cobj = Doc_cobj.path cobj in
-  Fpath.(reroot ~root ~dst cobj -+ ".odoc")
+  Fpath.(reroot ~src_root ~dst_root cobj -+ ".odoc")
 
 let odoc_file_for_mld b pkg mld = (* assume mld names are flat *)
   let page = Fmt.str "page-%s" (Fpath.basename mld) in
@@ -169,7 +169,7 @@ let require_cobj_deps b cobj = (* Also used to find the digest of cobj *)
       let deps_file = Fpath.(odoc_file + ".deps") in
       set_cobj_deps b cobj fut_deps;
       begin
-        B0_memo.file_ready m (Doc_cobj.path cobj);
+        B0_memo.ready_file m (Doc_cobj.path cobj);
         B0_odoc.Compile.Dep.write m (Doc_cobj.path cobj) ~o:deps_file;
         ignore @@
         let* deps = B0_odoc.Compile.Dep.read m deps_file in
@@ -278,7 +278,7 @@ let index_mld_for_pkg b pkg pkg_info _pkg_odocs ~user_index_mld =
     let reads = Option.to_list user_index_mld in
     let reads = match Opam.file pkg with
     | None -> reads
-    | Some file -> B0_memo.file_ready b.m file; file :: reads
+    | Some file -> B0_memo.ready_file b.m file; file :: reads
     in
     let stamp =
       (* Influences the index content; we could relativize file paths *)
@@ -305,7 +305,7 @@ let index_mld_for_pkg b pkg pkg_info _pkg_odocs ~user_index_mld =
 let mlds_to_odoc b pkg pkg_info pkg_odocs mlds =
   let rec loop ~user_index_mld pkg_odocs = function
   | mld :: mlds ->
-      B0_memo.file_ready b.m mld;
+      B0_memo.ready_file b.m mld;
       let odocs, user_index_mld = match Fpath.basename mld = "index.mld" with
       | false -> mld_to_odoc b pkg pkg_odocs mld :: pkg_odocs, user_index_mld
       | true -> pkg_odocs, Some mld
@@ -375,7 +375,7 @@ let index_frag_to_html b frag ~o = match frag with
     let odoc_deps = Os.Dir.fold_files ~recurse:true is_odoc b.odoc_dir [] in
     let odoc_deps = B0_memo.fail_if_error b.m odoc_deps in
     let o = Fpath.(b.odoc_dir / o) in
-    B0_memo.file_ready b.m mld;
+    B0_memo.ready_file b.m mld;
     B0_odoc.Html_fragment.cmd b.m ~odoc_deps mld ~o;
     let* res = B0_memo.read b.m o in
     Fut.return (Some res)
@@ -426,9 +426,9 @@ let write_ocaml_manual b =
         ignore @@
         let* () = B0_memo.delete b.m dst in
         let copy_file m ~src_root ~dst_root src =
-          let dst = Fpath.reroot ~root:src_root ~dst:dst_root src in
-          B0_memo.file_ready m src;
-          B0_memo.copy m ~src dst
+          let dst = Fpath.reroot ~src_root ~dst_root src in
+          B0_memo.ready_file m src;
+          B0_memo.copy m src ~dst
         in
         let src = manual_pkg_dir in
         let files = Os.Dir.fold_files ~recurse:true Os.Dir.path_list src [] in
@@ -484,7 +484,7 @@ let gen
       let write_howto = Fmt.any "odig log -w " in
       B0_zero_conv.Op.pp_aggregate_error
         ~read_howto ~write_howto () Fmt.stderr e;
-      Error "Documentation might be incomplete (see: odig log -e)."
+      Error "Documentation might be incomplete (see: odig log --failed)."
 
 let install_theme c theme =
   Result.bind (Conf.memo c) @@ fun m ->

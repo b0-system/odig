@@ -77,7 +77,7 @@ let cache_cmd conf = function
     let dir = Conf.cache_dir conf in
     Log.app begin fun m ->
       m "Deleting %a, this may take some time..."
-        (Fmt.tty' [`Fg `Green] Fpath.pp_quoted) dir
+        (Fmt.st' [`Fg `Green] Fpath.pp_quoted) dir
     end;
     Log.if_error ~use:Exit.some_error @@
     let* _del = Os.Path.delete ~recurse:true dir in
@@ -161,7 +161,7 @@ let log_cmd conf no_pager format kind op_selector =
   let* pager = B0_pager.find ~don't () in
   let* () = B0_pager.page_stdout pager in
   let log_file = Conf.b0_log_file conf in
-  let* log = B0_cli.Memo.Log.read log_file in
+  let* log = B0_memo_log.read log_file in
   B0_cli.Memo.Log.out Fmt.stdout format kind op_selector ~path:log_file log;
   Ok 0
 
@@ -192,7 +192,7 @@ let pkg_cmd conf no_pager out_fmt pkg_names =
       let pp_pkg ppf (pkg, o) =
         Fmt.pf ppf "@[<h>%a %a %a@]"
           Pkg.pp_name pkg Pkg.pp_version (Opam.version o)
-          (Fmt.tty' [`Faint] Fpath.pp_quoted) (Pkg.path pkg)
+          (Fmt.st' [`Faint] Fpath.pp_quoted) (Pkg.path pkg)
       in
       let pkgs = Opam.query pkgs in
       (fun ppf () -> (Fmt.list pp_pkg) ppf pkgs)
@@ -291,10 +291,10 @@ let exits =
   Cmd.Exit.info Exit.err_uri ~doc:"an URI cannot be shown in a browser." ::
   Cmd.Exit.defaults
 
-let format = B0_cli.output_format ()
+let format = B0_std_cli.output_format ()
 let conf =
   let absent = "see below" in
-  let path = B0_cli.fpath in
+  let path = B0_std_cli.fpath in
   let docs = Manpage.s_common_options in
   let docv = "PATH" in
   let doc dirname dir =
@@ -347,9 +347,8 @@ let conf =
          info ["share-dir"] ~absent ~doc ~docs ~env ~docv)
   in
   let jobs = B0_cli.Memo.jobs ~docs ~env:(Cmd.Env.info "ODIG_JOBS") () in
-  let tty_cap = B0_cli.B0_std.tty_cap ~env:(Cmd.Env.info Env.color) () in
-  let log_level = B0_cli.B0_std.log_level ~env:(Cmd.Env.info Env.verbosity) ()
-  in
+  let tty_cap = B0_std_cli.tty_cap ~env:(Cmd.Env.info Env.color) () in
+  let log_level = B0_std_cli.log_level ~env:(Cmd.Env.info Env.verbosity) () in
   let conf
       b0_cache_dir b0_log_file cache_dir doc_dir jobs lib_dir log_level
       odoc_theme share_dir tty_cap
@@ -521,14 +520,14 @@ let odoc_cmd =
     let doc = "$(docv) is the .mld file to use to define the introduction
                text on the package list page."
     in
-    let some_path = Arg.some B0_cli.fpath in
+    let some_path = Arg.some B0_std_cli.fpath in
     Arg.(value & opt some_path None & info ["index-intro"] ~docv:"MLDFILE" ~doc)
   in
   let index_toc =
     let doc = "$(docv) is the .mld file to use to define the contents of the
                table of contents on the package list page."
     in
-    let some_path = Arg.some B0_cli.fpath in
+    let some_path = Arg.some B0_std_cli.fpath in
     Arg.(value & opt some_path None & info ["index-toc"] ~docv:"MLDFILE" ~doc)
   in
   let no_pkg_deps =
@@ -604,7 +603,7 @@ let odoc_theme_cmd =
     `P "See the packaging conventions in $(b,odig doc) $(mname) for the \
         theme install structure.";
     `S Manpage.s_options;
-    `S B0_cli.s_output_format_options;
+    `S B0_std_cli.s_output_format_options;
   ]
   in
   Cmd.group (Cmd.info "odoc-theme" ~doc ~exits ~man)
@@ -617,7 +616,7 @@ let log_cmd =
     `S Manpage.s_description;
     `P "The $(tname) command shows odoc build operations.";
     `S Manpage.s_options;
-    `S B0_cli.s_output_format_options;
+    `S B0_std_cli.s_output_format_options;
     `S B0_cli.Op.s_selection_options;
     `Blocks B0_cli.Op.query_man ]
   in
@@ -637,7 +636,7 @@ let pkg_cmd =
         install structure.";
     `S Manpage.s_commands;
     `S Manpage.s_options;
-    `S B0_cli.s_output_format_options; ]
+    `S B0_std_cli.s_output_format_options; ]
   in
   Cmd.v (Cmd.info "pkg" ~doc ~envs ~exits ~man) pkg_term
 
@@ -654,7 +653,7 @@ let show_cmd =
     `P "To preceed values by the name of the package they apply to, use
         the $(b,--long) option.";
     `S Manpage.s_options;
-    `S B0_cli.s_output_format_options; ]
+    `S B0_std_cli.s_output_format_options; ]
   in
   let field =
     let field = Odig_support.Pkg_info.field_names in
@@ -686,7 +685,7 @@ let odig =
     `P "See $(mname) $(b,conf --help) for information about $(mname) \
         configuration.";
     `S Manpage.s_options;
-    `S B0_cli.s_output_format_options;
+    `S B0_std_cli.s_output_format_options;
     `S Manpage.s_see_also;
     `P "Consult $(b,odig doc odig) for a tutorial, packaging conventions and
          more details.";

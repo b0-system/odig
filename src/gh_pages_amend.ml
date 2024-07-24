@@ -34,9 +34,9 @@ let publish_cmd
     tty_cap log_level new_commit remote branch msg preserve_symlinks
     cname_file src dst
   =
-  let tty_cap = B0_cli.B0_std.get_tty_cap tty_cap in
-  let log_level = B0_cli.B0_std.get_log_level log_level in
-  B0_cli.B0_std.setup tty_cap log_level ~log_spawns:Log.Debug;
+  let tty_cap = B0_std_cli.get_tty_cap tty_cap in
+  let log_level = B0_std_cli.get_log_level log_level in
+  B0_std_cli.setup tty_cap log_level ~log_spawns:Log.Debug;
   Log.if_error ~use:1 @@
   let msg = get_msg ~src ~dst msg in
   let amend = not new_commit in
@@ -46,14 +46,14 @@ let publish_cmd
   Result.bind pub @@ fun updated ->
   Log.app begin fun m ->
     m "[%a] %a %a"
-      (Fmt.tty [`Fg `Green]) "DONE" pp_updated updated
+      (Fmt.st [`Fg `Green]) "DONE" pp_updated updated
       B0_vcs_repo.Git.pp_remote_branch (remote, branch)
   end;
   Ok 0
 
 let main () =
   let open Cmdliner in
-  let some_path = Arg.some B0_cli.fpath in
+  let some_path = Arg.some B0_std_cli.fpath in
   let cmd =
     let preserve_symlinks =
       let doc = "Do not follow symlinks in $(i,SRC), preserve them." in
@@ -96,8 +96,8 @@ let main () =
       in
       Arg.(value & opt some_path None & info ["cname-file"] ~doc ~docv:"FILE")
     in
-    let tty_cap = B0_cli.B0_std.tty_cap () in
-    let log_level = B0_cli.B0_std.log_level () in
+    let tty_cap = B0_std_cli.tty_cap () in
+    let log_level = B0_std_cli.log_level () in
     let doc = "Publish directories on GitHub pages" in
     let man = [
       `S Manpage.s_description;

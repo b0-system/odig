@@ -21,11 +21,11 @@ module Pkg = struct
   type t = name * Fpath.t
   let name = fst
   let path = snd
-  let pp ppf (n, p) = Fmt.pf ppf "%s %a" n (Fmt.tty' [`Faint] Fpath.pp_quoted) p
+  let pp ppf (n, p) = Fmt.pf ppf "%s %a" n (Fmt.st' [`Faint] Fpath.pp_quoted) p
   let pp_name ppf (n, p) = Fmt.string ppf n
   let pp_version ppf v =
     let v = if v = "" then "?" else v in
-    Fmt.pf ppf "%a" (Fmt.tty [`Fg `Green]) v
+    Fmt.pf ppf "%a" (Fmt.st [`Fg `Green]) v
 
   let equal = ( = )
   let compare = compare
@@ -451,7 +451,7 @@ module Conf = struct
       pkg_infos : Pkg_info.t Pkg.Map.t Lazy.t;
       pkgs : Pkg.t list Lazy.t;
       share_dir : Fpath.t;
-      tty_cap : Tty.cap; }
+      tty_cap : Fmt.styler; }
 
   let memo ~cwd ~cache_dir (* b0 not odig *) ~trash_dir ~jobs =
     let feedback =
@@ -527,9 +527,9 @@ module Conf = struct
       ~odoc_theme ~share_dir ~tty_cap ()
     =
     Result.map_error (Fmt.str "conf: %s") @@
-    let tty_cap = B0_cli.B0_std.get_tty_cap tty_cap in
-    let log_level = B0_cli.B0_std.get_log_level log_level in
-    B0_cli.B0_std.setup tty_cap log_level ~log_spawns:Log.Debug;
+    let tty_cap = B0_std_cli.get_tty_cap tty_cap in
+    let log_level = B0_std_cli.get_log_level log_level in
+    B0_std_cli.setup tty_cap log_level ~log_spawns:Log.Debug;
     Result.bind (Os.Dir.cwd ()) @@ fun cwd ->
     Result.bind (Fpath.of_string Sys.executable_name) @@ fun exec ->
     let cache_dir = get_dir ~cwd ~exec (Fpath.v "var/cache/odig") cache_dir in

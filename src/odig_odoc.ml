@@ -459,7 +459,7 @@ let rec build b = match Pkg.Set.choose b.r.pkgs_todo with
 
 let write_log_file c memo =
   Log.if_error ~use:() @@
-  B0_cli.Memo.Log.(write (Conf.b0_log_file c) (of_memo memo))
+  B0_memo_log.(write (Conf.b0_log_file c) (of_memo memo))
 
 let gen
     c ~force ~index_title ~index_intro ~index_toc ~pkg_deps ~tag_index

@@ -347,20 +347,20 @@ let conf =
          info ["share-dir"] ~absent ~doc ~docs ~env ~docv)
   in
   let jobs = B0_cli.Memo.jobs ~docs ~env:(Cmd.Env.info "ODIG_JOBS") () in
-  let tty_cap = B0_std_cli.tty_cap ~env:(Cmd.Env.info Env.color) () in
+  let color = B0_std_cli.color ~env:(Cmd.Env.info Env.color) () in
   let log_level = B0_std_cli.log_level ~env:(Cmd.Env.info Env.verbosity) () in
   let conf
       b0_cache_dir b0_log_file cache_dir doc_dir jobs lib_dir log_level
-      odoc_theme share_dir tty_cap
+      odoc_theme share_dir color
     =
     Result.map_error (fun s -> `Msg s) @@
     Conf.setup_with_cli
       ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~jobs ~lib_dir ~log_level
-      ~odoc_theme ~share_dir ~tty_cap ()
+      ~odoc_theme ~share_dir ~color ()
   in
   Term.term_result @@
   Term.(const conf $ b0_cache_dir $ b0_log_file $ cache_dir $ doc_dir $ jobs $
-        lib_dir $ log_level $ odoc_theme $ share_dir $ tty_cap)
+        lib_dir $ log_level $ odoc_theme $ share_dir $ color)
 
 let pkgs_pos1_nonempty, pkgs_pos, pkgs_pos1, pkgs_opt =
   let doc = "Package to consider (repeatable)." in

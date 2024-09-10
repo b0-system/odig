@@ -451,7 +451,7 @@ module Conf = struct
       pkg_infos : Pkg_info.t Pkg.Map.t Lazy.t;
       pkgs : Pkg.t list Lazy.t;
       share_dir : Fpath.t;
-      tty_cap : Fmt.styler; }
+      fmt_styler : Fmt.styler; }
 
   let memo ~cwd ~cache_dir (* b0 not odig *) ~trash_dir ~jobs =
     let feedback =
@@ -464,7 +464,7 @@ module Conf = struct
 
   let v
       ~b0_cache_dir ~b0_log_file ~cache_dir ~cwd ~doc_dir ~html_dir ~jobs
-      ~lib_dir ~log_level ~odoc_theme ~share_dir ~tty_cap ()
+      ~lib_dir ~log_level ~odoc_theme ~share_dir ~fmt_styler ()
     =
     let trash_dir =
       B0_cli.Memo.get_trash_dir ~cwd ~b0_dir:cache_dir ~trash_dir:None
@@ -480,7 +480,7 @@ module Conf = struct
     in
     { b0_cache_dir; b0_log_file; cache_dir; cwd; doc_dir; html_dir; jobs;
       lib_dir; log_level; memo; odoc_theme; pkg_infos; pkgs; share_dir;
-      tty_cap }
+      fmt_styler }
 
   let b0_cache_dir c = c.b0_cache_dir
   let b0_log_file c = c.b0_log_file
@@ -496,7 +496,7 @@ module Conf = struct
   let pkg_infos c = Lazy.force c.pkg_infos
   let pkgs c = Lazy.force c.pkgs
   let share_dir c = c.share_dir
-  let tty_cap c = c.tty_cap
+  let fmt_styler c = c.fmt_styler
   let pp =
     Fmt.record @@
     [ Fmt.field "b0-cache-dir" b0_cache_dir Fpath.pp_quoted;
@@ -524,12 +524,12 @@ module Conf = struct
 
   let setup_with_cli
       ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~jobs ~lib_dir ~log_level
-      ~odoc_theme ~share_dir ~tty_cap ()
+      ~odoc_theme ~share_dir ~color ()
     =
     Result.map_error (Fmt.str "conf: %s") @@
-    let tty_cap = B0_std_cli.get_tty_cap tty_cap in
+    let fmt_styler = B0_std_cli.get_styler color in
     let log_level = B0_std_cli.get_log_level log_level in
-    B0_std_cli.setup tty_cap log_level ~log_spawns:Log.Debug;
+    B0_std_cli.setup fmt_styler log_level ~log_spawns:Log.Debug;
     Result.bind (Os.Dir.cwd ()) @@ fun cwd ->
     Result.bind (Fpath.of_string Sys.executable_name) @@ fun exec ->
     let cache_dir = get_dir ~cwd ~exec (Fpath.v "var/cache/odig") cache_dir in
@@ -548,5 +548,5 @@ module Conf = struct
     Result.bind (get_odoc_theme odoc_theme) @@ fun odoc_theme ->
     let jobs = B0_cli.Memo.get_jobs ~jobs in
     Ok (v ~b0_cache_dir ~b0_log_file ~cache_dir ~cwd ~doc_dir ~html_dir
-          ~jobs ~lib_dir ~log_level ~odoc_theme ~share_dir ~tty_cap ())
+          ~jobs ~lib_dir ~log_level ~odoc_theme ~share_dir ~fmt_styler ())
 end

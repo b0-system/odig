@@ -1,6 +1,9 @@
 true : bin_annot, safe_string
-true : package(b0.std), package(b0), package(b0.file), package(b0), \
-       package(b0.kit)
+true : package(b0.std b0.file b0.kit)
+
+<_opam> : -traverse
+<_b0> : -traverse
+<sample/_opam> : -traverse
 
 <src> : include
 <src/odig_bin.*> : package(cmdliner unix)
@@ -8,6 +11,3 @@ true : package(b0.std), package(b0), package(b0.file), package(b0), \
 <src/odig_support.*> : package(unix)
 <sample> : include
 <test> : include
-<sample/_opam> : -traverse
-<_opam> : -traverse
-<_b0> : -traverse

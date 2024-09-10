@@ -326,7 +326,7 @@ module Conf : sig
     b0_cache_dir:Fpath.t -> b0_log_file:Fpath.t -> cache_dir:Fpath.t ->
     cwd:Fpath.t -> doc_dir:Fpath.t -> html_dir:Fpath.t -> jobs:int ->
     lib_dir:Fpath.t -> log_level:Log.level -> odoc_theme:B0_odoc.Theme.name ->
-    share_dir:Fpath.t -> tty_cap:Fmt.styler -> unit -> t
+    share_dir:Fpath.t -> fmt_styler:Fmt.styler -> unit -> t
   (** [v] consructs a configuration with given attributes. See
       the corresponding accessors for details. *)
 
@@ -373,8 +373,8 @@ module Conf : sig
   val share_dir : t -> Fpath.t
   (** [share_dir c] is [c]'s share directory. *)
 
-  val tty_cap : t -> Fmt.styler
-  (** [tty_cap c] is [c]'s tty capability. *)
+  val fmt_styler : t -> Fmt.styler
+  (** [fmt_styler c] is [c]'s formatter styler. *)
 
   val pp : t Fmt.t
   (** [pp] formats configurations. *)
@@ -386,7 +386,7 @@ module Conf : sig
     cache_dir:Fpath.t option -> doc_dir:Fpath.t option -> jobs:int option ->
     lib_dir:Fpath.t option -> log_level:Log.level option ->
     odoc_theme:B0_odoc.Theme.name option -> share_dir:Fpath.t option ->
-    tty_cap:Fmt.styler option option -> unit -> (t, string) result
+    color:Fmt.styler option option -> unit -> (t, string) result
   (** [setup_with_cli] determines and setups a configuration with the given
       values. These are expected to have been determined by environment
       variables and command line arguments. *)

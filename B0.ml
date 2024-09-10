@@ -2,55 +2,63 @@ open B0_kit.V000
 
 (* OCaml library names *)
 
-let cmdliner = B0_ocaml.libname "cmdliner"
-let b0_std = B0_ocaml.libname "b0.std"
-let b0_memo = B0_ocaml.libname "b0.memo"
 let b0_file = B0_ocaml.libname "b0.file"
 let b0_kit = B0_ocaml.libname "b0.kit"
+let b0_memo = B0_ocaml.libname "b0.memo"
+let b0_std = B0_ocaml.libname "b0.std"
+let cmdliner = B0_ocaml.libname "cmdliner"
+
 let odig_support = B0_ocaml.libname "odig.support"
 
 (* Units *)
 
 let odig_support_lib =
+  let doc = "odig support library" in
+  let srcs =
+    [`Dir ~/"src"; `X ~/"src/gh_pages_amend.ml"; `X ~/"src/odig_main.ml"]
+  in
   let requires = [ b0_std; b0_memo; b0_file; b0_kit; ] in
-  let srcs = Fpath.[`Dir (v "src");
-                    `X (v "src/gh_pages_amend.ml");
-                    `X (v "src/odig_main.ml")] in
-  B0_ocaml.lib odig_support ~doc:"odig support library" ~requires ~srcs
+  B0_ocaml.lib odig_support ~srcs ~requires ~doc
 
 let odig_tool =
-  let requires =
-    [ cmdliner; b0_std; b0_memo; b0_file; b0_kit; odig_support ] in
-  let srcs = Fpath.[`File (v "src/odig_main.ml")] in
-  B0_ocaml.exe "odig" ~public:true ~doc:"odig tool" ~requires ~srcs
+  let srcs = [`File ~/"src/odig_main.ml"] in
+  let requires = [ cmdliner; b0_std; b0_memo; b0_file; b0_kit; odig_support ] in
+  B0_ocaml.exe "odig" ~public:true ~requires ~srcs ~doc:"odig tool"
 
 let gh_pages_amend =
-  let requires = [ cmdliner; b0_std; b0_memo; b0_file; b0_kit ] in
-  let srcs = Fpath.[`File (v "src/gh_pages_amend.ml")] in
   let doc = "GitHub pages publication tool" in
+  let requires = [ cmdliner; b0_std; b0_memo; b0_file; b0_kit ] in
+  let srcs = [`File ~/"src/gh_pages_amend.ml"] in
   B0_ocaml.exe "gh-pages-amend" ~doc ~requires ~srcs
+
+(* Testing *)
+
+let publish_sample =
+  let srcs = [ `File ~/"sample/publish.ml" ] in
+  let requires = [ cmdliner; b0_std; b0_file (* For B0_cli *) ; b0_kit ] in
+  B0_ocaml.exe "publish-sample" ~requires ~srcs ~doc:"Publish sample tool"
 
 (* Packs *)
 
 let default =
-  let units = B0_unit.list () in
   let meta =
-    let open B0_meta in
-    empty
-    |> add authors ["The odig programmers"]
-    |> add maintainers ["Daniel Bünzli <daniel.buenzl i@erratique.ch>"]
-    |> add homepage "https://erratique.ch/software/odig"
-    |> add online_doc "https://erratique.ch/software/odig/doc"
-    |> add description_tags
+    B0_meta.empty
+    |> ~~ B0_meta.authors ["The odig programmers"]
+    |> ~~ B0_meta.maintainers ["Daniel Bünzli <daniel.buenzl i@erratique.ch>"]
+    |> ~~ B0_meta.homepage "https://erratique.ch/software/odig"
+    |> ~~ B0_meta.online_doc "https://erratique.ch/software/odig/doc"
+    |> ~~ B0_meta.description_tags
       ["build"; "dev"; "doc"; "meta"; "packaging"; "org:erratique";
        "org:b0-system"]
-    |> add licenses ["ISC"; "LicenseRef-ParaType-Free-Font-License"; "LicenseRef-DejaVu-fonts"]
-    |> add repo "git+https://erratique.ch/repos/odig.git"
-    |> add issues "https://github.com/b0-system/odig/issues"
-    |> tag B0_opam.tag
-    |> add B0_opam.build
+    |> ~~ B0_meta.licenses
+      ["ISC"; "LicenseRef-ParaType-Free-Font-License";
+       "LicenseRef-DejaVu-fonts"]
+    |> ~~ B0_meta.repo "git+https://erratique.ch/repos/odig.git"
+    |> ~~ B0_meta.issues "https://github.com/b0-system/odig/issues"
+    |> B0_meta.tag B0_opam.tag
+    |> ~~ B0_opam.build
       {|[["ocaml" "pkg/pkg.ml" "build" "--dev-pkg" "%{dev}%"]]|}
-    |> add B0_opam.depends
+    |> ~~ B0_opam.depends
       [ "ocaml", {|>= "4.08"|};
         "ocamlfind", {|build|};
         "ocamlbuild", {|build|};
@@ -59,4 +67,5 @@ let default =
         "odoc", {|>= "2.0.0" |};
         "b0", {|= "0.0.5"|}; ]
   in
-  B0_pack.make "default" ~doc:"The odig project" ~meta ~locked:true units
+  B0_pack.make "default" ~doc:"odig package" ~meta ~locked:true @@
+  B0_unit.list ()

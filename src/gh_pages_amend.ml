@@ -31,12 +31,12 @@ let publish ~amend ~msg ~remote ~branch preserve_symlinks cname_file src dst =
     repo ~amend ~force ~remote ~branch ~msg updates
 
 let publish_cmd
-    tty_cap log_level new_commit remote branch msg preserve_symlinks
+    color log_level new_commit remote branch msg preserve_symlinks
     cname_file src dst
   =
-  let tty_cap = B0_std_cli.get_tty_cap tty_cap in
+  let styler = B0_std_cli.get_styler color in
   let log_level = B0_std_cli.get_log_level log_level in
-  B0_std_cli.setup tty_cap log_level ~log_spawns:Log.Debug;
+  B0_std_cli.setup styler log_level ~log_spawns:Log.Debug;
   Log.if_error ~use:1 @@
   let msg = get_msg ~src ~dst msg in
   let amend = not new_commit in
@@ -96,7 +96,7 @@ let main () =
       in
       Arg.(value & opt some_path None & info ["cname-file"] ~doc ~docv:"FILE")
     in
-    let tty_cap = B0_std_cli.tty_cap () in
+    let color = B0_std_cli.color () in
     let log_level = B0_std_cli.log_level () in
     let doc = "Publish directories on GitHub pages" in
     let man = [
@@ -111,7 +111,7 @@ let main () =
       `P "Report them, see $(i,%%PKG_HOMEPAGE%%) for contact information." ];
     in
     Cmd.v (Cmd.info "gh-pages-amend" ~version:"%%VERSION%%" ~doc ~man)
-      Term.(const publish_cmd $ tty_cap $ log_level $ new_commit $ remote $
+      Term.(const publish_cmd $ color $ log_level $ new_commit $ remote $
             branch $ msg $ preserve_symlinks $ cname_file $ src $ dst)
   in
   exit (Cmd.eval' cmd)

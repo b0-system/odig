@@ -63,7 +63,7 @@ let publish color log_level new_commit remote branch =
   Log.if_error ~use:1 @@
   let* versions = versions () in
   let* htmldir, htmldir_contents = odig_html () in
-  Log.app (fun m ->
+  Log.stdout (fun m ->
       m "Publishing %a" (Fmt.st' [`Fg `Green] Fpath.pp_quoted) htmldir);
   let* themes = odig_theme_list () in
   Result.join @@
@@ -78,7 +78,7 @@ let publish color log_level new_commit remote branch =
     B0_github.Pages.commit_updates repo ~remote ~branch ~amend ~force ~msg
       updates
   in
-  Log.app begin fun m ->
+  Log.stdout begin fun m ->
       m "[%a] %a %a"
         (Fmt.st [`Fg `Green]) "DONE" pp_updated updated
         B0_vcs_repo.Git.pp_remote_branch

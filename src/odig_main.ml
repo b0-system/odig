@@ -42,7 +42,7 @@ let find_pkgs conf = function
 let odoc_gen conf
     ~force ~index_title ~index_intro ~index_toc ~pkg_deps ~tag_index pkgs
   =
-  Log.app (fun m -> m "Updating documentation, this may take some time...");
+  Log.stdout (fun m -> m "Updating documentation, this may take some time...");
   Odig_odoc.gen
     conf ~force ~index_title ~index_intro ~index_toc ~pkg_deps ~tag_index pkgs
 
@@ -75,7 +75,7 @@ let cache_cmd conf = function
 | `Path -> Fmt.pr "%a@." Fpath.pp_unquoted (Conf.cache_dir conf); 0
 | `Clear ->
     let dir = Conf.cache_dir conf in
-    Log.app begin fun m ->
+    Log.stdout begin fun m ->
       m "Deleting %a, this may take some time..."
         (Fmt.st' [`Fg `Green] Fpath.pp_quoted) dir
     end;

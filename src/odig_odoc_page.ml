@@ -41,7 +41,7 @@ let pkg_title pkg pkg_info =
   in
   Fmt.str "{0:package-%s Package %s {%%html:%s%%}}"
     (Pkg.name pkg) (Pkg.name pkg)
-    (El.to_string ~doc_type:false (El.splice short_info))
+    (El.to_string ~doctype:false (El.splice short_info))
 
 let ocaml_pkg_module_indexes pkg_info =
   (* Too much noise to use regular index generation. We cook up
@@ -133,7 +133,7 @@ let pkg_info_section pkg pkg_info ~with_tag_links =
       def_values `Version "version" string_val pkg_info ]
   in
   Fmt.str "{1:package_info Package info}\n {%%html:%s%%}" @@
-  El.to_string ~doc_type:false
+  El.to_string ~doctype:false
     (El.table ~at:At.[class' "package"; class' "info"] (defs pkg pkg_info))
 
 let index_mld conf pkg pkg_info ~user_index ~with_tag_links =
@@ -267,7 +267,7 @@ let pkg_list
   let doc_header =
     let comma = El.txt ", " in
     let contents = match raw_index_intro with
-    | Some h -> [El.raw h]
+    | Some h -> [El.unsafe_raw h]
     | None ->
         let browse_by_tag = match tag_index with
         | true -> El.(splice [a ~at:At.[href "#by-tag"] [txt "by tag"]; comma])
@@ -288,7 +288,7 @@ let pkg_list
   in
   let toc =
     let contents = match raw_index_toc with
-    | Some toc -> El.raw toc
+    | Some toc -> El.unsafe_raw toc
     | None ->
         let packages_by_tag_li = match tag_index with
         | false -> El.splice []
@@ -309,7 +309,7 @@ let pkg_list
   | None -> Fpath.(basename @@ parent (Conf.lib_dir conf))
   | Some t -> t
   in
-  El.to_string ~doc_type:true @@
+  El.to_string ~doctype:true @@
   El.html [
     doc_head ~style_href page_title;
     El.body ~at:At.[class' "odoc"]

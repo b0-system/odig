@@ -44,7 +44,7 @@ let publish_cmd
     publish ~amend ~msg ~remote ~branch preserve_symlinks cname_file src dst
   in
   Result.bind pub @@ fun updated ->
-  Log.app begin fun m ->
+  Log.stdout begin fun m ->
     m "[%a] %a %a"
       (Fmt.st [`Fg `Green]) "DONE" pp_updated updated
       B0_vcs_repo.Git.pp_remote_branch (remote, branch)

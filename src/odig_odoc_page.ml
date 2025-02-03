@@ -302,7 +302,8 @@ let pkg_list
           El.li [El.a ~at:At.[href "#by-name"] [El.txt "Packages by name"]];
           packages_by_tag_li; ]
     in
-    El.nav ~at:At.[class' "odoc-toc"] [contents]
+    El.div ~at:At.[class' "odoc-tocs"]
+      [El.nav ~at:At.[class' "odoc-toc"] [contents]]
   in
   let style_href = "_odoc-theme/odoc.css" in
   let page_title = match index_title with

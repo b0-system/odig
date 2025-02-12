@@ -30,7 +30,7 @@ let find_pkgs conf = function
     match miss with
     | [] -> Ok (List.rev fnd)
     | miss ->
-        let exists = List.rev_map Pkg.name pkgs in
+        let exists yield = List.iter yield (List.rev_map Pkg.name pkgs) in
         let add_error acc n =
           let kind = Fmt.any "package" in
           let unknown = Fmt.(unknown' ~kind Fmt.string ~hint:did_you_mean) in

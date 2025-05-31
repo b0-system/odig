@@ -1,7 +1,8 @@
 
 
-- Track b0. `odig log -e` or `--errors` becomes 
-  `odig log -f` or `--failed`.
+- Fix race condition in `odoc compiler-deps` invocations.  Thanks to
+  Raphaël Proust and José Nogueira for reporting (#77).
+- Track b0. `odig log --errors` becomes `odig log --failed`.
 
 v0.0.9 2023-06-04 Zagreb
 ------------------------

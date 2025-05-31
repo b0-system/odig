@@ -163,11 +163,11 @@ let require_cobj_deps b cobj = (* Also used to find the digest of cobj *)
   | None ->
       let pkg = Doc_cobj.pkg cobj in
       let m = B0_memo.with_mark b.m (Pkg.name pkg) in
-      let* () = clear_pkg_odoc_dir b m pkg in
       let fut_deps, set_deps = Fut.make () in
       let odoc_file = odoc_file_for_cobj b cobj in
       let deps_file = Fpath.(odoc_file + ".deps") in
       set_cobj_deps b cobj fut_deps;
+      let* () = clear_pkg_odoc_dir b m pkg in
       begin
         B0_memo.ready_file m (Doc_cobj.path cobj);
         B0_odoc.Compile.Dep.write m (Doc_cobj.path cobj) ~o:deps_file;

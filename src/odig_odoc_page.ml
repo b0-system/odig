@@ -49,27 +49,53 @@ let ocaml_pkg_module_indexes pkg_info =
      ocaml directory. The day upstream wants control over it can
      provide an `index.mld` file at the right place. It will override
      this. *)
-  let cobjs = Pkg_info.doc_cobjs pkg_info in
   let dirid f = Fpath.basename (Fpath.parent f) in
   let add_cobj acc cobj =
-    if Doc_cobj.don't_list cobj then acc else
     let dirid = dirid (Doc_cobj.path cobj) in
     match String.Map.find dirid acc with
     | exception Not_found -> String.Map.add dirid [cobj] acc
     | cobjs -> String.Map.add dirid (cobj :: cobjs) acc
   in
+  let cobjs = Pkg_info.doc_cobjs pkg_info in
   let bydir = List.fold_left add_cobj String.Map.empty cobjs in
-  let dirmods dirid libid lib = match String.Map.find dirid bydir with
+  let dirmods ~lib =
+    let mods = match String.Map.find lib bydir with
+    | cobjs ->
+        let cobjs = List.filter (Fun.negate Doc_cobj.don't_list) cobjs in
+        List.rev_map Doc_cobj.modname cobjs
+    | exception Not_found ->
+        if lib = "unix" then (* < OCaml 5 *) ["Unix"; "UnixLabels"] else []
+    in
+    if mods = [] then "" else
+    let mods = List.sort String.compare mods in
+    let libid = String.map (function '-' -> '_' | c -> c) lib in
+    Fmt.str "{1:%s Library [%s]}\n{!modules: %s}\n" libid lib
+       (String.concat " " mods)
+  in
+  let stdlib_mods = match String.Map.find "ocaml" bydir with
   | exception Not_found -> ""
   | cobjs ->
-      let mods = List.rev_map Doc_cobj.modname cobjs in
+      let stdlib_mod cobj =
+        let modn = Doc_cobj.modname cobj in
+        let prefix = "Stdlib__" in
+        if not (String.starts_with ~prefix modn) then None else
+        Some (String.replace_all ~sub:"__" ~by:"." modn)
+      in
+      let mods = List.filter_map stdlib_mod cobjs in
       let mods = List.sort String.compare mods in
-      Fmt.str "{1:%s %s}\n{!modules: %s}\n" libid lib (String.concat " " mods)
+      String.concat " " mods
   in
-  Fmt.str "%s%s%s"
-    (dirmods "ocaml" "stdlib" "Stdlib")
-    (dirmods "threads" "threads" "Threads")
-    (dirmods "compiler-libs" "compiler_libs" "Compiler libs")
+  Fmt.str "{1:library_stdlib Library [stdlib]}\n\
+           {!modules: Stdlib %s}\n\
+           %s%s%s%s%s%s%s"
+    stdlib_mods
+    (dirmods ~lib:"unix")
+    (dirmods ~lib:"dynlink")
+    (dirmods ~lib:"runtime_events")
+    (dirmods ~lib:"str")
+    (dirmods ~lib:"threads")
+    (dirmods ~lib:"ocamldoc")
+    (dirmods ~lib:"compiler-libs")
 
 let pkg_index pkg pkg_info ~user_index =
   let drop_section_0 s = match String.cut_left ~sep:"{0" s with
@@ -220,14 +246,7 @@ let manual_reference conf ~ocaml_manual_uri =
   in
   El.splice @@ [El.a ~at:At.[href uri] [El.txt "OCaml manual"]; suff], uri
 
-let stdlib_link conf =
-  let htmldir = Conf.html_dir conf in
-  let new_style_stdlib = "ocaml/Stdlib/index.html" in
-  let old_style_stdlib = "ocaml/index.html#stdlib" in
-  let stdlib = Fpath.(htmldir // v new_style_stdlib) in
-  match Os.File.exists stdlib |> Log.if_error ~use:false with
-  | false -> old_style_stdlib
-  | true -> new_style_stdlib ^ "#modules"
+let stdlib_link conf = "ocaml/index.html#library_stdlib"
 
 let pkgs_with_html_docs conf =
   let by_names = Pkg.by_names (Conf.pkgs conf) in

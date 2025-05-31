@@ -1,5 +1,8 @@
 
 
+- Improve built-in `index.mld` of the `ocaml` package to adapt 
+  to new upstream install structure and provide better access
+  to stdlib modules.
 - Fix race condition in `odoc compiler-deps` invocations.  Thanks to
   Raphaël Proust and José Nogueira for reporting (#77).
 - Track b0. `odig log --errors` becomes `odig log --failed`.

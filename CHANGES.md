@@ -1,3 +1,6 @@
+- Fix race condition in `odoc compiler-deps` invocations.  Thanks to
+  Raphaël Proust and José Nogueira for reporting (#77).
+
 v0.0.9 2023-06-04 Zagreb
 ------------------------
 

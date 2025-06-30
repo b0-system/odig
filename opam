@@ -22,7 +22,7 @@ homepage: "https://erratique.ch/software/odig"
 doc: "https://erratique.ch/software/odig/doc"
 bug-reports: "https://github.com/b0-system/odig/issues"
 depends: [
-  "ocaml" {>= "4.08"}
+  "ocaml" {>= "4.14.0"}
   "ocamlfind" {build}
   "ocamlbuild" {build}
   "topkg" {build & >= "1.0.3"}
@@ -32,3 +32,4 @@ depends: [
 ]
 build: ["ocaml" "pkg/pkg.ml" "build" "--dev-pkg" "%{dev}%"]
 dev-repo: "git+https://erratique.ch/repos/odig.git"
+x-maintenance-intent: ["(latest)"]

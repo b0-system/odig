@@ -285,7 +285,7 @@ let index_mld_for_pkg b pkg pkg_info _pkg_odocs ~user_index_mld =
       let fields = List.rev_map snd Pkg_info.field_names in
       let data = List.rev_map (fun f -> Pkg_info.get f pkg_info) fields in
       let data = odig_version :: (Pkg.name pkg) :: List.concat data in
-      Hash.to_binary_string (B0_memo.hash_string b.m (String.concat "" data))
+      B0_hash.to_binary_string (B0_memo.hash_string b.m (String.concat "" data))
     in
     B0_memo.write b.m ~stamp ~reads index_mld @@ fun () ->
     let with_tag_links = b.tag_index in

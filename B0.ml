@@ -13,23 +13,22 @@ let odig_support = B0_ocaml.libname "odig.support"
 (* Units *)
 
 let odig_support_lib =
-  let doc = "odig support library" in
   let srcs =
     [`Dir ~/"src"; `X ~/"src/gh_pages_amend.ml"; `X ~/"src/odig_main.ml"]
   in
   let requires = [ b0_std; b0_memo; b0_file; b0_kit; ] in
-  B0_ocaml.lib odig_support ~srcs ~requires ~doc
+  B0_ocaml.lib odig_support ~srcs ~requires
 
 let odig_tool =
   let srcs = [`File ~/"src/odig_main.ml"] in
   let requires = [ cmdliner; b0_std; b0_memo; b0_file; b0_kit; odig_support ] in
-  B0_ocaml.exe "odig" ~public:true ~requires ~srcs ~doc:"odig tool"
+  B0_ocaml.exe "odig" ~public:true ~requires ~srcs
 
 let gh_pages_amend =
   let doc = "GitHub pages publication tool" in
   let requires = [ cmdliner; b0_std; b0_memo; b0_file; b0_kit ] in
   let srcs = [`File ~/"src/gh_pages_amend.ml"] in
-  B0_ocaml.exe "gh-pages-amend" ~doc ~requires ~srcs
+  B0_ocaml.exe "gh-pages-amend" ~public:true ~doc ~requires ~srcs
 
 (* Testing *)
 
@@ -63,7 +62,7 @@ let default =
         "ocamlfind", {|build|};
         "ocamlbuild", {|build|};
         "topkg", {|build & >= "1.0.3"|};
-        "cmdliner", {|>= "1.1.0"|};
+        "cmdliner", {|>= "1.3.0"|};
         "odoc", {|>= "2.0.0" |};
         "b0", {|= "0.0.5"|}; ]
   in

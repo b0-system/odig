@@ -57,6 +57,13 @@ let default =
     |> B0_meta.tag B0_opam.tag
     |> ~~ B0_opam.build
       {|[["ocaml" "pkg/pkg.ml" "build" "--dev-pkg" "%{dev}%"]]|}
+    |> ~~ B0_opam.install
+      {|[[ "cmdliner" "install" "tool-support"
+           "_build/src/odig_main.native:odig" {ocaml:native}
+           "_build/src/odig_main.byte:odig" {!ocaml:native}
+           "_build/src/gh_pages_amend.native:gh-pages-amend" {ocaml:native}
+           "_build/src/gh_pages_amend.byte:gh-pages-amend" {!ocaml:native}
+           "%{prefix}%"]]|}
     |> ~~ B0_opam.depends
       [ "ocaml", {|>= "4.14.0"|};
         "ocamlfind", {|build|};

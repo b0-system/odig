@@ -31,5 +31,15 @@ depends: [
   "b0" {= "0.0.5"}
 ]
 build: ["ocaml" "pkg/pkg.ml" "build" "--dev-pkg" "%{dev}%"]
+install: [
+  "cmdliner"
+  "install"
+  "tool-support"
+  "_build/src/odig_main.native:odig" {ocaml:native}
+  "_build/src/odig_main.byte:odig" {!ocaml:native}
+  "_build/src/gh_pages_amend.native:gh-pages-amend" {ocaml:native}
+  "_build/src/gh_pages_amend.byte:gh-pages-amend" {!ocaml:native}
+  "%{prefix}%"
+]
 dev-repo: "git+https://erratique.ch/repos/odig.git"
 x-maintenance-intent: ["(latest)"]

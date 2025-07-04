@@ -1,5 +1,6 @@
 
 
+- Install manpages and shell completions.
 - Improve built-in `index.mld` of the `ocaml` package to adapt 
   to new upstream install structure and provide better access
   to stdlib modules.

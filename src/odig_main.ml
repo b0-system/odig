@@ -622,7 +622,7 @@ let log_cmd =
   in
   Cmd.v (Cmd.info "log" ~doc ~exits ~envs ~man)
     Term.(const log_cmd $ conf $ no_pager $
-          B0_cli.Memo.Log.out_format_cli () $ format $ B0_cli.Op.query_cli ())
+          B0_cli.Memo.Log.format_cli () $ format $ B0_cli.Op.query_cli ())
 
 let pkg_term = Term.(const pkg_cmd $ conf $ no_pager $ format $ pkgs_pos)
 let pkg_cmd =

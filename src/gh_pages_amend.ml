@@ -35,8 +35,7 @@ let publish_cmd
     cname_file src dst
   =
   let styler = B0_std_cli.get_styler color in
-  let log_level = B0_std_cli.get_log_level log_level in
-  B0_std_cli.setup styler log_level ~log_spawns:Log.Debug;
+  Fmt.set_styler styler;
   Log.if_error ~use:1 @@
   let msg = get_msg ~src ~dst msg in
   let amend = not new_commit in

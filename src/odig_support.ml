@@ -528,7 +528,7 @@ module Conf = struct
     =
     Result.map_error (Fmt.str "conf: %s") @@
     let fmt_styler = B0_std_cli.get_styler color in
-    let log_level = B0_std_cli.get_log_level log_level in
+    Fmt.set_styler fmt_styler;
     B0_std_cli.setup fmt_styler log_level ~log_spawns:Log.Debug;
     Result.bind (Os.Dir.cwd ()) @@ fun cwd ->
     Result.bind (Fpath.of_string Sys.executable_name) @@ fun exec ->

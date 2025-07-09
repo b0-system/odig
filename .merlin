@@ -1,4 +1,4 @@
 PKG cmdliner b0.std b0.memo b0.file b0.kit
-S src
-S test
-B _b0/**
+S src/**
+S test/**
+B _b0/b/**

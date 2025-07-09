@@ -56,10 +56,9 @@ let pp_updated ppf = function
 | false -> Fmt.string ppf "No update to publish on"
 | true -> Fmt.string ppf "Published docs on"
 
-let publish color log_level new_commit remote branch =
+let publish ~color ~new_commit ~remote ~branch =
   let styler = B0_std_cli.get_styler color in
-  let log_level = B0_std_cli.get_log_level log_level in
-  B0_std_cli.setup styler log_level ~log_spawns:Log.Debug;
+  Fmt.set_styler styler;
   Log.if_error ~use:1 @@
   let* versions = versions () in
   let* htmldir, htmldir_contents = odig_html () in
@@ -88,26 +87,23 @@ let publish color log_level new_commit remote branch =
 
 let main () =
   let open Cmdliner in
+  let open Cmdliner.Term.Syntax in
   let cmd =
-    let new_commit =
+    let doc = "Updates odig's sample output on GitHub pages" in
+    Cmd.make (Cmd.info "publish" ~version:"%%VERSION%%" ~doc) @@
+    let+ () = B0_std_cli.set_log_level ()
+    and+ new_commit =
       let doc = "Make a new commit, do not amend the last one." in
       Arg.(value & flag & info ["c"; "new-commit"] ~doc)
-    in
-    let remote =
+    and+ remote =
       let doc = "Publish on remote $(docv)." and docv = "REMOTE" in
       Arg.(value & opt string "origin" & info ["remote"] ~doc ~docv)
-    in
-    let branch =
+    and+ branch =
       let doc = "Publish on branch $(docv)." and docv = "BRANCH" in
       let default = B0_github.Pages.default_branch in
       Arg.(value & opt string default & info ["b"; "branch"] ~doc ~docv)
-    in
-    let color = B0_std_cli.color () in
-    let log_level = B0_std_cli.log_level () in
-    let doc = "Updates odig's sample output on GitHub pages" in
-    Cmd.v (Cmd.info "publish" ~version:"%%VERSION%%" ~doc)
-    Term.(const publish $ color $ log_level $ new_commit $
-          remote $ branch)
+    and+ color = B0_std_cli.color () in
+    publish ~color ~new_commit ~remote ~branch
   in
   Cmd.eval' cmd
 

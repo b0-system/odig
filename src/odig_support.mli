@@ -384,7 +384,7 @@ module Conf : sig
   val setup_with_cli :
     b0_cache_dir:Fpath.t option -> b0_log_file:Fpath.t option ->
     cache_dir:Fpath.t option -> doc_dir:Fpath.t option -> jobs:int option ->
-    lib_dir:Fpath.t option -> log_level:Log.level option ->
+    lib_dir:Fpath.t option -> log_level:Log.level ->
     odoc_theme:B0_odoc.Theme.name option -> share_dir:Fpath.t option ->
     color:Fmt.styler option option -> unit -> (t, string) result
   (** [setup_with_cli] determines and setups a configuration with the given

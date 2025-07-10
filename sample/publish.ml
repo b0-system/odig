@@ -23,11 +23,11 @@ let odig_html () =
 let odig_theme_list () =
   let themes = Cmd.(tool "odig" % "odoc-theme" % "list" % "--long") in
   let* themes = Os.Cmd.run_out ~trim:true themes in
-  let parse_theme p = match String.cut ~sep:" " (String.trim p) with
+  let parse_theme p = match String.split_first ~sep:" " (String.trim p) with
   | None -> Fmt.failwith "%S: could not parse theme" p
   | Some (tn, path) -> Fpath.v ("doc@" ^ tn), Fpath.v path
   in
-  Ok (List.map parse_theme (String.split ~sep:"\n" (String.trim themes)))
+  Ok (List.map parse_theme (String.split_all ~sep:"\n" (String.trim themes)))
 
 let link_themes dir htmldir_contents themes =
   let theme_link dir htmldir_contents (tdir, tcontents) =

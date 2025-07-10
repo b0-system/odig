@@ -199,7 +199,7 @@ module Opam = struct
     let open Result.Syntax in
     let* opam = Os.Cmd.get (Cmd.arg "opam") in
     let* v = Os.Cmd.run_out ~trim:true Cmd.(opam % "--version") in
-    match String.cut ~sep:"." (String.trim v) with
+    match String.split_first ~sep:"." (String.trim v) with
     | Some (maj, _)  when
         maj <> "" && Char.code maj.[0] - 0x30 >= 2 -> Ok opam
     | Some _ | None ->
@@ -219,7 +219,7 @@ module Opam = struct
       match lines with
       | [] -> [], [] (* unreported error... *)
       | l :: ls ->
-          match String.cut ~sep:":" l with
+          match String.split_first ~sep:":" l with
           | None -> [], [] (* unreported error... *)
           | Some (f, v) -> take_fields (n - 1) ((f, String.trim v) :: acc) ls
 
@@ -229,7 +229,7 @@ module Opam = struct
       let err l =
         Log.err (fun m -> m "%S: opam metadata expected name: field line" l)
       in
-      match String.cut ~sep:":" name with
+      match String.split_first ~sep:":" name with
       | Some ("name", n) ->
           let n, _ = parse_string n in
           let fields, lines = take_fields (field_count - 1) [] lines in
@@ -259,7 +259,7 @@ module Opam = struct
         with
         | Error e -> Log.err (fun m -> m "%s" e); no_data qpkgs
         | Ok out ->
-            let lines = String.split ~sep:"\n" out in
+            let lines = String.split_all ~sep:"\n" out in
             let infos = parse_lines String.Map.empty lines in
             let find_info is p = match String.Map.find (Pkg.name p) is with
             | exception Not_found -> p, []

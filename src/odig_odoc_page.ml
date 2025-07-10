@@ -98,7 +98,7 @@ let ocaml_pkg_module_indexes pkg_info =
     (dirmods ~lib:"compiler-libs")
 
 let pkg_index pkg pkg_info ~user_index =
-  let drop_section_0 s = match String.cut ~sep:"{0" s with
+  let drop_section_0 s = match String.split_first ~sep:"{0" s with
   | Some (t, r) when String.trim t = "" ->
       (* can break but should be mostly ok *)
       let max = String.length r in

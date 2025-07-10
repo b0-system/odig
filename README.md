@@ -1,6 +1,5 @@
 odig — Lookup documentation of installed OCaml packages
--------------------------------------------------------------------------------
-%%VERSION%%
+=======================================================
 
 odig is a command line tool to lookup documentation of installed OCaml
 packages. It shows package metadata, readmes, change logs, licenses,
@@ -9,7 +8,7 @@ cross-referenced `odoc` API documentation and manuals.
 odig is distributed under the ISC license. The theme fonts have their
 own [licenses](LICENSE.md).
 
-Homepage: https://erratique.ch/software/odig  
+Homepage: <https://erratique.ch/software/odig>  
 
 ## Installation
 
@@ -32,7 +31,11 @@ A few commands to get you started:
 The manual and packaging conventions can be consulted [online][doc] or
 via `odig doc odig`.
 
+Questions are welcome but better asked on the [OCaml forum] than on the
+issue tracker.
+
 [doc]: https://b0-system.github.io/odig/doc/odig/
+[OCaml forum]: https://discuss.ocaml.org/
 
 ## Sample odoc API documentation and manuals
 

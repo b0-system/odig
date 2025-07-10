@@ -296,9 +296,7 @@ let output_details = B0_std_cli.output_details ()
 let conf =
   Term.term_result @@
   let absent = "see below" in
-  let path = B0_std_cli.fpath in
   let docs = Manpage.s_common_options in
-  let docv = "PATH" in
   let doc dirname dir =
     Fmt.str
       "%s directory. If unspecified, $(b,\\$PREFIX)/%s with $(b,\\$PREFIX) \
@@ -315,18 +313,18 @@ let conf =
   and+ cache_dir =
     let doc = doc "Cache" "var/cache/odig" in
     let env = Cmd.Env.info Env.cache_dir in
-    Arg.(value & opt (some path) None &
-         info ["cache-dir"] ~absent ~doc ~docs ~env ~docv)
+    Arg.(value & opt (some B0_std_cli.dirpath) None &
+         info ["cache-dir"] ~absent ~doc ~docs ~env)
   and+ doc_dir =
     let doc = doc "Documentation" "doc" in
     let env = Cmd.Env.info Env.doc_dir in
-    Arg.(value & opt (some path) None &
-         info ["doc-dir"] ~absent ~doc ~docs ~env ~docv)
+    Arg.(value & opt (some B0_std_cli.dirpath) None &
+         info ["doc-dir"] ~absent ~doc ~docs ~env)
   and+ lib_dir =
     let doc = doc "Library" "lib" in
     let env = Cmd.Env.info Env.lib_dir in
-    Arg.(value & opt (some path) None &
-         info ["lib-dir"] ~absent ~doc ~docs ~env ~docv)
+    Arg.(value & opt (some B0_std_cli.dirpath) None &
+         info ["lib-dir"] ~absent ~doc ~docs ~env)
   and+ odoc_theme =
     let doc =
       "Theme to use for odoc documentation. If unspecified, the theme can be \
@@ -339,8 +337,8 @@ let conf =
   and+ share_dir =
     let doc = doc "Share" "share" in
     let env = Cmd.Env.info Env.share_dir in
-    Arg.(value & opt (some path) None &
-         info ["share-dir"] ~absent ~doc ~docs ~env ~docv)
+    Arg.(value & opt (some B0_std_cli.dirpath) None &
+         info ["share-dir"] ~absent ~doc ~docs ~env)
   and+ jobs = B0_cli.Memo.jobs ~docs ~env:(Cmd.Env.info "ODIG_JOBS") ()
   and+ color = B0_std_cli.color ~env:(Cmd.Env.info Env.color) ()
   and+ log_level =
@@ -509,14 +507,14 @@ let odoc_cmd =
     let doc = "$(docv) is the .mld file to use to define the introduction
                text on the package list page."
     in
-    let some_path = Arg.some B0_std_cli.fpath in
+    let some_path = Arg.some B0_std_cli.filepath in
     Arg.(value & opt some_path None & info ["index-intro"] ~docv:"MLDFILE" ~doc)
   in
   let index_toc =
     let doc = "$(docv) is the .mld file to use to define the contents of the
                table of contents on the package list page."
     in
-    let some_path = Arg.some B0_std_cli.fpath in
+    let some_path = Arg.some B0_std_cli.filepath in
     Arg.(value & opt some_path None & info ["index-toc"] ~docv:"MLDFILE" ~doc)
   in
   let no_pkg_deps =

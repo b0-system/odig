@@ -59,6 +59,8 @@ let default =
       {|[["ocaml" "pkg/pkg.ml" "build" "--dev-pkg" "%{dev}%"]]|}
     |> ~~ B0_opam.install
       {|[[ "cmdliner" "install" "tool-support"
+           "--mandir=%{man}%"
+           "--sharedir=%{share}%"
            "_build/src/odig_main.native:odig" {ocaml:native}
            "_build/src/odig_main.byte:odig" {!ocaml:native}
            "_build/src/gh_pages_amend.native:gh-pages-amend" {ocaml:native}

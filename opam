@@ -9,7 +9,7 @@ cross-referenced `odoc` API documentation and manuals.
 odig is distributed under the ISC license. The theme fonts have their
 own [licenses](LICENSE.md).
 
-Homepage: https://erratique.ch/software/odig"""
+Homepage: <https://erratique.ch/software/odig>"""
 maintainer: "Daniel Bünzli <daniel.buenzl i@erratique.ch>"
 authors: "The odig programmers"
 license: [
@@ -35,6 +35,8 @@ install: [
   "cmdliner"
   "install"
   "tool-support"
+  "--mandir=%{man}%"
+  "--sharedir=%{share}%"
   "_build/src/odig_main.native:odig" {ocaml:native}
   "_build/src/odig_main.byte:odig" {!ocaml:native}
   "_build/src/gh_pages_amend.native:gh-pages-amend" {ocaml:native}

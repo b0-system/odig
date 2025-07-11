@@ -426,7 +426,6 @@ module Env = struct
   let b0_cache_dir = "ODIG_B0_CACHE_DIR"
   let b0_log_file = "ODIG_B0_LOG_FILE"
   let cache_dir = "ODIG_CACHE_DIR"
-  let color = "ODIG_COLOR"
   let doc_dir = "ODIG_DOC_DIR"
   let lib_dir = "ODIG_LIB_DIR"
   let odoc_theme = "ODIG_ODOC_THEME"
@@ -450,8 +449,7 @@ module Conf = struct
       odoc_theme : string;
       pkg_infos : Pkg_info.t Pkg.Map.t Lazy.t;
       pkgs : Pkg.t list Lazy.t;
-      share_dir : Fpath.t;
-      fmt_styler : Fmt.styler; }
+      share_dir : Fpath.t; }
 
   let memo ~cwd ~cache_dir (* b0 not odig *) ~trash_dir ~jobs =
     let feedback =
@@ -464,7 +462,7 @@ module Conf = struct
 
   let v
       ~b0_cache_dir ~b0_log_file ~cache_dir ~cwd ~doc_dir ~html_dir ~jobs
-      ~lib_dir ~log_level ~odoc_theme ~share_dir ~fmt_styler ()
+      ~lib_dir ~log_level ~odoc_theme ~share_dir ()
     =
     let trash_dir =
       B0_cli.Memo.get_trash_dir ~cwd ~b0_dir:cache_dir ~trash_dir:None
@@ -479,8 +477,7 @@ module Conf = struct
       List.fold_left add Pkg.Map.empty pkg_infos
     in
     { b0_cache_dir; b0_log_file; cache_dir; cwd; doc_dir; html_dir; jobs;
-      lib_dir; log_level; memo; odoc_theme; pkg_infos; pkgs; share_dir;
-      fmt_styler }
+      lib_dir; log_level; memo; odoc_theme; pkg_infos; pkgs; share_dir }
 
   let b0_cache_dir c = c.b0_cache_dir
   let b0_log_file c = c.b0_log_file
@@ -496,7 +493,6 @@ module Conf = struct
   let pkg_infos c = Lazy.force c.pkg_infos
   let pkgs c = Lazy.force c.pkgs
   let share_dir c = c.share_dir
-  let fmt_styler c = c.fmt_styler
   let pp =
     Fmt.record @@
     [ Fmt.field "b0-cache-dir" b0_cache_dir Fpath.pp_quoted;
@@ -524,12 +520,10 @@ module Conf = struct
 
   let setup_with_cli
       ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~jobs ~lib_dir ~log_level
-      ~odoc_theme ~share_dir ~color ()
+      ~odoc_theme ~share_dir ()
     =
+    B0_std_cli.setup_log log_level ~log_spawns:Log.Debug;
     Result.map_error (Fmt.str "conf: %s") @@
-    let fmt_styler = B0_std_cli.get_styler color in
-    Fmt.set_styler fmt_styler;
-    B0_std_cli.setup fmt_styler log_level ~log_spawns:Log.Debug;
     Result.bind (Os.Dir.cwd ()) @@ fun cwd ->
     Result.bind (Fpath.of_string Sys.executable_name) @@ fun exec ->
     let cache_dir = get_dir ~cwd ~exec (Fpath.v "var/cache/odig") cache_dir in
@@ -548,5 +542,5 @@ module Conf = struct
     Result.bind (get_odoc_theme odoc_theme) @@ fun odoc_theme ->
     let jobs = B0_cli.Memo.get_jobs ~jobs in
     Ok (v ~b0_cache_dir ~b0_log_file ~cache_dir ~cwd ~doc_dir ~html_dir
-          ~jobs ~lib_dir ~log_level ~odoc_theme ~share_dir ~fmt_styler ())
+          ~jobs ~lib_dir ~log_level ~odoc_theme ~share_dir ())
 end

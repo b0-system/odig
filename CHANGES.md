@@ -1,5 +1,6 @@
 
-
+- Remove the `--color` option and `ODIG_COLOR` environment variable.
+  Invoke the term with `TERM=dumb` to suppress unwanted styled text.
 - Install manpages and shell completions.
 - Improve built-in `index.mld` of the `ocaml` package to adapt 
   to new upstream install structure and provide better access

@@ -340,14 +340,13 @@ let conf =
     Arg.(value & opt (some B0_std_cli.dirpath) None &
          info ["share-dir"] ~absent ~doc ~docs ~env)
   and+ jobs = B0_cli.Memo.jobs ~docs ~env:(Cmd.Env.info "ODIG_JOBS") ()
-  and+ color = B0_std_cli.color ~env:(Cmd.Env.info Env.color) ()
   and+ log_level =
     B0_std_cli.log_level ~env:(Some (Cmd.Env.info Env.verbosity)) ()
   in
   Result.map_error (fun s -> `Msg s) @@
   Conf.setup_with_cli
     ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~jobs ~lib_dir ~log_level
-    ~odoc_theme ~share_dir ~color ()
+    ~odoc_theme ~share_dir ()
 
 let pkgs_pos1_nonempty, pkgs_pos, pkgs_pos1, pkgs_opt =
   let doc = "Package to consider (repeatable)." in

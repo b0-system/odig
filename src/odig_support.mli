@@ -306,9 +306,6 @@ module Env : sig
   val share_dir : string
   (** [share_dir_env] is the environment variable that can be used to
       define a share dir. *)
-
-  val verbosity : string
-  (** [verbosity] is the variable used to specify log verbosity. *)
 end
 
 (** Odig configuration. *)
@@ -319,11 +316,11 @@ module Conf : sig
   type t
   (** The type for configuration. *)
 
-  val v :
+  val make :
     b0_cache_dir:Fpath.t -> b0_log_file:Fpath.t -> cache_dir:Fpath.t ->
     cwd:Fpath.t -> doc_dir:Fpath.t -> html_dir:Fpath.t -> jobs:int ->
-    lib_dir:Fpath.t -> log_level:Log.level -> odoc_theme:B0_odoc.Theme.name ->
-    share_dir:Fpath.t -> unit -> t
+    lib_dir:Fpath.t -> odoc_theme:B0_odoc.Theme.name -> share_dir:Fpath.t ->
+    unit -> t
   (** [v] consructs a configuration with given attributes. See
       the corresponding accessors for details. *)
 
@@ -344,9 +341,6 @@ module Conf : sig
 
   val lib_dir : t -> Fpath.t
   (** [lib_dir c] is [c]'s library directory. *)
-
-  val log_level : t -> Log.level
-  (** [log_level c] is [c]'s log level. *)
 
   val html_dir : t -> Fpath.t
   (** [html_dir c] is [c]'s HTML directory, where the API docs
@@ -378,9 +372,8 @@ module Conf : sig
   val setup_with_cli :
     b0_cache_dir:Fpath.t option -> b0_log_file:Fpath.t option ->
     cache_dir:Fpath.t option -> doc_dir:Fpath.t option -> jobs:int option ->
-    lib_dir:Fpath.t option -> log_level:Log.level ->
-    odoc_theme:B0_odoc.Theme.name option -> share_dir:Fpath.t option ->
-    unit -> (t, string) result
+    lib_dir:Fpath.t option -> odoc_theme:B0_odoc.Theme.name option ->
+    share_dir:Fpath.t option -> unit -> (t, string) result
   (** [setup_with_cli] determines and setups a configuration with the given
       values. These are expected to have been determined by environment
       variables and command line arguments. *)

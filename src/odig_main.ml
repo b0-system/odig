@@ -351,11 +351,10 @@ let conf =
     Arg.(value & opt (some B0_std_cli.dirpath) None &
          info ["share-dir"] ~absent ~doc ~docs ~env)
   and+ jobs = B0_cli.Memo.jobs ~docs ~env:(Cmd.Env.info "ODIG_JOBS") ()
-  and+ log_level =
-    B0_std_cli.log_level ~env:(Some (Cmd.Env.info Env.verbosity)) ()
-  in
+  and+ () = B0_std_cli.set_no_color ()
+  and+ () = B0_std_cli.set_log_level () in
   Conf.setup_with_cli
-    ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~jobs ~lib_dir ~log_level
+    ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~jobs ~lib_dir
     ~odoc_theme ~share_dir ()
 
 let show_files_cmd ?cmd ~kind get_files =

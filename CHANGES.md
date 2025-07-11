@@ -1,6 +1,11 @@
 
-- Remove the `--color` option and `ODIG_COLOR` environment variable.
-  Invoke the term with `TERM=dumb` to suppress unwanted styled text.
+- The variable `ODIG_VERBOSITY` no longer affects `odig`.
+  Use `LOG_LEVEL` instead.
+- The option `--verbosity` is renamed to `--log-level`.
+- The variable `ODIG_COLOR` no longer affects `odig`.
+  Use `NO_COLOR` with  a non empty value to suppress ANSI text styling.
+- The option `--color` no longer exists.
+  Use `--no-color` to suppress ANSI text styling.
 - Install manpages and shell completions.
 - Improve built-in `index.mld` of the `ocaml` package to adapt 
   to new upstream install structure and provide better access

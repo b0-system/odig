@@ -56,9 +56,7 @@ let pp_updated ppf = function
 | false -> Fmt.string ppf "No update to publish on"
 | true -> Fmt.string ppf "Published docs on"
 
-let publish ~color ~new_commit ~remote ~branch =
-  let styler = B0_std_cli.get_styler color in
-  Fmt.set_styler styler;
+let publish ~new_commit ~remote ~branch =
   Log.if_error ~use:1 @@
   let* versions = versions () in
   let* htmldir, htmldir_contents = odig_html () in
@@ -85,26 +83,26 @@ let publish ~color ~new_commit ~remote ~branch =
   end;
   Ok 0
 
-let main () =
-  let open Cmdliner in
-  let open Cmdliner.Term.Syntax in
-  let cmd =
-    let doc = "Updates odig's sample output on GitHub pages" in
-    Cmd.make (Cmd.info "publish" ~version:"%%VERSION%%" ~doc) @@
-    let+ () = B0_std_cli.set_log_level ()
-    and+ new_commit =
-      let doc = "Make a new commit, do not amend the last one." in
-      Arg.(value & flag & info ["c"; "new-commit"] ~doc)
-    and+ remote =
-      let doc = "Publish on remote $(docv)." and docv = "REMOTE" in
-      Arg.(value & opt string "origin" & info ["remote"] ~doc ~docv)
-    and+ branch =
+open Cmdliner
+open Cmdliner.Term.Syntax
+
+let cmd =
+  let doc = "Updates odig's sample output on GitHub pages" in
+  Cmd.make (Cmd.info "publish" ~version:"%%VERSION%%" ~doc) @@
+  let+ () = B0_std_cli.set_no_color ()
+  and+ () = B0_std_cli.set_log_level ()
+  and+ new_commit =
+    let doc = "Make a new commit, do not amend the last one." in
+    Arg.(value & flag & info ["c"; "new-commit"] ~doc)
+  and+ remote =
+    let doc = "Publish on remote $(docv)." and docv = "REMOTE" in
+    Arg.(value & opt string "origin" & info ["remote"] ~doc ~docv)
+  and+ branch =
       let doc = "Publish on branch $(docv)." and docv = "BRANCH" in
       let default = B0_github.Pages.default_branch in
       Arg.(value & opt string default & info ["b"; "branch"] ~doc ~docv)
-    and+ color = B0_std_cli.color () in
-    publish ~color ~new_commit ~remote ~branch
   in
-  Cmd.eval' cmd
+  publish ~new_commit ~remote ~branch
 
+let main () = Cmd.eval' cmd
 let () = if !Sys.interactive then exit (main ())

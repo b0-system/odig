@@ -4,6 +4,7 @@
   ---------------------------------------------------------------------------*)
 
 open B0_std
+open Result.Syntax
 
 module Digest = struct
   include Digest
@@ -430,7 +431,6 @@ module Env = struct
   let lib_dir = "ODIG_LIB_DIR"
   let odoc_theme = "ODIG_ODOC_THEME"
   let share_dir = "ODIG_SHARE_DIR"
-  let verbosity = "ODIG_VERBOSITY"
 end
 
 module Conf = struct
@@ -444,7 +444,6 @@ module Conf = struct
       html_dir : Fpath.t;
       jobs : int;
       lib_dir : Fpath.t;
-      log_level : Log.level;
       memo : (B0_memo.t, string) result Lazy.t;
       odoc_theme : string;
       pkg_infos : Pkg_info.t Pkg.Map.t Lazy.t;
@@ -460,9 +459,9 @@ module Conf = struct
     in
     B0_memo.make ~cwd ~cache_dir ~trash_dir ~jobs ~feedback ()
 
-  let v
+  let make
       ~b0_cache_dir ~b0_log_file ~cache_dir ~cwd ~doc_dir ~html_dir ~jobs
-      ~lib_dir ~log_level ~odoc_theme ~share_dir ()
+      ~lib_dir ~odoc_theme ~share_dir ()
     =
     let trash_dir =
       B0_cli.Memo.get_trash_dir ~cwd ~b0_dir:cache_dir ~trash_dir:None
@@ -477,7 +476,7 @@ module Conf = struct
       List.fold_left add Pkg.Map.empty pkg_infos
     in
     { b0_cache_dir; b0_log_file; cache_dir; cwd; doc_dir; html_dir; jobs;
-      lib_dir; log_level; memo; odoc_theme; pkg_infos; pkgs; share_dir }
+      lib_dir; memo; odoc_theme; pkg_infos; pkgs; share_dir }
 
   let b0_cache_dir c = c.b0_cache_dir
   let b0_log_file c = c.b0_log_file
@@ -487,7 +486,6 @@ module Conf = struct
   let html_dir c = c.html_dir
   let jobs c = c.jobs
   let lib_dir c = c.lib_dir
-  let log_level c = c.log_level
   let memo c = Lazy.force c.memo
   let odoc_theme c = c.odoc_theme
   let pkg_infos c = Lazy.force c.pkg_infos
@@ -515,17 +513,16 @@ module Conf = struct
   let get_odoc_theme = function
   | Some v -> Ok v
   | None ->
-      Result.bind (B0_odoc.Theme.get_user_preference ()) @@ fun n ->
+      let* n = B0_odoc.Theme.get_user_preference () in
       Ok (Option.value ~default:B0_odoc.Theme.odig_default n)
 
   let setup_with_cli
-      ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~jobs ~lib_dir ~log_level
-      ~odoc_theme ~share_dir ()
+      ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~jobs ~lib_dir ~odoc_theme
+      ~share_dir ()
     =
-    B0_std_cli.setup_log log_level ~log_spawns:Log.Debug;
     Result.map_error (Fmt.str "conf: %s") @@
-    Result.bind (Os.Dir.cwd ()) @@ fun cwd ->
-    Result.bind (Fpath.of_string Sys.executable_name) @@ fun exec ->
+    let* cwd = Os.Dir.cwd () in
+    let* exec = Fpath.of_string Sys.executable_name in
     let cache_dir = get_dir ~cwd ~exec (Fpath.v "var/cache/odig") cache_dir in
     let b0_cache_dir =
       let b0_dir = cache_dir and cache_dir = b0_cache_dir in
@@ -539,8 +536,8 @@ module Conf = struct
     let lib_dir = get_dir ~cwd ~exec (Fpath.v "lib") lib_dir in
     let doc_dir = get_dir ~cwd ~exec (Fpath.v "doc") doc_dir in
     let share_dir = get_dir ~cwd ~exec (Fpath.v "share") share_dir in
-    Result.bind (get_odoc_theme odoc_theme) @@ fun odoc_theme ->
+    let* odoc_theme = get_odoc_theme odoc_theme in
     let jobs = B0_cli.Memo.get_jobs ~jobs in
-    Ok (v ~b0_cache_dir ~b0_log_file ~cache_dir ~cwd ~doc_dir ~html_dir
-          ~jobs ~lib_dir ~log_level ~odoc_theme ~share_dir ())
+    Ok (make ~b0_cache_dir ~b0_log_file ~cache_dir ~cwd ~doc_dir ~html_dir
+          ~jobs ~lib_dir ~odoc_theme ~share_dir ())
 end

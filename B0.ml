@@ -26,7 +26,7 @@ let odig_tool =
 
 let gh_pages_amend =
   let doc = "GitHub pages publication tool" in
-  let requires = [ cmdliner; b0_std; b0_memo; b0_file; b0_kit ] in
+  let requires = [ cmdliner; b0_std; ] in
   let srcs = [`File ~/"src/gh_pages_amend.ml"] in
   B0_ocaml.exe "gh-pages-amend" ~public:true ~doc ~requires ~srcs
 

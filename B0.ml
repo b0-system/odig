@@ -1,4 +1,5 @@
 open B0_kit.V000
+open Result.Syntax
 
 (* OCaml library names *)
 
@@ -22,7 +23,23 @@ let odig_support_lib =
 let odig_tool =
   let srcs = [`File ~/"src/odig_main.ml"] in
   let requires = [ cmdliner; b0_std; b0_memo; b0_file; b0_kit; odig_support ] in
-  B0_ocaml.exe "odig" ~public:true ~requires ~srcs
+  let env =
+    let doc = "Configure for the opam in the build env" in
+    let env env _unit =
+      let* opam = B0_env.get_cmd env Cmd.(tool "opam" % "var" % "prefix") in
+      let* prefix = Os.Cmd.run_out ~trim:true opam in
+      let* prefix = Fpath.of_string prefix in
+      Result.ok @@
+      (B0_env.env env `Build_env
+       |> Os.Env.add "ODIG_CACHE_DIR" "/tmp/odig-cache"
+       |> Os.Env.add "ODIG_LIB_DIR" Fpath.(to_string @@ prefix / "lib")
+       |> Os.Env.add "ODIG_DOC_DIR" Fpath.(to_string @@ prefix / "doc")
+       |> Os.Env.add "ODIG_SHARE_DIR" Fpath.(to_string @@ prefix / "share"))
+    in
+    `Fun (doc, env)
+  in
+  let meta = B0_meta.empty |> ~~ B0_unit.Action.env env in
+  B0_ocaml.exe "odig" ~meta ~public:true ~requires ~srcs
 
 let gh_pages_amend =
   let doc = "GitHub pages publication tool" in

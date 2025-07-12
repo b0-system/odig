@@ -6,15 +6,15 @@ perform common development tasks.
 [b0 occasionally]: https://erratique.ch/software/b0/doc/occasionally.html
 
 
-Build and test
---------------
+# Build and test
 
-    source dev-env
-    topkg build   # or brzo -b
-    odig          # Uses a cache in /tmp/odig-cache
+The following runs odig with a cache in `/tmp/odig-cache` and
+configured with the paths of an `opam` found in the build environment
+(see [B0.ml](B0.ml)).
 
-Publish sample to gh-pages
---------------------------
+    b0 -- odig
+
+# Publish sample to gh-pages
 
 ```
 cd sample
@@ -25,8 +25,7 @@ cd ..
 topkg run publish
 ```
 
-Working on themes
------------------
+# Working on themes
 
 An easy way is to generate a representative docset and then:
 

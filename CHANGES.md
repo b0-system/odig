@@ -1,4 +1,9 @@
 
+If you were parsing the outputs of `odig` note that it no longers
+automatically disable ANSI text styling based on `isatty`. Invoke the
+tool with option `--no-color` or set the environment variable
+`NO_COLOR=1` to make sure it does not.
+
 - The variable `ODIG_VERBOSITY` no longer affects `odig`.
   Use `LOG_LEVEL` instead.
 - The option `--verbosity` is renamed to `--log-level`.

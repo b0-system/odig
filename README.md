@@ -2,7 +2,7 @@ odig — Lookup documentation of installed OCaml packages
 =======================================================
 
 odig is a command line tool to lookup documentation of installed OCaml
-packages. It shows package metadata, readmes, change logs, licenses,
+packages. It finds package metadata, readmes, change logs, licenses,
 cross-referenced `odoc` API documentation and manuals.
 
 odig is distributed under the ISC license. The theme fonts have their

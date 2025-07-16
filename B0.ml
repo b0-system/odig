@@ -51,7 +51,7 @@ let gh_pages_amend =
 
 let publish_sample =
   let srcs = [ `File ~/"sample/publish.ml" ] in
-  let requires = [ cmdliner; b0_std; b0_file (* For B0_cli *) ; b0_kit ] in
+  let requires = [ cmdliner; b0_std ] in
   B0_ocaml.exe "publish-sample" ~requires ~srcs ~doc:"Publish sample tool"
 
 (* Packs *)

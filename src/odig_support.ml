@@ -453,9 +453,10 @@ module Conf = struct
   let memo ~cwd ~cache_dir (* b0 not odig *) ~trash_dir ~jobs =
     let feedback =
       let op_howto ppf o = Fmt.pf ppf "odig log --id %d" (B0_zero.Op.id o) in
-      let show_op = Log.Debug and show_ui = Log.Info and level = Log.level () in
-      B0_cli.Memo.pp_leveled_feedback ~op_howto ~show_op ~show_ui ~level
-        Fmt.stderr
+      let output_op_level = Log.Debug and output_ui_level = Log.Info in
+      let level = Log.level () in
+      B0_memo_cli.pp_leveled_feedback
+        ~op_howto ~output_op_level ~output_ui_level ~level Fmt.stderr
     in
     B0_memo.make ~cwd ~cache_dir ~trash_dir ~jobs ~feedback ()
 
@@ -463,9 +464,7 @@ module Conf = struct
       ~b0_cache_dir ~b0_log_file ~cache_dir ~cwd ~doc_dir ~html_dir ~jobs
       ~lib_dir ~odoc_theme ~share_dir ()
     =
-    let trash_dir =
-      B0_cli.Memo.get_trash_dir ~cwd ~b0_dir:cache_dir ~trash_dir:None
-    in
+    let trash_dir = Fpath.(b0_cache_dir / B0_memo_cli.trash_dirname) in
     let memo =
       lazy (memo ~cwd:cache_dir ~cache_dir:b0_cache_dir ~trash_dir ~jobs)
     in
@@ -524,20 +523,20 @@ module Conf = struct
     let* cwd = Os.Dir.cwd () in
     let* exec = Fpath.of_string Sys.executable_name in
     let cache_dir = get_dir ~cwd ~exec (Fpath.v "var/cache/odig") cache_dir in
-    let b0_cache_dir =
-      let b0_dir = cache_dir and cache_dir = b0_cache_dir in
-      B0_cli.Memo.get_cache_dir ~cwd ~b0_dir ~cache_dir
+    let b0_cache_dir = match b0_cache_dir with
+    | None -> Fpath.(cache_dir / B0_memo_cli.File_cache.dirname)
+    | Some dir -> Fpath.(cwd // dir)
     in
-    let b0_log_file =
-      let b0_dir = cache_dir and log_file = b0_log_file in
-      B0_cli.Memo.get_log_file ~cwd ~b0_dir ~log_file
+    let b0_log_file = match b0_log_file with
+    | None -> Fpath.(cache_dir / B0_memo_cli.Log.filename)
+    | Some file -> Fpath.(cwd // file)
     in
     let html_dir = Fpath.(cache_dir / "html") in
     let lib_dir = get_dir ~cwd ~exec (Fpath.v "lib") lib_dir in
     let doc_dir = get_dir ~cwd ~exec (Fpath.v "doc") doc_dir in
     let share_dir = get_dir ~cwd ~exec (Fpath.v "share") share_dir in
     let* odoc_theme = get_odoc_theme odoc_theme in
-    let jobs = B0_cli.Memo.get_jobs ~jobs in
+    let jobs = B0_memo_cli.get_jobs ~jobs in
     Ok (make ~b0_cache_dir ~b0_log_file ~cache_dir ~cwd ~doc_dir ~html_dir
           ~jobs ~lib_dir ~odoc_theme ~share_dir ())
 end

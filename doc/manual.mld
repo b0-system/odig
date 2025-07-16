@@ -14,16 +14,16 @@ the [pkg] command.
 
 {v
 odig pkg              # List recognized packages and their version
-odig pkg odig --long  # Show odig's package full metadata
+odig pkg odig --long  # Output odig's package full metadata
 v}
 
-Metadata fields of packages can be queried individually with the [show]
+Metadata fields of packages can be queried individually with the [info]
 command:
 
 {v
-odig show repo odig        # Show odig's repository address
-odig show homepage odig    # Show odig's homepage address
-odig show license odig     # Show odig's license(s) tags
+odig info repo odig        # Output odig's repository address
+odig info homepage odig    # Output odig's homepage address
+odig info license odig     # Output odig's license(s) tags
 v}
 
 A few URI metadata fields can be opened directly in your browser with
@@ -41,18 +41,18 @@ If the package installed them [odig] provides instant access to the
 the readme, change log and license files of a package via:
 
 {v
-odig readme odig    # Show the readme of odig
-odig changes odig   # Show the changes of odig
-odig license odig   # Show the license of odig
+odig readme odig    # Output the readme of odig
+odig changes odig   # Output the changes of odig
+odig license odig   # Output the license of odig
 v}
 
 If you want to access the file paths rather than the content use
-[show]:
+[info]:
 
 {v
-odig show readme-files odig    # Show path to the readme of odig
-odig show changes-files odig   # Show path the changes of odig
-odig show license-files odig   # Show path the license of odig
+odig info readme-files odig    # Output path to the readme of odig
+odig info changes-files odig   # Output path the changes of odig
+odig info license-files odig   # Output path the license of odig
 v}
 
 {1:odoc_docs Package odoc API documentation and manuals}
@@ -98,7 +98,7 @@ changed via the [odoc-theme] command:
 
 {v
 odig odoc-theme list            # List available themes
-odig odoc-theme default         # Show the default theme name
+odig odoc-theme default         # Output the default theme name
 v}
 
 The default theme is used and restored whenever a documentation

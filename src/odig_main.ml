@@ -154,15 +154,17 @@ let doc ~conf ~background ~browser ~pkg_names ~update ~no_update ~show_files =
       Fmt.error "@[<v>No doc could be generated for:@,%a@]"
         (Fmt.list Fpath.pp_quoted) fs
 
-let log ~conf ~no_pager ~log_format ~output_details ~op_query =
+let log ~conf ~no_pager ~format ~output_details ~query =
   Log.if_error ~use:Exit.some_error @@
-  let don't = no_pager || log_format = `Trace_event in
-  let* pager = B0_pager.find ~don't () in
+  let no_pager = no_pager || format = `Trace_event in
+  let* pager = B0_pager.find ~no_pager () in
   let* () = B0_pager.page_stdout pager in
   let log_file = Conf.b0_log_file conf in
   let* log = B0_memo_log.read log_file in
-  B0_cli.Memo.Log.out
-    Fmt.stdout log_format output_details op_query ~path:log_file log;
+  let pp =
+    B0_memo_cli.Log.pp ~format ~output_details ~query ~path:log_file ()
+  in
+  Fmt.pr "@[<v>%a@]@?" pp log;
   Ok 0
 
 let odoc
@@ -185,7 +187,7 @@ let pkg ~conf ~no_pager ~output_details ~pkg_names =
   Log.if_error ~use:Exit.no_such_name @@
   let* pkgs = find_pkgs conf pkg_names in
   Log.if_error' ~use:Exit.some_error @@
-  let* pager = B0_pager.find ~don't:no_pager () in
+  let* pager = B0_pager.find ~no_pager () in
   let* () = B0_pager.page_stdout pager in
   let pp_pkgs = match output_details with
   | `Short -> (fun ppf () -> (Fmt.list Pkg.pp_name) ppf pkgs)
@@ -206,35 +208,35 @@ let pkg ~conf ~no_pager ~output_details ~pkg_names =
   in
   Fmt.pr "@[<v>%a@]@." pp_pkgs (); Ok 0
 
-let show ~conf ~no_pager ~output_details ~show_empty ~field ~pkg_names =
+let info ~conf ~no_pager ~output_details ~keep_empty ~field ~pkg_names =
   Log.if_error ~use:Exit.no_such_name @@
   let* pkgs = find_pkgs conf pkg_names in
   Log.if_error' ~use:Exit.some_error @@
-  let* pager = B0_pager.find ~don't:no_pager () in
+  let* pager = B0_pager.find ~no_pager () in
   let* () = B0_pager.page_stdout pager in
-  let pp_field field out_fmt show_empty = match out_fmt with
+  let pp_field field out_fmt keep_empty = match out_fmt with
   | `Short | `Normal ->
       (fun ppf (p, i) -> match Pkg_info.get field i with
-        | [] -> if show_empty then Fmt.pf ppf "@," else ()
+        | [] -> if keep_empty then Fmt.pf ppf "@," else ()
         | vs -> Fmt.pf ppf "%a@," Fmt.(list string) vs)
   | `Long ->
       (fun ppf (p, i) -> match Pkg_info.get field i with
-        | [] when not show_empty -> ()
+        | [] when not keep_empty -> ()
         | [] -> Fmt.pf ppf "@[<h>%a@]@," Pkg.pp_name p
         | vs ->
             let pp_val ppf v = Fmt.pf ppf "@[<h>%a %s@]" Pkg.pp_name p v in
             Fmt.pf ppf "%a@," Fmt.(list pp_val) vs)
   in
   let infos = Pkg_info.query ~doc_dir:(Conf.doc_dir conf) pkgs in
-  let pp_field = pp_field field output_details show_empty in
+  let pp_field = pp_field field output_details keep_empty in
   Fmt.pr "@[<v>%a@]@?" Fmt.(list ~sep:Fmt.nop pp_field) infos;
   Ok 0
 
-let show_files ~conf ~no_pager ~pkg_names ~get_files =
+let output_files ~conf ~no_pager ~pkg_names ~get_files =
   Log.if_error ~use:Exit.no_such_name @@
   let* pkgs = find_pkgs conf pkg_names in
   Log.if_error' ~use:Exit.some_error @@
-  let* pager = B0_pager.find ~don't:no_pager () in
+  let* pager = B0_pager.find ~no_pager () in
   let doc_dir = Conf.doc_dir conf in
   let doc_dirs = List.map (fun p -> p, (Doc_dir.of_pkg ~doc_dir p)) pkgs in
   let files = List.concat (List.map (fun (p, i) -> get_files i) doc_dirs) in
@@ -289,13 +291,13 @@ open Cmdliner.Term.Syntax
 let exits =
   Cmd.Exit.info Exit.no_such_name
     ~doc:"a specified entity name cannot be found." ::
-  Cmd.Exit.info Exit.err_url ~doc:"an URL cannot be shown in a browser." ::
+  Cmd.Exit.info Exit.err_url ~doc:"an URL cannot be opened in a browser." ::
   Cmd.Exit.defaults
 
 let output_details = B0_std_cli.output_details ()
 let background = B0_web_browser.background ()
 let browser = B0_web_browser.browser ()
-let no_pager = B0_pager.don't ()
+let no_pager = B0_pager.no_pager ()
 let pkgs_pos1_nonempty, pkgs_pos, pkgs_pos1, pkgs_opt =
   let doc = "Package to consider (repeatable)." in
   let docv = "PKG" in
@@ -315,12 +317,16 @@ let conf =
   in
   let+ b0_cache_dir =
     let env = Cmd.Env.info Env.b0_cache_dir in
-    let doc_none = "$(b,.cache) in odig cache directory" in
-    B0_cli.Memo.cache_dir ~opts:["b0-cache-dir"] ~doc_none ~env ()
+    let doc_absent =
+      Fmt.str "$(b,%s) in odig cache directory" B0_memo_cli.File_cache.dirname
+    in
+    B0_memo_cli.File_cache.dir ~doc_absent ~env ()
   and+ b0_log_file =
     let env = Cmd.Env.info Env.b0_log_file in
-    let doc_none = "$(b,.log) in odig cache directory" in
-    B0_cli.Memo.log_file ~docs ~doc_none ~env ()
+    let doc_absent =
+      Fmt.str "$(b,%s) in odig cache directory" B0_memo_cli.Log.filename
+    in
+    B0_memo_cli.Log.file ~doc_absent ~env ()
   and+ cache_dir =
     let doc = doc "Cache" "var/cache/odig" in
     let env = Cmd.Env.info Env.cache_dir in
@@ -350,30 +356,29 @@ let conf =
     let env = Cmd.Env.info Env.share_dir in
     Arg.(value & opt (some B0_std_cli.dirpath) None &
          info ["share-dir"] ~absent ~doc ~docs ~env)
-  and+ jobs = B0_cli.Memo.jobs ~docs ~env:(Cmd.Env.info "ODIG_JOBS") ()
+  and+ jobs = B0_memo_cli.jobs ~docs ~env:(Cmd.Env.info "ODIG_JOBS") ()
   and+ () = B0_std_cli.set_no_color ()
   and+ () = B0_std_cli.set_log_level () in
   Conf.setup_with_cli
     ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~jobs ~lib_dir
     ~odoc_theme ~share_dir ()
 
-let show_files_cmd ?cmd ~kind get_files =
+let output_files_cmd ?cmd ~kind get_files =
   let cname = match cmd with None -> kind | Some cmd -> cmd in
-  let doc = Fmt.str "Show package %s files" kind in
-  let envs = B0_pager.Env.infos in
+  let doc = Fmt.str "Output package %s files" kind in
   let man =
     [ `S "DESCRIPTION";
-      `P (Fmt.str "The $(cmd) command shows package %s files. If \
+      `P (Fmt.str "The $(cmd) command outputs package %s files. If \
                    invoked with $(b,--no-pager) and multiple files are output \
                    these are separated by a U+001C (file separator) control \
                    character." kind);
       `P "To output the file paths rather than their content use $(tool) \
-          $(b,show)." ]
+          $(b,info)." ]
   in
-  Cmd.make (Cmd.info cname ~doc ~envs ~exits ~man) @@
+  Cmd.make (Cmd.info cname ~doc ~exits ~man) @@
   let+ conf and+ no_pager and+ pkg_names = pkgs_pos
   and+ get_files = Term.const get_files in
-  show_files ~conf ~no_pager ~pkg_names ~get_files
+  output_files ~conf ~no_pager ~pkg_names ~get_files
 
 let subcmd ?(exits = exits) ?(envs = []) name ~doc ~descr term =
   let man = [`S Manpage.s_description; descr] in
@@ -395,7 +400,7 @@ let browse_cmd =
       [ "homepage", `Homepage; "issues", `Issues; "online-doc", `Online_doc; ]
     in
     let alts = Arg.doc_alts_enum field in
-    let doc = Fmt.str "The URL field to show. $(docv) must be %s." alts in
+    let doc = Fmt.str "The URL field to open. $(docv) must be %s." alts in
     let action = Arg.enum field in
     Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"FIELD")
   in
@@ -413,7 +418,7 @@ let cache_cmd =
     subcmd "clear" ~doc ~descr @@ let+ conf in cache ~conf `Clear
   in
   let path_cmd =
-    let doc = "Show cache directory path" in
+    let doc = "Output cache directory path" in
     let descr = `P "$(cmd) outputs the path to the cache directory." in
     subcmd "path" ~doc ~descr @@ let+ conf in cache ~conf `Path
   in
@@ -428,10 +433,10 @@ let cache_cmd =
   [clear_cmd; path_cmd; trim_cmd]
 
 let changes_cmd =
-  show_files_cmd ~cmd:"changes" ~kind:"change log" Doc_dir.changes_files
+  output_files_cmd ~cmd:"changes" ~kind:"change log" Doc_dir.changes_files
 
 let conf_cmd =
-  let doc = "Show odig configuration" in
+  let doc = "Output odig configuration" in
   let man = [
     `S Manpage.s_description;
     `P "$(cmd) outputs the odig configuration.";
@@ -468,14 +473,14 @@ let doc_cmd =
     Arg.(value & flag & info ["n"; "no-update"] ~doc)
   and+ show_files =
     let doc =
-      "Output files on stdout one by line, rather than trying to open them \
-       in a broken way."
+      "Instead of trying to open them in a broken way, output selected \
+       file paths on $(b,stdout) one by line."
     in
-    Arg.(value & flag & info ["f"; "show-files"] ~doc)
+    Arg.(value & flag & info ["t"; "output-path"] ~doc)
   in
   doc ~conf ~background ~browser ~pkg_names ~update ~no_update ~show_files
 
-let license_cmd = show_files_cmd ~kind:"license" Doc_dir.license_files
+let license_cmd = output_files_cmd ~kind:"license" Doc_dir.license_files
 
 let odoc_cmd =
   let doc = "Generate odoc API documentation and manuals" in
@@ -529,7 +534,7 @@ let odoc_theme_cmd =
   let get_cmd =
     let doc = "Get the theme used on documentation generation" in
     let descr = `Blocks [
-        `P "$(tool) shows the theme used on documentation generation.";
+        `P "$(tool) outputs the theme used on documentation generation.";
         `P "This is either, in order, the value of the $(b,--odoc-theme) \
             option, the value of the $(b,ODIG_ODOC_THEME) environment \
             variable, the stripped contents of the \
@@ -542,7 +547,7 @@ let odoc_theme_cmd =
     let+ conf
     and+ read_conf =
       let doc =
-        "Show the value written in $(b,~/.config/odig/odoc-theme) \
+        "Output the value written in $(b,~/.config/odig/odoc-theme) \
          or $(b,odig.default) if there is no such file."
       in
       Arg.(value & flag & info ["conf"] ~doc)
@@ -559,8 +564,8 @@ let odoc_theme_cmd =
     subcmd "list" ~doc ~descr list_term
   in
   let path_cmd =
-    let doc = "Show theme directory" in
-    let descr = `P "$(cmd) shows the directory of $(i,THEME)" in
+    let doc = "Output theme directory" in
+    let descr = `P "$(cmd) outputs the directory of $(i,THEME)" in
     subcmd "path" ~doc ~descr @@
     let+ conf and+ theme in
     theme_path ~conf ~theme
@@ -591,78 +596,78 @@ let odoc_theme_cmd =
   [get_cmd; list_cmd; path_cmd; set_cmd]
 
 let log_cmd =
-  let doc = "Show odoc build log" in
-  let envs = B0_pager.Env.infos in
+  let doc = "Output odoc build log" in
   let man = [
     `S Manpage.s_description;
-    `P "The $(cmd) command shows odoc build operations.";
+    `P "The $(cmd) command outputs the log of odoc build operations.";
     `S Manpage.s_options;
     `S B0_std_cli.s_output_details_options;
-    `S B0_cli.Memo.Log.s_output_format_options;
-    `S B0_cli.Op.s_selection_options;
-    `Blocks B0_cli.Op.query_man ]
+    `S B0_memo_cli.Log.s_output_format_options;
+    `S B0_memo_cli.Op.s_selection_options;
+    `Blocks B0_memo_cli.Op.query_man ]
   in
-  Cmd.make (Cmd.info "log" ~doc ~exits ~envs ~man) @@
-  let+ conf and+ no_pager and+ log_format = B0_cli.Memo.Log.format_cli ()
-  and+ output_details and+ op_query = B0_cli.Op.query_cli () in
-  log ~conf ~no_pager ~log_format ~output_details ~op_query
+  Cmd.make (Cmd.info "log" ~doc ~exits ~man) @@
+  let+ conf and+ no_pager and+ format = B0_memo_cli.Log.format_cli ()
+  and+ output_details and+ query = B0_memo_cli.Op.query_cli () in
+  log ~conf ~no_pager ~format ~output_details ~query
 
 let pkg_term =
   let+ conf and+ no_pager and+ output_details and+ pkg_names = pkgs_pos in
   pkg ~conf ~no_pager ~output_details ~pkg_names
 
 let pkg_cmd =
-  let doc = "Show packages (default command)" in
-  let envs = B0_pager.Env.infos in
+  let doc = "List packages" in
   let man = [
     `S Manpage.s_description;
-    `P "The $(cmd) command shows packages known to odig. If no packages
-        are specified, all packages are shown.";
+    `P "The $(cmd) lists packages known to odig. If no packages
+        are specified, all packages are listed.";
     `P "See the packaging conventions in $(b,odig doc) $(tool) for the package
         install structure.";
     `S Manpage.s_commands;
     `S Manpage.s_options;
     `S B0_std_cli.s_output_details_options; ]
   in
-  Cmd.make (Cmd.info "pkg" ~doc ~envs ~exits ~man) pkg_term
+  Cmd.make (Cmd.info "pkg" ~doc ~exits ~man) pkg_term
 
-let readme_cmd = show_files_cmd ~kind:"readme" Doc_dir.readme_files
-let show_cmd =
-  let doc = "Show package metadata" in
-  let envs = B0_pager.Env.infos in
+let readme_cmd = output_files_cmd ~kind:"readme" Doc_dir.readme_files
+let info_cmd =
+  let doc = "Output package metadata" in
   let man = [
     `S Manpage.s_description;
     `P "$(cmd) outputs package metadata. If no packages
-        are specified, information for all packages is shown.";
+        are specified, information for all packages is output.";
     `P "Outputs a single non-empty value per line; to output empty
-        value use the $(b,--show-empty) option.";
+        value use the $(b,--keep-empty) option.";
     `P "To preceed values by the name of the package they apply to, use
         the $(b,--long) option.";
     `S Manpage.s_options;
     `S B0_std_cli.s_output_details_options; ]
   in
-  Cmd.make (Cmd.info "show" ~doc ~envs ~exits ~man) @@
+  Cmd.make (Cmd.info "info" ~doc ~exits ~man) @@
   let+ conf and+ no_pager and+ output_details
   and+ pkg_names = pkgs_pos1
-  and+ show_empty =
-    let doc = "Show empty fields." in
-    Arg.(value & flag & info ["e"; "show-empty"] ~doc)
+  and+ keep_empty =
+    let doc = "Keep empty fields." in
+    Arg.(value & flag & info ["e"; "keep-empty"] ~doc)
   and+ field =
     let field = Odig_support.Pkg_info.field_names in
     let alts = Arg.doc_alts_enum field in
-    let doc = Fmt.str "The field to show. $(docv) must be %s." alts in
+    let doc = Fmt.str "The field to output. $(docv) must be %s." alts in
     let action = Arg.enum field in
     Arg.(required & pos 0 (some action) None & info [] ~doc ~docv:"FIELD")
   in
-  show ~conf ~no_pager ~output_details ~show_empty ~field ~pkg_names
+  info ~conf ~no_pager ~output_details ~keep_empty ~field ~pkg_names
 
 let odig =
   let doc = "Lookup documentation of installed OCaml packages" in
   let man = [
     `S Manpage.s_description;
-    `P "$(tool) looks up documentation of installed OCaml packages. It shows \
+    `P "$(tool) looks up documentation of installed OCaml packages. It finds \
         package metadata, readmes, change logs, licenses, cross-referenced \
         $(b,odoc) API documentation and manuals.";
+    `Pre "$(tool) $(b,doc)          # Generate and open package documentation";
+    `Noblank;
+    `Pre "$(tool) $(b,changes) $(i,PKG)  # Read the change log of $(i,PKG)";
     `P "See $(b,odig doc) $(tool) for a tutorial and more details."; `Noblank;
     `P "See $(tool) $(b,conf --help) for information about $(tool) \
         configuration.";
@@ -677,7 +682,7 @@ let odig =
   in
   Cmd.group (Cmd.info "odig" ~version:"%%VERSION%%" ~doc ~exits ~man) @@
   [ browse_cmd; cache_cmd; changes_cmd; conf_cmd; doc_cmd; license_cmd;
-    log_cmd; odoc_cmd; odoc_theme_cmd; pkg_cmd; readme_cmd; show_cmd; ]
+    log_cmd; odoc_cmd; odoc_theme_cmd; pkg_cmd; readme_cmd; info_cmd; ]
 
 let main () =
   Log.time (fun _ m -> m "total time") @@ fun () ->

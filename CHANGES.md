@@ -1,24 +1,31 @@
 
-If you were parsing the outputs of `odig` note that it no longers
-automatically disable ANSI text styling based on `isatty`. Invoke the
-tool with option `--no-color` or set the environment variable
-`NO_COLOR=1` to make sure it does not.
-
-- The variable `ODIG_VERBOSITY` no longer affects `odig`.
-  Use `LOG_LEVEL` instead.
-- The option `--verbosity` is renamed to `--log-level`.
-- The variable `ODIG_COLOR` no longer affects `odig`.
-  Use `NO_COLOR` with  a non empty value to suppress ANSI text styling.
-- The option `--color` no longer exists.
-  Use `--no-color` to suppress ANSI text styling.
+- Require OCaml 4.14.0.
 - Install manpages and shell completions.
+- Fix race condition in `odoc compiler-deps` invocations.  Thanks to
+  Raphaël Proust and José Nogueira for investigating and reporting (#77).
 - Improve built-in `index.mld` of the `ocaml` package to adapt 
   to new upstream install structure and provide better access
-  to stdlib modules.
-- Fix race condition in `odoc compiler-deps` invocations.  Thanks to
-  Raphaël Proust and José Nogueira for reporting (#77).
-- Track b0. `odig log --errors` becomes `odig log --failed`.
-- Require OCaml 4.14.0.
+  to OCaml stdlib modules.
+
+## Command line interface changes 
+
+If you are parsing the outputs of `odig` note that it no longers
+automatically disable ANSI text styling based on `isatty`. Invoke the
+tool with option `--no-color` or set the environment variable
+`NO_COLOR=true` to make sure it does not.
+
+- The variable `ODIG_VERBOSITY` no longer affects `odig`.
+- The variable `LOG_LEVEL` sets the log level.
+- The variable `ODIG_COLOR` no longer affects `odig`.
+- The variable `NO_COLOR` with a non empty value suppresses ANSI text styling.
+- The command `odig show` is renamed to `odig info`.
+- The option `odig --verbosity` is renamed to `odig --log-level`.
+- The option `odig --color` no longer exists.
+- The option `odig --no-color` is added to suppress ANSI text styling.
+- The option `odig show --show-empty` is renamed to `odig info --keep-empty`.
+- The options `odig doc -f` and `odig doc --show-file` are renamed to 
+  `odig doc -t` and `odig doc --output-paths`.
+- The option `odig log --errors` is renamed to `odig log --failed` (tracks b0).
 
 v0.0.9 2023-06-04 Zagreb
 ------------------------

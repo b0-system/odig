@@ -30,18 +30,19 @@ depends: [
   "odoc" {>= "2.0.0"}
   "b0" {= "0.0.5"}
 ]
-build: ["ocaml" "pkg/pkg.ml" "build" "--dev-pkg" "%{dev}%"]
-install: [
-  "cmdliner"
-  "install"
-  "tool-support"
-  "--mandir=%{man}%"
-  "--sharedir=%{share}%"
-  "_build/src/odig_main.native:odig" {ocaml:native}
-  "_build/src/odig_main.byte:odig" {!ocaml:native}
-  "_build/src/gh_pages_amend.native:gh-pages-amend" {ocaml:native}
-  "_build/src/gh_pages_amend.byte:gh-pages-amend" {!ocaml:native}
-  "%{prefix}%"
+build: [
+  ["ocaml" "pkg/pkg.ml" "build" "--dev-pkg" "%{dev}%"]
+  [
+    "cmdliner"
+    "install"
+    "tool-support"
+    "--update-opam-install=%{_:name}%.install"
+    "_build/src/odig_main.native:odig" {ocaml:native}
+    "_build/src/odig_main.byte:odig" {!ocaml:native}
+    "_build/src/gh_pages_amend.native:gh-pages-amend" {ocaml:native}
+    "_build/src/gh_pages_amend.byte:gh-pages-amend" {!ocaml:native}
+    "_build/cmdliner-install"
+  ]
 ]
 dev-repo: "git+https://erratique.ch/repos/odig.git"
 x-maintenance-intent: ["(latest)"]

@@ -107,7 +107,7 @@ let pkg_index pkg pkg_info ~user_index =
       | false ->
           match r.[i] with
           | '{' -> loop (c + 1) (i + 1) max
-          | '}' when c = 1 -> String.drop (i + 1) r
+          | '}' when c = 1 -> String.drop_first (i + 1) r
           | '}' -> loop (c - 1) (i + 1) max
           | _ -> loop c (i + 1) max
       in

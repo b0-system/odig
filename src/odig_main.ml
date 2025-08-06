@@ -298,13 +298,6 @@ let output_details = B0_std_cli.output_details ()
 let background = B0_web_browser.background ()
 let browser = B0_web_browser.browser ()
 let no_pager = B0_pager.no_pager ()
-let pkgs_pos1_nonempty, pkgs_pos, pkgs_pos1, pkgs_opt =
-  let doc = "Package to consider (repeatable)." in
-  let docv = "PKG" in
-  Arg.(non_empty & pos_right 0 string [] & info [] ~doc ~docv),
-  Arg.(value & pos_all string [] & info [] ~doc ~docv),
-  Arg.(value & pos_right 0 string [] & info [] ~doc ~docv),
-  Arg.(value & opt_all string [] & info ["p"; "pkg"] ~doc ~docv)
 
 let conf =
   Term.term_result' @@
@@ -362,6 +355,29 @@ let conf =
   Conf.setup_with_cli
     ~b0_cache_dir ~b0_log_file ~cache_dir ~doc_dir ~jobs ~lib_dir
     ~odoc_theme ~share_dir ()
+
+let pkg_name_conv =
+  let complete_name conf ~token = match conf with
+  | None -> Ok []
+  | Some conf ->
+      let* pkgs = find_pkgs conf [] in
+      let complete_pkg pkg =
+        let name = Pkg.name pkg in
+        if not (String.starts_with ~prefix:token name) then None else
+        (Some (Arg.Completion.string name))
+      in
+      Ok (List.filter_map complete_pkg pkgs)
+  in
+  let completion = Arg.Completion.make ~context:conf complete_name in
+  Arg.Conv.of_conv Arg.string ~completion
+
+let pkgs_pos1_nonempty, pkgs_pos, pkgs_pos1, pkgs_opt =
+  let doc = "Package to consider (repeatable)." in
+  let docv = "PKG" in
+  Arg.(non_empty & pos_right 0 pkg_name_conv [] & info [] ~doc ~docv),
+  Arg.(value & pos_all pkg_name_conv [] & info [] ~doc ~docv),
+  Arg.(value & pos_right 0 pkg_name_conv [] & info [] ~doc ~docv),
+  Arg.(value & opt_all pkg_name_conv [] & info ["p"; "pkg"] ~doc ~docv)
 
 let output_files_cmd ?cmd ~kind get_files =
   let cname = match cmd with None -> kind | Some cmd -> cmd in

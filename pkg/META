@@ -4,7 +4,7 @@ requires = ""
 
 package "support" (
   directory = "support"
-  description = "odig support library"
+  description = "The odig.support library"
   version = "%%VERSION_NUM%%"
   requires = "b0.std b0.memo b0.file b0.kit"
   archive(byte) = "odig_support.cma"

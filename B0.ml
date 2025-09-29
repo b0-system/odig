@@ -86,9 +86,9 @@ let default =
         "ocamlfind", {|build|};
         "ocamlbuild", {|build|};
         "topkg", {|build & >= "1.1.0"|};
-        "cmdliner", {|>= "1.3.0"|};
+        "cmdliner", {|>= "2.0.0"|};
         "odoc", {|>= "2.0.0" |};
-        "b0", {|= "0.0.5"|}; ]
+        "b0", {|= "0.0.6"|}; ]
   in
   B0_pack.make "default" ~doc:"odig package" ~meta ~locked:true @@
   B0_unit.list ()

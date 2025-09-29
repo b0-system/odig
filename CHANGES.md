@@ -1,4 +1,7 @@
+v0.1.0 2025-09-29 Zagreb
+------------------------
 
+- Require `cmdliner` 2.0.0.
 - Require OCaml 4.14.0.
 - Install manpages and shell completions.
 - Fix race condition in `odoc compiler-deps` invocations.  Thanks to
@@ -7,7 +10,7 @@
   to new upstream install structure and provide better access
   to OCaml stdlib modules.
 
-## Command line interface changes 
+### Command line interface changes
 
 If you are parsing the outputs of `odig` note that it no longers
 automatically disable ANSI text styling based on `isatty`. Invoke the

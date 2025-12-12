@@ -35,7 +35,7 @@ let link_themes dir htmldir_contents themes =
     let rec loop = function
     | [] ->
         let dst = Fpath.(dir / "_odoc-theme") in
-        Os.Path.copy ~make_path:true
+        Os.Path.copy ~force:true ~make_path:true
           ~recurse:true tcontents ~dst |> Result.error_to_failure;
         B0_github.Pages.update ~follow_symlinks:false (Some dir) ~dst:tdir
     | f :: fs ->

@@ -52,7 +52,10 @@ module Pkg = struct
       let add_pkg _ name dir acc =
         if name <> "ocaml" then (name, dir) :: acc else acc
       in
-      let pkgs = Os.Dir.fold_dirs ~recurse:false add_pkg dir [] in
+      let pkgs =
+        let dotfiles = false and follow_symlinks = true and recurse = false in
+        Os.Dir.fold_dirs ~dotfiles ~follow_symlinks ~recurse add_pkg dir []
+      in
       let pkgs = pkgs |> Result.error_to_failure in
       List.sort compare_by_caseless_name (ocaml_pkg () :: pkgs)
     with Failure e -> Log.err (fun m -> m "package list: %s" e); []
@@ -105,8 +108,11 @@ module Doc_cobj = struct
 
   let of_pkg pkg =
     let dir = Pkg.path pkg in
-    let recurse = true in
-    let cobjs = Os.Dir.fold_files ~recurse (add_cobj pkg) dir Fpath.Map.empty in
+    let cobjs =
+      let dotfiles = false and follow_symlinks = true and recurse = true in
+      Os.Dir.fold_files
+        ~dotfiles ~follow_symlinks ~recurse (add_cobj pkg) dir Fpath.Map.empty
+    in
     let cobjs = Log.if_error ~use:Fpath.Map.empty cobjs in
     Fpath.Map.fold (fun _ c acc -> c :: acc) cobjs []
 
@@ -299,7 +305,9 @@ module Doc_dir = struct
           if is_pre "README" then cs, ls, (file :: rs) else
           acc
         in
-        Os.Dir.fold_files ~recurse:false add_file doc_dir ([], [], [])
+        let dotfiles = false and follow_symlinks = true and recurse = false in
+        Os.Dir.fold_files
+          ~dotfiles ~follow_symlinks ~recurse add_file doc_dir ([], [], [])
         |> Log.if_error ~use:([], [], [])
     in
     let changes_files = List.sort Fpath.compare cs in
@@ -319,7 +327,8 @@ module Doc_dir = struct
           | Some sat ->
               fun _ _ file acc -> if sat file then file :: acc else acc
           in
-          Os.Dir.fold_files ~recurse:true add_file dir []
+          let dotfiles = false and follow_symlinks = true and recurse = true in
+          Os.Dir.fold_files ~dotfiles ~follow_symlinks ~recurse add_file dir []
           |> Log.if_error ~use:[]
 
   let doc_dir_odoc_pages pkg_doc_dir =

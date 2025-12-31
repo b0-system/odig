@@ -372,7 +372,11 @@ let index_frag_to_html b frag ~o = match frag with
 | Some mld ->
     let mld = Fpath.(Conf.cwd b.conf // mld) in
     let is_odoc _ _ f acc = if Fpath.has_ext ".odoc" f then f :: acc else acc in
-    let odoc_deps = Os.Dir.fold_files ~recurse:true is_odoc b.odoc_dir [] in
+    let odoc_deps =
+      let dotfiles = false and follow_symlinks = true and recurse = true in
+      Os.Dir.fold_files
+        ~dotfiles ~follow_symlinks ~recurse is_odoc b.odoc_dir []
+    in
     let odoc_deps = B0_memo.fail_if_error b.m odoc_deps in
     let o = Fpath.(b.odoc_dir / o) in
     B0_memo.ready_file b.m mld;
@@ -431,7 +435,11 @@ let write_ocaml_manual b =
           B0_memo.copy m src ~dst
         in
         let src = manual_pkg_dir in
-        let files = Os.Dir.fold_files ~recurse:true Os.Dir.path_list src [] in
+        let files =
+          let dotfiles = false and follow_symlinks = true and recurse = true in
+          Os.Dir.fold_files
+            ~dotfiles ~follow_symlinks ~recurse Os.Dir.path_list src []
+        in
         let files = B0_memo.fail_if_error b.m files in
         List.iter (copy_file b.m ~src_root:src ~dst_root:dst) files;
         Fut.return ()

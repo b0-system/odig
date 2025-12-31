@@ -17,7 +17,10 @@ let odig_html () =
   let* path = Os.Cmd.run_out ~trim:true cache_path in
   let htmldir = Fpath.(v path / "html") in
   let add_element _ f _ acc = f :: acc in
-  let* fs = Os.Dir.fold ~recurse:false add_element htmldir [] in
+  let* fs =
+    let dotfiles = false and follow_symlinks = true and recurse = false in
+    Os.Dir.fold ~dotfiles ~follow_symlinks ~recurse add_element htmldir []
+  in
   Ok (htmldir, fs)
 
 let odig_theme_list () =
@@ -35,8 +38,9 @@ let link_themes dir htmldir_contents themes =
     let rec loop = function
     | [] ->
         let dst = Fpath.(dir / "_odoc-theme") in
-        Os.Path.copy ~force:true ~make_path:true
-          ~recurse:true tcontents ~dst |> Result.error_to_failure;
+        Os.Path.copy
+          ~follow_symlinks:true ~recurse:true tcontents
+          ~force:true ~make_path:true ~dst |> Result.error_to_failure;
         B0_github.Pages.update ~follow_symlinks:false (Some dir) ~dst:tdir
     | f :: fs ->
         if f = "_odoc-theme" then loop fs else

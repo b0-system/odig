@@ -259,7 +259,11 @@ let pkgs_with_html_docs conf =
         | exception Not_found -> acc
         | pkg -> pkg :: acc
   in
-  let pkgs = Os.Dir.fold_dirs ~recurse:false add_pkg (Conf.html_dir conf) [] in
+  let pkgs =
+    let dotfiles = false and follow_symlinks = false and recurse = false in
+    Os.Dir.fold_dirs
+      ~dotfiles ~follow_symlinks ~recurse add_pkg (Conf.html_dir conf) []
+  in
   let pkgs = pkgs |> Log.if_error ~level:Log.Warning ~use:[] in
   List.sort Pkg.compare pkgs
 

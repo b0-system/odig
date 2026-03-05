@@ -88,7 +88,7 @@ let default =
         "topkg", {|build & >= "1.1.0"|};
         "cmdliner", {|>= "2.0.0"|};
         "odoc", {|>= "2.0.0" |};
-        "b0", {|= "0.0.6"|}; ]
+        "b0", {|>= "0.0.7"|}; ]
   in
   B0_pack.make "default" ~doc:"odig package" ~meta ~locked:true @@
   B0_unit.list ()

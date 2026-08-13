@@ -42,7 +42,7 @@ module Pkg : sig
   val name : t -> name
   (** [name] is the name of the package. *)
 
-  val path : t -> Fpath.t
+  val path : t -> Filepath.t
   (** [path] is the path to the compilation objects of the package. *)
 
   val equal : t -> t -> bool
@@ -72,7 +72,7 @@ module Pkg : sig
 
   (** {1:query Queries} *)
 
-  val of_dir : Fpath.t -> t list
+  val of_dir : Filepath.t -> t list
   (** [of_dir lib_dir] are the packages found in [lib_dir]. This is
       simply all the directory names inside [lib_dir] and an [ocaml]
       package which points to [ocamlc -where]. *)
@@ -105,7 +105,7 @@ module Doc_cobj : sig
   type t
   (** The type for documentation compilation objects. *)
 
-  val path : t -> Fpath.t
+  val path : t -> Filepath.t
   (** [path cobj] is the path to [cobj]. *)
 
   val kind : t -> kind
@@ -180,7 +180,7 @@ module Opam : sig
 
   (** {1:query Queries} *)
 
-  val file : Pkg.t -> Fpath.t option
+  val file : Pkg.t -> Filepath.t option
   (** [file pkg] is the opam file of package [pkg] (if any). *)
 
   val query : Pkg.t list -> (Pkg.t * t) list
@@ -200,30 +200,30 @@ module Doc_dir : sig
   type t
   (** The type for documentation directory information. *)
 
-  val dir : t -> Fpath.t option
+  val dir : t -> Filepath.t option
   (** [dir] is the path to the documentation directory (if any). *)
 
-  val changes_files : t -> Fpath.t list
+  val changes_files : t -> Filepath.t list
   (** [changes_files i] are the package's change log files. *)
 
-  val license_files : t -> Fpath.t list
+  val license_files : t -> Filepath.t list
   (** [license_files i] are the package's licenses files. *)
 
-  val odoc_pages : t -> Fpath.t list
+  val odoc_pages : t -> Filepath.t list
   (** [odoc_pages i] are the package's [odoc] pages *)
 
-  val odoc_assets_dir : t -> Fpath.t option
+  val odoc_assets_dir : t -> Filepath.t option
   (** [odoc_assets i] is the package's [odoc] assets directory (if any). *)
 
-  val odoc_assets : t -> Fpath.t list
+  val odoc_assets : t -> Filepath.t list
   (** [odoc_assets i] is the package's [odoc] assets directory contents. *)
 
-  val readme_files : t -> Fpath.t list
+  val readme_files : t -> Filepath.t list
   (** [readme_files i] are the package's readme files. *)
 
   (** {1:query Queries} *)
 
-  val of_pkg : doc_dir:Fpath.t -> Pkg.t -> t
+  val of_pkg : doc_dir:Filepath.t -> Pkg.t -> t
   (** [query ~doc_dir pkg] queries the documentation directory [doc_dir]
       for documentation about [pkg]. *)
 end
@@ -269,7 +269,7 @@ module Pkg_info : sig
 
   (** {1:query Queries} *)
 
-  val query : doc_dir:Fpath.t -> Pkg.t list -> (Pkg.t * t) list
+  val query : doc_dir:Filepath.t -> Pkg.t list -> (Pkg.t * t) list
   (** [query ~doc_dir pkgs] combines the result of
       {!Doc_cobj.of_pkg}, {!Opam.query} and {!Doc_dir.of_pkg}. *)
 end
@@ -317,32 +317,32 @@ module Conf : sig
   (** The type for configuration. *)
 
   val make :
-    b0_cache_dir:Fpath.t -> b0_log_file:Fpath.t -> cache_dir:Fpath.t ->
-    cwd:Fpath.t -> doc_dir:Fpath.t -> html_dir:Fpath.t -> jobs:int ->
-    lib_dir:Fpath.t -> odoc_theme:B0_odoc.Theme.name -> share_dir:Fpath.t ->
-    unit -> t
+    b0_cache_dir:Filepath.t -> b0_log_file:Filepath.t -> cache_dir:Filepath.t ->
+    cwd:Filepath.t -> doc_dir:Filepath.t -> html_dir:Filepath.t -> jobs:int ->
+    lib_dir:Filepath.t -> odoc_theme:B0_odoc.Theme.name ->
+    share_dir:Filepath.t -> unit -> t
   (** [v] consructs a configuration with given attributes. See
       the corresponding accessors for details. *)
 
-  val b0_cache_dir : t -> Fpath.t
+  val b0_cache_dir : t -> Filepath.t
   (** [b0_cache_dir c] is [c]'s b0 cache directory. *)
 
-  val b0_log_file : t -> Fpath.t
+  val b0_log_file : t -> Filepath.t
   (** [b0_log_file c] is [c]'s b0 log file. *)
 
-  val cache_dir : t -> Fpath.t
+  val cache_dir : t -> Filepath.t
   (** [cache_dir c] is [c]'s cache directory. *)
 
-  val cwd : t -> Fpath.t
+  val cwd : t -> Filepath.t
   (** [cwd c] is [c]'s current working directory. *)
 
-  val doc_dir : t -> Fpath.t
+  val doc_dir : t -> Filepath.t
   (** [doc_dir c] is [c]'s documentation directory. *)
 
-  val lib_dir : t -> Fpath.t
+  val lib_dir : t -> Filepath.t
   (** [lib_dir c] is [c]'s library directory. *)
 
-  val html_dir : t -> Fpath.t
+  val html_dir : t -> Filepath.t
   (** [html_dir c] is [c]'s HTML directory, where the API docs
       are generated (derived from {!cache_dir}). *)
 
@@ -361,7 +361,7 @@ module Conf : sig
   val pkg_infos : t -> Pkg_info.t Pkg.Map.t
   (** [pkg_infos conf] are the package information of {!pkgs}. *)
 
-  val share_dir : t -> Fpath.t
+  val share_dir : t -> Filepath.t
   (** [share_dir c] is [c]'s share directory. *)
 
   val pp : t Fmt.t
@@ -370,10 +370,11 @@ module Conf : sig
   (** {1:setup Setup} *)
 
   val setup_with_cli :
-    b0_cache_dir:Fpath.t option -> b0_log_file:Fpath.t option ->
-    cache_dir:Fpath.t option -> doc_dir:Fpath.t option -> jobs:int option ->
-    lib_dir:Fpath.t option -> odoc_theme:B0_odoc.Theme.name option ->
-    share_dir:Fpath.t option -> unit -> (t, string) result
+    b0_cache_dir:Filepath.t option -> b0_log_file:Filepath.t option ->
+    cache_dir:Filepath.t option -> doc_dir:Filepath.t option ->
+    jobs:int option -> lib_dir:Filepath.t option ->
+    odoc_theme:B0_odoc.Theme.name option ->
+    share_dir:Filepath.t option -> unit -> (t, string) result
   (** [setup_with_cli] determines and setups a configuration with the given
       values. These are expected to have been determined by environment
       variables and command line arguments. *)

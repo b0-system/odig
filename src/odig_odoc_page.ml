@@ -15,7 +15,7 @@ let a_to_utf_8_txt ~href:h txt =
   El.a ~at:At.[type' "text/plain; charset=UTF-8"; href h] [El.txt txt]
 
 let doc_dir_link ?txt f =
-  let fname = Fpath.basename (Fpath.v f) in
+  let fname = Filepath.basename (Filepath.v f) in
   let txt = match txt with None -> fname | Some txt -> txt in
   a_to_utf_8_txt ~href:(Fmt.str "_doc-dir/%s" fname) txt
 
@@ -49,7 +49,7 @@ let ocaml_pkg_module_indexes pkg_info =
      ocaml directory. The day upstream wants control over it can
      provide an `index.mld` file at the right place. It will override
      this. *)
-  let dirid f = Fpath.basename (Fpath.parent f) in
+  let dirid f = Filepath.basename (Filepath.parent f) in
   let add_cobj acc cobj =
     let dirid = dirid (Doc_cobj.path cobj) in
     match String.Map.find dirid acc with
@@ -251,7 +251,7 @@ let stdlib_link conf = "ocaml/index.html#library_stdlib"
 let pkgs_with_html_docs conf =
   let by_names = Pkg.by_names (Conf.pkgs conf) in
   let add_pkg _ name dir acc =
-    let exists = Os.File.exists Fpath.(dir / "index.html") in
+    let exists = Os.File.exists Filepath.(dir / "index.html") in
     match exists |> Log.if_error ~level:Log.Warning ~use:false with
     | false -> acc
     | true ->
@@ -305,7 +305,7 @@ let pkg_list
                 El.txt " and the "; manual_markup; El.txt ".";];
           El.p [El.small [El.txt "Generated for ";
                           El.code
-                            [El.txt (Fpath.to_string (Conf.lib_dir conf))]]];]
+                            [El.txt (Filepath.to_string (Conf.lib_dir conf))]]];]
     in
     El.header ~at:At.[class' "odoc-preamble"] contents
   in
@@ -330,7 +330,7 @@ let pkg_list
   in
   let style_href = "_odoc-theme/odoc.css" in
   let page_title = match index_title with
-  | None -> Fpath.(basename @@ parent (Conf.lib_dir conf))
+  | None -> Filepath.(basename @@ parent (Conf.lib_dir conf))
   | Some t -> t
   in
   El.to_string ~doctype:true @@

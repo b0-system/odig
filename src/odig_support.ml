@@ -19,10 +19,10 @@ end
 
 module Pkg = struct
   type name = string
-  type t = name * Fpath.t
+  type t = name * Filepath.t
   let name = fst
   let path = snd
-  let pp ppf (n, p) = Fmt.pf ppf "%s %a" n (Fmt.st' [`Faint] Fpath.pp_quoted) p
+  let pp ppf (n, p) = Fmt.pf ppf "%s %a" n (Fmt.st' [`Faint] Filepath.pp_quoted) p
   let pp_name ppf (n, p) = Fmt.string ppf n
   let pp_version ppf v =
     let v = if v = "" then "?" else v in
@@ -39,14 +39,14 @@ module Pkg = struct
   module Map = Map.Make (T)
 
   let of_dir dir =
-    Log.time (fun _ m -> m "package list of %a" Fpath.pp_quoted dir) @@
+    Log.time (fun _ m -> m "package list of %a" Filepath.pp_quoted dir) @@
     fun () ->
     let ocaml_pkg () =
       let ocaml_where = Cmd.(arg "ocamlc" % "-where") in
       let p =
         Os.Cmd.run_out ~trim:true ocaml_where |> Result.error_to_failure
       in
-      "ocaml", Fpath.of_string p |> Result.error_to_failure
+      "ocaml", Filepath.of_string p |> Result.error_to_failure
     in
     try
       let add_pkg _ name dir acc =
@@ -68,7 +68,7 @@ end
 module Doc_cobj = struct
   type kind = Cmi | Cmti | Cmt
   type t =
-    { path : Fpath.t;
+    { path : Filepath.t;
       kind : kind;
       modname : string;
       hidden : bool;
@@ -85,14 +85,14 @@ module Doc_cobj = struct
   let add_cobj pkg _ _ path acc =
     try
       let multi = true in (* implies e.g .p.ext objects are not considered *)
-      let base, kind = match Fpath.cut_ext ~multi path with
+      let base, kind = match Filepath.cut_ext ~multi path with
       | base, ".cmi" -> base, Cmi
       | base, ".cmti" -> base, Cmti
       | base, ".cmt" -> base, Cmt
       | base, _ -> raise_notrace Exit
       in
-      let modname = String.Ascii.capitalize (Fpath.basename base) in
-      let cobj = match Fpath.Map.find base acc with
+      let modname = String.Ascii.capitalize (Filepath.basename base) in
+      let cobj = match Filepath.Map.find base acc with
       | exception Not_found ->
           let hidden = not (kind = Cmi) in
           { path; kind; modname; hidden; pkg; }
@@ -103,7 +103,7 @@ module Doc_cobj = struct
           | Cmt, Cmti -> { path; kind; modname; hidden = cobj'.hidden; pkg }
           | Cmti, Cmt | _ -> cobj'
       in
-      Fpath.Map.add base cobj acc
+      Filepath.Map.add base cobj acc
     with Exit -> acc
 
   let of_pkg pkg =
@@ -111,12 +111,13 @@ module Doc_cobj = struct
     let cobjs =
       let dotfiles = false and follow_symlinks = true and recurse = true in
       Os.Dir.fold_files
-        ~dotfiles ~follow_symlinks ~recurse (add_cobj pkg) dir Fpath.Map.empty
+        ~dotfiles ~follow_symlinks ~recurse (add_cobj pkg) dir
+        Filepath.Map.empty
     in
-    let cobjs = Log.if_error ~use:Fpath.Map.empty cobjs in
-    Fpath.Map.fold (fun _ c acc -> c :: acc) cobjs []
+    let cobjs = Log.if_error ~use:Filepath.Map.empty cobjs in
+    Filepath.Map.fold (fun _ c acc -> c :: acc) cobjs []
 
-  let by_modname ?(init = String.Map.empty) cobjs =
+ let by_modname ?(init = String.Map.empty) cobjs =
     let add acc cobj = match String.Map.find cobj.modname acc with
     | exception Not_found -> String.Map.add cobj.modname [cobj] acc
     | cobjs -> String.Map.add cobj.modname (cobj :: cobjs) acc
@@ -197,7 +198,7 @@ module Opam = struct
   (* Queries *)
 
   let file pkg =
-    let opam = Fpath.(Pkg.path pkg / "opam") in
+    let opam = Filepath.(Pkg.path pkg / "opam") in
     match Os.File.exists opam |> Log.if_error ~use:false with
     | true -> Some opam
     | false -> None
@@ -281,16 +282,16 @@ module Doc_dir = struct
   (* Doc dir info *)
 
   type files =
-    { changes_files : Fpath.t list;
-      license_files : Fpath.t list;
-      readme_files : Fpath.t list; }
+    { changes_files : Filepath.t list;
+      license_files : Filepath.t list;
+      readme_files : Filepath.t list; }
 
   type t =
-    { dir : Fpath.t option;
+    { dir : Filepath.t option;
       files : files Lazy.t;
-      odoc_pages : Fpath.t list Lazy.t;
-      odoc_assets_dir : Fpath.t option Lazy.t;
-      odoc_assets : Fpath.t list Lazy.t; }
+      odoc_pages : Filepath.t list Lazy.t;
+      odoc_assets_dir : Filepath.t option Lazy.t;
+      odoc_assets : Filepath.t list Lazy.t; }
 
   let doc_dir_files pkg_doc_dir =
     let cs, ls, rs = match pkg_doc_dir with
@@ -310,15 +311,15 @@ module Doc_dir = struct
           ~dotfiles ~follow_symlinks ~recurse add_file doc_dir ([], [], [])
         |> Log.if_error ~use:([], [], [])
     in
-    let changes_files = List.sort Fpath.compare cs in
-    let license_files = List.sort Fpath.compare ls in
-    let readme_files = List.sort Fpath.compare rs in
+    let changes_files = List.sort Filepath.compare cs in
+    let license_files = List.sort Filepath.compare ls in
+    let readme_files = List.sort Filepath.compare rs in
     { changes_files; license_files; readme_files }
 
   let doc_dir_subdir_files pkg_doc_dir sub ~sat = match pkg_doc_dir with
   | None -> []
   | Some pkg_doc_dir ->
-      let dir = Fpath.(pkg_doc_dir / sub) in
+      let dir = Filepath.(pkg_doc_dir / sub) in
       match Os.Dir.exists dir with
       | Ok false | Error _  -> []
       | Ok true ->
@@ -332,7 +333,7 @@ module Doc_dir = struct
           |> Log.if_error ~use:[]
 
   let doc_dir_odoc_pages pkg_doc_dir =
-    let is_mld = Some (Fpath.has_ext ".mld") in
+    let is_mld = Some (Filepath.has_ext ".mld") in
     doc_dir_subdir_files pkg_doc_dir "odoc-pages" ~sat:is_mld
 
   let doc_dir_odoc_assets pkg_doc_dir  =
@@ -341,7 +342,7 @@ module Doc_dir = struct
   let doc_dir_odoc_assets_dir pkg_doc_dir = match pkg_doc_dir with
   | None -> None
   | Some pkg_doc_dir ->
-      let dir = Fpath.(pkg_doc_dir / "odoc-assets") in
+      let dir = Filepath.(pkg_doc_dir / "odoc-assets") in
       match Os.Dir.exists dir |> Log.if_error ~use:false with
       | false -> None
       | true -> Some dir
@@ -361,7 +362,7 @@ module Doc_dir = struct
   let odoc_assets i = Lazy.force i.odoc_assets
   let readme_files i = (Lazy.force i.files).readme_files
   let of_pkg ~doc_dir pkg =
-    let doc_dir = Fpath.(doc_dir / Pkg.name pkg) in
+    let doc_dir = Filepath.(doc_dir / Pkg.name pkg) in
     match Os.Dir.exists doc_dir |> Log.if_error ~use:false with
     | true -> v (Some doc_dir)
     | false -> v None
@@ -393,7 +394,7 @@ module Pkg_info = struct
       "version", `Version; ]
 
   let get field i =
-    let paths ps = List.map Fpath.to_string ps in
+    let paths ps = List.map Filepath.to_string ps in
     match field with
     | `Authors -> Opam.authors (opam i)
     | `Changes_files -> paths @@ Doc_dir.changes_files (doc_dir i)
@@ -445,19 +446,19 @@ end
 module Conf = struct
 
   type t =
-    { b0_cache_dir : Fpath.t;
-      b0_log_file : Fpath.t;
-      cache_dir : Fpath.t;
-      cwd : Fpath.t;
-      doc_dir : Fpath.t;
-      html_dir : Fpath.t;
+    { b0_cache_dir : Filepath.t;
+      b0_log_file : Filepath.t;
+      cache_dir : Filepath.t;
+      cwd : Filepath.t;
+      doc_dir : Filepath.t;
+      html_dir : Filepath.t;
       jobs : int;
-      lib_dir : Fpath.t;
+      lib_dir : Filepath.t;
       memo : (B0_memo.t, string) result Lazy.t;
       odoc_theme : string;
       pkg_infos : Pkg_info.t Pkg.Map.t Lazy.t;
       pkgs : Pkg.t list Lazy.t;
-      share_dir : Fpath.t; }
+      share_dir : Filepath.t; }
 
   let memo ~cwd ~cache_dir (* b0 not odig *) ~trash_dir ~jobs =
     let feedback =
@@ -473,7 +474,7 @@ module Conf = struct
       ~b0_cache_dir ~b0_log_file ~cache_dir ~cwd ~doc_dir ~html_dir ~jobs
       ~lib_dir ~odoc_theme ~share_dir ()
     =
-    let trash_dir = Fpath.(b0_cache_dir / B0_memo_cli.trash_dirname) in
+    let trash_dir = Filepath.(b0_cache_dir / B0_memo_cli.trash_dirname) in
     let memo =
       lazy (memo ~cwd:cache_dir ~cache_dir:b0_cache_dir ~trash_dir ~jobs)
     in
@@ -501,22 +502,22 @@ module Conf = struct
   let share_dir c = c.share_dir
   let pp =
     Fmt.record @@
-    [ Fmt.field "b0-cache-dir" b0_cache_dir Fpath.pp_quoted;
-      Fmt.field "b0-log-file" b0_log_file Fpath.pp_quoted;
-      Fmt.field "cache-dir" cache_dir Fpath.pp_quoted;
-      Fmt.field "doc-dir" doc_dir Fpath.pp_quoted;
-      Fmt.field "lib-dir" lib_dir Fpath.pp_quoted;
+    [ Fmt.field "b0-cache-dir" b0_cache_dir Filepath.pp_quoted;
+      Fmt.field "b0-log-file" b0_log_file Filepath.pp_quoted;
+      Fmt.field "cache-dir" cache_dir Filepath.pp_quoted;
+      Fmt.field "doc-dir" doc_dir Filepath.pp_quoted;
+      Fmt.field "lib-dir" lib_dir Filepath.pp_quoted;
       Fmt.field "jobs" jobs Fmt.int;
       Fmt.field "odoc-theme" odoc_theme Fmt.string;
-      Fmt.field "share-dir" share_dir Fpath.pp_quoted; ]
+      Fmt.field "share-dir" share_dir Filepath.pp_quoted; ]
 
   (* Setup *)
 
   let get_dir ~cwd ~exec default_dir = function
-  | Some dir -> Fpath.(cwd // dir)
+  | Some dir -> Filepath.(cwd // dir)
   | None ->
       (* relocation hack find directory relative to executable path *)
-      Fpath.((parent @@ parent @@ exec) // default_dir)
+      Filepath.((parent @@ parent @@ exec) // default_dir)
 
   let get_odoc_theme = function
   | Some v -> Ok v
@@ -530,20 +531,22 @@ module Conf = struct
     =
     Result.map_error (Fmt.str "conf: %s") @@
     let* cwd = Os.Dir.cwd () in
-    let* exec = Fpath.of_string Sys.executable_name in
-    let cache_dir = get_dir ~cwd ~exec (Fpath.v "var/cache/odig") cache_dir in
+    let* exec = Filepath.of_string Sys.executable_name in
+    let cache_dir =
+      get_dir ~cwd ~exec (Filepath.v "var/cache/odig") cache_dir
+    in
     let b0_cache_dir = match b0_cache_dir with
-    | None -> Fpath.(cache_dir / B0_memo_cli.File_cache.dirname)
-    | Some dir -> Fpath.(cwd // dir)
+    | None -> Filepath.(cache_dir / B0_memo_cli.File_cache.dirname)
+    | Some dir -> Filepath.(cwd // dir)
     in
     let b0_log_file = match b0_log_file with
-    | None -> Fpath.(cache_dir / B0_memo_cli.Log.filename)
-    | Some file -> Fpath.(cwd // file)
+    | None -> Filepath.(cache_dir / B0_memo_cli.Log.filename)
+    | Some file -> Filepath.(cwd // file)
     in
-    let html_dir = Fpath.(cache_dir / "html") in
-    let lib_dir = get_dir ~cwd ~exec (Fpath.v "lib") lib_dir in
-    let doc_dir = get_dir ~cwd ~exec (Fpath.v "doc") doc_dir in
-    let share_dir = get_dir ~cwd ~exec (Fpath.v "share") share_dir in
+    let html_dir = Filepath.(cache_dir / "html") in
+    let lib_dir = get_dir ~cwd ~exec (Filepath.v "lib") lib_dir in
+    let doc_dir = get_dir ~cwd ~exec (Filepath.v "doc") doc_dir in
+    let share_dir = get_dir ~cwd ~exec (Filepath.v "share") share_dir in
     let* odoc_theme = get_odoc_theme odoc_theme in
     let jobs = B0_memo_cli.get_jobs ~jobs in
     Ok (make ~b0_cache_dir ~b0_log_file ~cache_dir ~cwd ~doc_dir ~html_dir

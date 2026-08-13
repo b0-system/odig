@@ -15,7 +15,7 @@ let get_msg ~src ~dst = function
 | Some m -> m
 | None ->
     Fmt.str "Update %a\n\nWith contents of %a"
-      Fpath.pp_quoted dst Fpath.pp_quoted src
+      Filepath.pp_quoted dst Filepath.pp_quoted src
 
 let publish ~amend ~msg ~remote ~branch preserve_symlinks cname_file src dst =
   let follow_symlinks = not preserve_symlinks in
@@ -23,7 +23,8 @@ let publish ~amend ~msg ~remote ~branch preserve_symlinks cname_file src dst =
   let rupdates = [ B0_github.Pages.nojekyll; dst_upd ] in
   let rupdates = match cname_file with
   | None -> rupdates
-  | Some f -> B0_github.Pages.update (Some f) ~dst:(Fpath.v "CNAME") :: rupdates
+  | Some f ->
+      B0_github.Pages.update (Some f) ~dst:(Filepath.v "CNAME") :: rupdates
   in
   let updates = List.rev rupdates in
   let* repo = B0_vcs_repo.get () in
@@ -49,8 +50,8 @@ let publish
 open Cmdliner
 open Cmdliner.Term.Syntax
 
-let some_filepath = Arg.some B0_std_cli.filepath
-let some_dirpath = Arg.some B0_std_cli.dirpath
+let some_file = Arg.some B0_std_cli.file
+let some_dir = Arg.some B0_std_cli.dir
 
 let cmd =
   let doc = "Publish directories on GitHub pages" in
@@ -89,18 +90,18 @@ let cmd =
     Arg.(value & opt (some string) None & info ["m"; "message"] ~doc ~docv)
   and+ src =
     let doc = "$(docv) is the directory to publish." in
-    Arg.(required & pos 0 some_dirpath None & info [] ~doc ~docv:"SRC")
+    Arg.(required & pos 0 some_dir None & info [] ~doc ~docv:"SRC")
   and+ dst =
     let doc = "$(docv) is the directory relative to the root of the \
                repository checkout which is replaced by $(i,SRC)'s \
                contents. Use . to publish at the root."
     in
-    Arg.(required & pos 1 some_dirpath None & info [] ~doc ~docv:"DST")
+    Arg.(required & pos 1 some_dir None & info [] ~doc ~docv:"DST")
   and+ cname_file =
     let doc = "If specified the contents of $(docv) is copied over to the \
                path $(i,CNAME) at the root of the branch."
     in
-    Arg.(value & opt some_filepath None & info ["cname-file"] ~doc)
+    Arg.(value & opt some_file None & info ["cname-file"] ~doc)
   in
   publish
     ~new_commit ~remote ~branch ~msg ~preserve_symlinks ~cname_file ~src ~dst

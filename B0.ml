@@ -28,13 +28,13 @@ let odig_tool =
     let env env _unit =
       let* opam = B0_env.get_cmd env Cmd.(tool "opam" % "var" % "prefix") in
       let* prefix = Os.Cmd.run_out ~trim:true opam in
-      let* prefix = Fpath.of_string prefix in
+      let* prefix = Filepath.of_string prefix in
       Result.ok @@
       (B0_env.env env `Build_env
        |> Os.Env.add "ODIG_CACHE_DIR" "/tmp/odig-cache"
-       |> Os.Env.add "ODIG_LIB_DIR" Fpath.(to_string @@ prefix / "lib")
-       |> Os.Env.add "ODIG_DOC_DIR" Fpath.(to_string @@ prefix / "doc")
-       |> Os.Env.add "ODIG_SHARE_DIR" Fpath.(to_string @@ prefix / "share"))
+       |> Os.Env.add "ODIG_LIB_DIR" Filepath.(to_string @@ prefix / "lib")
+       |> Os.Env.add "ODIG_DOC_DIR" Filepath.(to_string @@ prefix / "doc")
+       |> Os.Env.add "ODIG_SHARE_DIR" Filepath.(to_string @@ prefix / "share"))
     in
     `Fun (doc, env)
   in

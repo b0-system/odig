@@ -15,7 +15,7 @@ let versions () =
 let odig_html () =
   let cache_path = Cmd.(tool "odig" % "cache" % "path") in
   let* path = Os.Cmd.run_out ~trim:true cache_path in
-  let htmldir = Fpath.(v path / "html") in
+  let htmldir = Filepath.(v path / "html") in
   let add_element _ f _ acc = f :: acc in
   let* fs =
     let dotfiles = false and follow_symlinks = true and recurse = false in
@@ -28,24 +28,24 @@ let odig_theme_list () =
   let* themes = Os.Cmd.run_out ~trim:true themes in
   let parse_theme p = match String.split_first ~sep:" " (String.trim p) with
   | None -> Fmt.failwith "%S: could not parse theme" p
-  | Some (tn, path) -> Fpath.v ("doc@" ^ tn), Fpath.v path
+  | Some (tn, path) -> Filepath.v ("doc@" ^ tn), Filepath.v path
   in
   Ok (List.map parse_theme (String.split_all ~sep:"\n" (String.trim themes)))
 
 let link_themes dir htmldir_contents themes =
   let theme_link dir htmldir_contents (tdir, tcontents) =
-    let dir = Fpath.(dir // tdir) in
+    let dir = Filepath.(dir // tdir) in
     let rec loop = function
     | [] ->
-        let dst = Fpath.(dir / "_odoc-theme") in
+        let dst = Filepath.(dir / "_odoc-theme") in
         Os.Path.copy
           ~follow_symlinks:true ~recurse:true tcontents
           ~force:true ~make_path:true ~dst |> Result.error_to_failure;
         B0_github.Pages.update ~follow_symlinks:false (Some dir) ~dst:tdir
     | f :: fs ->
         if f = "_odoc-theme" then loop fs else
-        let src = Fpath.(v ".." / "doc" / f) in
-        let dst = Fpath.(dir / f) in
+        let src = Filepath.(v ".." / "doc" / f) in
+        let dst = Filepath.(dir / f) in
         let force = true and make_path = true in
         Os.Path.symlink ~force ~make_path ~src dst |> Result.error_to_failure;
         loop fs
@@ -65,12 +65,12 @@ let publish ~new_commit ~remote ~branch =
   let* versions = versions () in
   let* htmldir, htmldir_contents = odig_html () in
   Log.stdout (fun m ->
-      m "Publishing %a" (Fmt.st' [`Fg `Green] Fpath.pp_quoted) htmldir);
+      m "Publishing %a" (Fmt.st' [`Fg `Green] Filepath.pp_quoted) htmldir);
   let* themes = odig_theme_list () in
   Result.join @@
   Os.Dir.with_tmp @@ fun dir ->
   let* theme_updates = link_themes dir htmldir_contents themes in
-  let udoc = B0_github.Pages.update (Some htmldir) ~dst:(Fpath.v "doc") in
+  let udoc = B0_github.Pages.update (Some htmldir) ~dst:(Filepath.v "doc") in
   let updates = B0_github.Pages.nojekyll :: udoc :: theme_updates in
   let* repo = B0_vcs_repo.get () in
   let msg = Fmt.str "Update sample output with %s." versions in

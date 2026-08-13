@@ -71,12 +71,12 @@ let browse ~conf ~background ~browser ~field ~pkg_names =
 
 let conf_cmd ~conf = Fmt.pr "%a@." Conf.pp conf; 0
 let cache ~conf = function
-| `Path -> Fmt.pr "%a@." Fpath.pp_unquoted (Conf.cache_dir conf); 0
+| `Path -> Fmt.pr "%a@." Filepath.pp_unquoted (Conf.cache_dir conf); 0
 | `Clear ->
     let dir = Conf.cache_dir conf in
     Log.stdout begin fun m ->
       m "Deleting %a, this may take some time..."
-        (Fmt.st' [`Fg `Green] Fpath.pp_quoted) dir
+        (Fmt.st' [`Fg `Green] Filepath.pp_quoted) dir
     end;
     Log.if_error ~use:Exit.some_error @@
     let* _del = Os.Path.delete ~recurse:true dir in
@@ -102,7 +102,7 @@ let doc ~conf ~background ~browser ~pkg_names ~update ~no_update ~show_files =
   let* browser = B0_web_browser.find ?cmd:browser () in
   let* files = match pkgs with
   | [] ->
-      let root_index = Fpath.(Conf.html_dir conf / "index.html") in
+      let root_index = Filepath.(Conf.html_dir conf / "index.html") in
       begin match exists root_index with
       | true when not update || no_update -> Ok [root_index]
       | false when no_update -> Error "No doc found. Try with 'odig doc -u'."
@@ -117,14 +117,14 @@ let doc ~conf ~background ~browser ~pkg_names ~update ~no_update ~show_files =
           Ok [root_index]
       end
   | pkgs ->
-      let index p = Fpath.(Conf.html_dir conf / Pkg.name p / "index.html") in
+      let index p = Filepath.(Conf.html_dir conf / Pkg.name p / "index.html") in
       let files = List.rev (List.rev_map index pkgs) in
       match List.find_all (fun f -> not (exists f)) files with
       | [] when not update || no_update -> Ok files
       | files when no_update ->
           Fmt.error
             "@[<v>No doc found for:@, %a@,@[Try with 'odig doc -u %a'@]@]"
-            Fmt.(list Fpath.pp_quoted) files
+            Fmt.(list Filepath.pp_quoted) files
             Fmt.(list Pkg.pp_name) pkgs
       | _ ->
           let index_title = None and index_intro = None and index_toc = None in
@@ -138,12 +138,12 @@ let doc ~conf ~background ~browser ~pkg_names ~update ~no_update ~show_files =
   let does_not_exist = List.find_all (fun f -> not (exists f)) files in
   match does_not_exist with
   | [] when show_files ->
-      Fmt.pr "@[<v>%a@]@." (Fmt.list Fpath.pp_unquoted) files; Ok 0
+      Fmt.pr "@[<v>%a@]@." (Fmt.list Filepath.pp_unquoted) files; Ok 0
   | [] ->
       let rec loop exit = function
       | [] -> Ok exit
       | f :: fs ->
-          let file_url p = Fmt.str "file://%a" Fpath.pp_unquoted p in
+          let file_url p = Fmt.str "file://%a" Filepath.pp_unquoted p in
           let url = file_url f in
           match B0_web_browser.show ~background ~prefix:false browser url with
           | Error e -> Log.err (fun m -> m "%s" e); loop Exit.err_url fs
@@ -152,7 +152,7 @@ let doc ~conf ~background ~browser ~pkg_names ~update ~no_update ~show_files =
       loop 0 files
   | fs ->
       Fmt.error "@[<v>No doc could be generated for:@,%a@]"
-        (Fmt.list Fpath.pp_quoted) fs
+        (Fmt.list Filepath.pp_quoted) fs
 
 let log ~conf ~no_pager ~format ~output_details ~query =
   Log.if_error ~use:Exit.some_error @@
@@ -195,7 +195,7 @@ let pkg ~conf ~no_pager ~output_details ~pkg_names =
       let pp_pkg ppf (pkg, o) =
         Fmt.pf ppf "@[<h>%a %a %a@]"
           Pkg.pp_name pkg Pkg.pp_version (Opam.version o)
-          (Fmt.st' [`Faint] Fpath.pp_quoted) (Pkg.path pkg)
+          (Fmt.st' [`Faint] Filepath.pp_quoted) (Pkg.path pkg)
       in
       let pkgs = Opam.query pkgs in
       (fun ppf () -> (Fmt.list pp_pkg) ppf pkgs)
@@ -279,7 +279,7 @@ let theme_path ~conf ~theme =
   let theme = match theme with None -> Conf.odoc_theme conf | Some t -> t in
   Log.if_error ~level:Log.Error ~use:Exit.no_such_name @@
   let* t = B0_odoc.Theme.find ~fallback:None theme ts in
-  Fmt.pr "%a@." Fpath.pp_unquoted (B0_odoc.Theme.path t); Ok 0
+  Fmt.pr "%a@." Filepath.pp_unquoted (B0_odoc.Theme.path t); Ok 0
 
 (* Command line interface *)
 
@@ -323,17 +323,17 @@ let conf =
   and+ cache_dir =
     let doc = doc "Cache" "var/cache/odig" in
     let env = Cmd.Env.info Env.cache_dir in
-    Arg.(value & opt (some B0_std_cli.dirpath) None &
+    Arg.(value & opt (some B0_std_cli.dir) None &
          info ["cache-dir"] ~absent ~doc ~docs ~env)
   and+ doc_dir =
     let doc = doc "Documentation" "doc" in
     let env = Cmd.Env.info Env.doc_dir in
-    Arg.(value & opt (some B0_std_cli.dirpath) None &
+    Arg.(value & opt (some B0_std_cli.dir) None &
          info ["doc-dir"] ~absent ~doc ~docs ~env)
   and+ lib_dir =
     let doc = doc "Library" "lib" in
     let env = Cmd.Env.info Env.lib_dir in
-    Arg.(value & opt (some B0_std_cli.dirpath) None &
+    Arg.(value & opt (some B0_std_cli.dir) None &
          info ["lib-dir"] ~absent ~doc ~docs ~env)
   and+ odoc_theme =
     let doc =
@@ -347,7 +347,7 @@ let conf =
   and+ share_dir =
     let doc = doc "Share" "share" in
     let env = Cmd.Env.info Env.share_dir in
-    Arg.(value & opt (some B0_std_cli.dirpath) None &
+    Arg.(value & opt (some B0_std_cli.dir) None &
          info ["share-dir"] ~absent ~doc ~docs ~env)
   and+ jobs = B0_memo_cli.jobs ~docs ~env:(Cmd.Env.info "ODIG_JOBS") ()
   and+ () = B0_std_cli.set_no_color ()
@@ -517,14 +517,14 @@ let odoc_cmd =
       "$(docv) is the .mld file to use to define the introduction text on \
        the package list page."
     in
-    let some_path = Arg.some B0_std_cli.filepath in
+    let some_path = Arg.some B0_std_cli.file in
     Arg.(value & opt some_path None & info ["index-intro"] ~docv:"MLDFILE" ~doc)
   and+ index_toc =
     let doc =
       "$(docv) is the .mld file to use to define the contents of the table \
        of contents on the package list page."
     in
-    let some_path = Arg.some B0_std_cli.filepath in
+    let some_path = Arg.some B0_std_cli.file in
     Arg.(value & opt some_path None & info ["index-toc"] ~docv:"MLDFILE" ~doc)
   and+ no_pkg_deps =
     let doc =
